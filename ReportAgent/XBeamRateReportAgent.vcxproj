@@ -199,6 +199,7 @@ xcopy /y /d $(ARPDIR)\XBeamRate\Images\*.* $(ARPDIR)\BridgeLink\Images
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DevLengthDetailsChapterBuilder.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="LoadingDetailsChapterBuilder.cpp" />
     <ClCompile Include="LoadRatingChapterBuilder.cpp" />
@@ -229,6 +230,7 @@ xcopy /y /d $(ARPDIR)\XBeamRate\Images\*.* $(ARPDIR)\BridgeLink\Images
     <ResourceCompile Include="ReportAgent.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DevLengthDetailsChapterBuilder.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="LoadingDetailsChapterBuilder.h" />
     <ClInclude Include="LoadRatingChapterBuilder.h" />
