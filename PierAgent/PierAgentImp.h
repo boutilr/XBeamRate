@@ -60,6 +60,7 @@ public:
 
 // IXBRPier
 public:
+   void GetPierModel(PierIDType pierID, IPier** ppPierModel) const override;
    Float64 GetSkewAngle(PierIDType pierID) const override;
    IndexType GetBearingLineCount(PierIDType pierID) const override;
    IndexType GetBearingCount(PierIDType pierID,IndexType brgLineIdx) const override;
@@ -163,7 +164,7 @@ private:
 
    mutable std::map<PierIDType,CComPtr<IPier>> m_PierModels;
    void ValidatePierModel(PierIDType pierID) const;
-   void GetPierModel(PierIDType pierID,IPier** ppPierModel) const;
+   
 
    void Invalidate();
 
