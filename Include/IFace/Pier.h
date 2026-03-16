@@ -25,6 +25,7 @@
 #include <XBeamRateExt\PointOfInterest.h>
 
 interface IShape;
+interface IPier;
 interface IPoint2d;
 interface IPoint2dCollection;
 interface IRebarSection;
@@ -36,6 +37,8 @@ DEFINE_GUID(IID_IXBRPier,
 class IXBRPier
 {
 public:
+
+   virtual void GetPierModel(PierIDType pierID, IPier** ppPierModel) const = 0;
    virtual Float64 GetSkewAngle(PierIDType pierID) const = 0;
 
    virtual IndexType GetBearingLineCount(PierIDType pierID) const = 0;

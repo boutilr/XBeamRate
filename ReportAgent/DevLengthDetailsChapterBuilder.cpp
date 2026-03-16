@@ -50,6 +50,34 @@ LPCTSTR CDevLengthDetailsChapterBuilder::GetName() const
    return TEXT("Development Length Details");
 }
 
+void WriteRowToDevelopmentTable(rptRcTable* pTable, RowIndexType row, CComBSTR barname, const WBFL::LRFD::REBARDEVLENGTHDETAILS& devDetails,
+    rptAreaUnitValue& area, rptLengthUnitValue& length, rptStressUnitValue& stress, rptRcScalar& scalar, bool is_LocationFactor)
+{
+    bool is_2015 = WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2015Interims == WBFL::LRFD::BDSManager::GetEdition();
+    bool is_2016 = WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2016Interims <= WBFL::LRFD::BDSManager::GetEdition();
+
+    ColumnIndexType col = 0;
+    (*pTable)(row, col++) << barname;
+    (*pTable)(row, col++) << area.SetValue(devDetails.Ab);
+    (*pTable)(row, col++) << length.SetValue(devDetails.db);
+    (*pTable)(row, col++) << stress.SetValue(devDetails.fy);
+    (*pTable)(row, col++) << stress.SetValue(devDetails.fc);
+    if (is_LocationFactor)
+    {
+        (*pTable)(row, col++) << length.SetValue(devDetails.distFromBottom);
+        (*pTable)(row, col++) << scalar.SetValue(devDetails.lambdaRl);
+        (*pTable)(row, col++) << scalar.SetValue(devDetails.lambdaLw);
+    }
+    else if (is_2015 || is_2016)
+    {
+        (*pTable)(row, col++) << scalar.SetValue(devDetails.lambdaRl);
+        (*pTable)(row, col++) << scalar.SetValue(devDetails.lambdaLw);
+    }
+    (*pTable)(row, col++) << scalar.SetValue(devDetails.factor);
+    (*pTable)(row, col++) << length.SetValue(devDetails.ldb);
+    (*pTable)(row, col++) << length.SetValue(devDetails.ld);
+}
+
 rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    USES_CONVERSION;
@@ -72,15 +100,30 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
 
    (*pParagraph) << rptNewLine;
 
-   GET_IFACE2(pBroker, IXBRRebar, pRebar);
-
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+
+   GET_IFACE2(pBroker,IXBRPier,pPier);
 
    PierIndexType pierID = pXBRRptSpec->GetPierID();
 
-   IndexType nRebarRows = pRebar->GetRebarRowCount(pierID);
+   CComPtr<IPier> pier;
+   pPier->GetPierModel(pierID, &pier);
 
-   if (nRebarRows == 0)
+   CComPtr<ICrossBeam> xbeam;
+   pier->get_CrossBeam(&xbeam);
+
+   CComPtr<IRebarLayout> rebarLayout;
+   xbeam->get_RebarLayout(&rebarLayout);
+
+   CComPtr<IRebarLayoutItem> rebarLayoutItem;
+   rebarLayout->get_Item(/*rowIdx*/0, &rebarLayoutItem);
+
+   IndexType nRebars;
+   rebarLayoutItem->get_Count(&nRebars);
+
+   rebarLayout->get_Count(&nRebars);
+
+   if (nRebars == 0)
    {
        (*pParagraph) << _T("No longitudinal reinforcement defined") << rptNewLine;
    }
@@ -175,80 +218,100 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
 
 	RowIndexType row = pTable->GetNumberOfHeaderRows();
 
-    CComPtr<IRebarSection> rebarSection;
-    const auto& stage = xbrTypes::Stage::Stage1;
-    pRebar->GetRebarSection(pierID, stage, xbrPointOfInterest(0, 0), &rebarSection);
-
-    CComPtr<IEnumRebarSectionItem> enumRebar;
-    rebarSection->get__EnumRebarSectionItem(&enumRebar);
-
-    CComPtr<IRebarSectionItem> rebarSectionItem;
-    while (enumRebar->Next(1, &rebarSectionItem, nullptr) != S_FALSE)
+    if (WBFL::LRFD::BDSManager::Edition::TenthEdition2024 <= WBFL::LRFD::BDSManager::GetEdition())
     {
-        CComPtr<IPoint2d> pntRebar;
-        rebarSectionItem->get_Location(&pntRebar);
-
-        Float64 Ybar = pRebar->GetRebarDepth(pierID, xbrPointOfInterest(0, 0), stage, pntRebar); // depth from top of cross beam to rebar
-
-        if (Ybar < 0)
+        // With 10th edition, we have to report development length for all rows since they can have unique elevations
+        RowIndexType row(1);
+        for (IndexType rebarIdx = 0; rebarIdx < nRebars; rebarIdx++)
         {
-            // rebar is not in the cross section (not applicable in this stage)
-            rebarSectionItem.Release();
-            continue;
-        }
+            CComPtr<IRebarLayoutItem> layoutItem;
+            rebarLayout->get_Item(rebarIdx, &layoutItem);
+            IndexType nPatterns;
+            layoutItem->get_Count(&nPatterns);
+            for (IndexType patternIdx = 0; patternIdx < nPatterns; patternIdx++)
+            {
+                CComPtr<IRebarPattern> rebarPattern;
+                layoutItem->get_Item(patternIdx, &rebarPattern);
+                CComPtr<IRebar> rebar;
+                rebarPattern->get_Rebar(&rebar);
 
-        CComPtr<IRebar> rebar;
-        rebarSectionItem->get_Rebar(&rebar);
+                CComBSTR barname;
+                rebar->get_Name(&barname);
 
-        USES_CONVERSION;
-        CComBSTR name;
+                WBFL::Materials::Rebar::Size size = WBFL::LRFD::RebarPool::GetBarSize(OLE2CT(barname));
 
-        rebar->get_Name(&name);
+                Float64 Ab, db, fy;
+                rebar->get_NominalArea(&Ab);
+                rebar->get_NominalDiameter(&db);
+                rebar->get_YieldStrength(&fy);
 
-        WBFL::Materials::Rebar::Size size = WBFL::LRFD::RebarPool::GetBarSize(OLE2CT(name));
+                const CConcreteMaterial& concrete = pProject->GetConcrete(pierID);
+                Float64 fc = concrete.Fc;
 
-        Float64 Ab, db, fy;
-        rebar->get_NominalArea(&Ab);
-        rebar->get_NominalDiameter(&db);
-        rebar->get_YieldStrength(&fy);
+                WBFL::Materials::ConcreteType type = WBFL::Materials::ConcreteType::Normal;
+                bool hasFct = false;
+                Float64 Fct = 0.0;
 
-        const CConcreteMaterial& concrete = pProject->GetConcrete(pierID);
-        Float64 fc = concrete.Fc;
+                WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, false, false, true);
 
-        WBFL::Materials::ConcreteType type = WBFL::Materials::ConcreteType::Normal;
-        bool hasFct = false;
-        Float64 Fct = 0.0;
+                WriteRowToDevelopmentTable(pTable, row, barname, details, area, length, stress, scalar, is_LocationFactor);
 
-        WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, false, false, true);
-
-        ColumnIndexType col = 0;
-        (*pTable)(row, col++) << name;
-        (*pTable)(row, col++) << area.SetValue(Ab);
-        (*pTable)(row, col++) << length.SetValue(db);
-        (*pTable)(row, col++) << stress.SetValue(fy);
-        (*pTable)(row, col++) << stress.SetValue(fc);
-        if (is_LocationFactor)
-        {
-            (*pTable)(row, col++) << length.SetValue(details.distFromBottom); //face?
-            (*pTable)(row, col++) << scalar.SetValue(details.lambdaRl);
-            (*pTable)(row, col++) << scalar.SetValue(details.lambdaLw);
-        }
-        else if (is_2015 || is_2016)
-        {
-            (*pTable)(row, col++) << scalar.SetValue(details.lambdaRl);
-            (*pTable)(row, col++) << scalar.SetValue(details.lambdaLw);
-        }
-        (*pTable)(row, col++) << scalar.SetValue(details.factor);
-        (*pTable)(row, col++) << length.SetValue(details.ldb);
-        (*pTable)(row, col++) << length.SetValue(details.ld);
-
-        row++;
-    
-
-        rebarSectionItem.Release();
-
+                row++;
+            } // next patternIdx
+        } // next rebarIdx
     }
-            
+    else
+    {
+        // Cycle over all rebar in section and output development details for each unique size
+        RowIndexType row(1);
+        std::set<Float64> diamSet;
+        for (IndexType rebarIdx = 0; rebarIdx < nRebars; rebarIdx++)
+        {
+            CComPtr<IRebarLayoutItem> layoutItem;
+            rebarLayout->get_Item(rebarIdx, &layoutItem);
+            IndexType nPatterns;
+            layoutItem->get_Count(&nPatterns);
+            for (IndexType patternIdx = 0; patternIdx < nPatterns; patternIdx++)
+            {
+                CComPtr<IRebarPattern> rebarPattern;
+                layoutItem->get_Item(patternIdx, &rebarPattern);
+                CComPtr<IRebar> rebar;
+                rebarPattern->get_Rebar(&rebar);
+                Float64 diam;
+                rebar->get_NominalDiameter(&diam);
+                if (diamSet.end() == diamSet.find(diam))
+                {
+                    // We have a unique bar
+                    diamSet.insert(diam);
+
+                    CComBSTR barname;
+                    rebar->get_Name(&barname);
+
+                    WBFL::Materials::Rebar::Size size = WBFL::LRFD::RebarPool::GetBarSize(OLE2CT(barname));
+
+                    Float64 Ab, db, fy;
+                    rebar->get_NominalArea(&Ab);
+                    rebar->get_NominalDiameter(&db);
+                    rebar->get_YieldStrength(&fy);
+
+                    const CConcreteMaterial& concrete = pProject->GetConcrete(pierID);
+                    Float64 fc = concrete.Fc;
+
+                    WBFL::Materials::ConcreteType type = WBFL::Materials::ConcreteType::Normal;
+                    bool hasFct = false;
+                    Float64 Fct = 0.0;
+
+                    WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, false, false, true);
+
+                    WriteRowToDevelopmentTable(pTable, row, barname, details, area, length, stress, scalar, is_LocationFactor);
+
+
+                    row++;
+                } // end if
+            } // next patternIdx
+        } // next rebarIdx
+    } // end if
+
     return pChapter;
 }
 
