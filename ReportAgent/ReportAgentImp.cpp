@@ -38,6 +38,7 @@
 #include "LoadRatingChapterBuilder.h"
 #include "LoadRatingDetailsChapterBuilder.h"
 #include "PierDescriptionDetailsChapterBuilder.h"
+#include "DevLengthDetailsChapterBuilder.h"
 #include "LoadingDetailsChapterBuilder.h"
 #include "MomentCapacityDetailsChapterBuilder.h"
 #include "ShearCapacityDetailsChapterBuilder.h"
@@ -108,6 +109,7 @@ void CReportAgentImp::InitReportBuilders()
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CLoadRatingDetailsChapterBuilder()));
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CPierDescriptionDetailsChapterBuilder()));
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CLoadingDetailsChapterBuilder()));
+   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CDevLengthDetailsChapterBuilder()));
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CMomentCapacityDetailsChapterBuilder()));
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CShearCapacityDetailsChapterBuilder()));
    pRptMgr->AddReportBuilder(pReportBuilder);
