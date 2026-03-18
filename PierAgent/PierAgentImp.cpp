@@ -864,6 +864,17 @@ void CPierAgentImp::GetRebarSection(PierIDType pierID,pgsTypes::Stage stage,cons
    rebarLayout->CreateRebarSection(Xxb,stageIdx,ppRebarSection);
 }
 
+void CPierAgentImp::GetRebarLayout(IRebarLayout** rebarLayout) const
+{
+    CComPtr<IPier> pier;
+    GetPierModel(-1, &pier);
+
+    CComPtr<ICrossBeam> xbeam;
+    pier->get_CrossBeam(&xbeam);
+
+    xbeam->get_RebarLayout(rebarLayout);
+}
+
 IndexType CPierAgentImp::GetRebarRowCount(PierIDType pierID) const
 {
    CComPtr<IPier> pier;

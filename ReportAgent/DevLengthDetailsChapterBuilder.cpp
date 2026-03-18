@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2025  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -104,26 +104,16 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
 
    GET_IFACE2(pBroker,IXBRPier,pPier);
 
-   PierIndexType pierID = pXBRRptSpec->GetPierID();
+   GET_IFACE2(pBroker, IXBRRebar, pRebar);
 
-   CComPtr<IPier> pier;
-   pPier->GetPierModel(pierID, &pier);
-
-   CComPtr<ICrossBeam> xbeam;
-   pier->get_CrossBeam(&xbeam);
+   PierIndexType pierID = -1;
 
    CComPtr<IRebarLayout> rebarLayout;
-   xbeam->get_RebarLayout(&rebarLayout);
+   pRebar->GetRebarLayout(&rebarLayout);
+   IndexType nRebarRows;
+   rebarLayout->get_Count(&nRebarRows);
 
-   CComPtr<IRebarLayoutItem> rebarLayoutItem;
-   rebarLayout->get_Item(/*rowIdx*/0, &rebarLayoutItem);
-
-   IndexType nRebars;
-   rebarLayoutItem->get_Count(&nRebars);
-
-   rebarLayout->get_Count(&nRebars);
-
-   if (nRebars == 0)
+   if (nRebarRows == 0)
    {
        (*pParagraph) << _T("No longitudinal reinforcement defined") << rptNewLine;
    }
@@ -207,7 +197,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
     GET_IFACE2(pBroker, IXBRProject, pProject);
 
     INIT_UV_PROTOTYPE(rptStressUnitValue, stress, pDisplayUnits->GetStressUnit(), false);
-    INIT_UV_PROTOTYPE(rptLengthUnitValue, length, pDisplayUnits->GetSpanLengthUnit(), false);
+    INIT_UV_PROTOTYPE(rptLengthUnitValue, length, pDisplayUnits->GetComponentDimUnit(), false);
     INIT_UV_PROTOTYPE(rptLength2UnitValue, area, pDisplayUnits->GetAreaUnit(), false);
 
     rptRcScalar scalar;
@@ -218,14 +208,20 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
 
 	RowIndexType row = pTable->GetNumberOfHeaderRows();
 
+	Float64 rebarDistToBottom = 0.0;
+
     if (WBFL::LRFD::BDSManager::Edition::TenthEdition2024 <= WBFL::LRFD::BDSManager::GetEdition())
     {
-        // With 10th edition, we have to report development length for all rows since they can have unique elevations
-        RowIndexType row(1);
-        for (IndexType rebarIdx = 0; rebarIdx < nRebars; rebarIdx++)
+        Float64 barRowPatternStartY = 0;
+		std::set<Float64> seenBarStartYs;
+        Float64 barRowPatternEndY = 0;
+        std::set<Float64> seenBarEndYs;
+
+        for (IndexType rebarRowIdx = 0; rebarRowIdx < nRebarRows; rebarRowIdx++)
         {
             CComPtr<IRebarLayoutItem> layoutItem;
-            rebarLayout->get_Item(rebarIdx, &layoutItem);
+            rebarLayout->get_Item(rebarRowIdx, &layoutItem);
+
             IndexType nPatterns;
             layoutItem->get_Count(&nPatterns);
             for (IndexType patternIdx = 0; patternIdx < nPatterns; patternIdx++)
@@ -252,7 +248,90 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                 bool hasFct = false;
                 Float64 Fct = 0.0;
 
-                WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, false, false, true);
+                // Need distance to bottom of pier. Use max from both ends
+                Float64 pier_length = pPier->GetXBeamLength(xbrTypes::xblBottomXBeam, pierID);
+                Float64 startLoc, barLength;
+                layoutItem->get_Start(&startLoc);
+                layoutItem->get_Length(&barLength);
+                Float64 endLoc = startLoc + barLength;
+
+                // Height of pier at start and end of bar
+                GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
+                Float64 fullDepthStart = pSectProp->GetDepth(pierID, xbrTypes::Stage2, xbrPointOfInterest(startLoc));
+                Float64 fullDepthEnd = pSectProp->GetDepth(pierID, xbrTypes::Stage2, xbrPointOfInterest(endLoc));
+                
+
+                // get bar depth
+                CComPtr<IRebarSectionItem> rebarSectionItem;
+
+                CComPtr<IRebarSection> rebarSectionStart;
+                const auto& stage = xbrTypes::Stage::Stage2;
+                pRebar->GetRebarSection(pierID, stage, xbrPointOfInterest(startLoc), &rebarSectionStart);
+
+                CComPtr<IEnumRebarSectionItem> enumRebarStart;
+                rebarSectionStart->get__EnumRebarSectionItem(&enumRebarStart);
+
+                while (enumRebarStart->Next(1, &rebarSectionItem, nullptr) != S_FALSE)
+                {
+                    CComPtr<IPoint2d> pntRebar;
+                    rebarSectionItem->get_Location(&pntRebar);
+
+                    Float64 barStartY = pRebar->GetRebarDepth(pierID, startLoc, xbrTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
+
+                    if (barStartY < 0)
+                    {
+                        // rebar is not in the cross section (not applicable in this stage)
+                        rebarSectionItem.Release();
+                        continue;
+                    }
+
+                    if (!(seenBarStartYs.find(barStartY) != seenBarStartYs.end()))
+                    {
+                        barRowPatternStartY = barStartY;
+						seenBarStartYs.insert(barStartY);
+                        rebarSectionItem.Release();
+                        break;
+                    }
+
+                    rebarSectionItem.Release();
+                }
+
+                CComPtr<IRebarSection> rebarSectionEnd;
+                pRebar->GetRebarSection(pierID, xbrTypes::Stage2, xbrPointOfInterest(endLoc), &rebarSectionEnd);
+
+                CComPtr<IEnumRebarSectionItem> enumRebarEnd;
+                rebarSectionEnd->get__EnumRebarSectionItem(&enumRebarEnd);
+
+                while (enumRebarEnd->Next(1, &rebarSectionItem, nullptr) != S_FALSE)
+                {
+                    CComPtr<IPoint2d> pntRebar;
+                    rebarSectionItem->get_Location(&pntRebar);
+
+                    Float64 barEndY = pRebar->GetRebarDepth(pierID, xbrPointOfInterest(endLoc), xbrTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
+
+                    if (barEndY < 0)
+                    {
+                        // rebar is not in the cross section (not applicable in this stage)
+                        rebarSectionItem.Release();
+                        continue;
+                    }
+
+                    if (!(seenBarEndYs.find(barEndY) != seenBarEndYs.end()))
+                    {
+                        barRowPatternEndY = barEndY;
+                        seenBarEndYs.insert(barEndY);
+                        rebarSectionItem.Release();
+                        break;
+                    }
+
+                    rebarSectionItem.Release();
+                    
+                }
+
+                rebarDistToBottom = Max(fullDepthStart - barRowPatternStartY, fullDepthEnd - barRowPatternEndY);
+
+                WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(
+                size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, rebarDistToBottom, false, true);
 
                 WriteRowToDevelopmentTable(pTable, row, barname, details, area, length, stress, scalar, is_LocationFactor);
 
@@ -265,7 +344,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
         // Cycle over all rebar in section and output development details for each unique size
         RowIndexType row(1);
         std::set<Float64> diamSet;
-        for (IndexType rebarIdx = 0; rebarIdx < nRebars; rebarIdx++)
+        for (IndexType rebarIdx = 0; rebarIdx < nRebarRows; rebarIdx++)
         {
             CComPtr<IRebarLayoutItem> layoutItem;
             rebarLayout->get_Item(rebarIdx, &layoutItem);
@@ -301,10 +380,30 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                     bool hasFct = false;
                     Float64 Fct = 0.0;
 
-                    WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, false, false, true);
+                    // Need distance to bottom of pier. Use max from both ends
+                    Float64 pier_length = pPier->GetXBeamLength(xbrTypes::xblBottomXBeam, pierID);
+                    Float64 startLoc, barLength;
+                    layoutItem->get_Start(&startLoc);
+                    layoutItem->get_Length(&barLength);
+                    Float64 endLoc = startLoc + barLength;
+             
+                    GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
+					Float64 depthStart = pSectProp->GetDepth(pierID, xbrTypes::Stage2, xbrPointOfInterest(startLoc));
+					Float64 depthEnd = pSectProp->GetDepth(pierID, xbrTypes::Stage2, xbrPointOfInterest(endLoc));
+
+                    // elevation of bar at ends
+                    CComPtr<IPoint2d> barStart, barEnd;
+                    rebarPattern->get_Location(0.0, 0, &barStart);
+                    rebarPattern->get_Location(barLength, 0, &barEnd);
+                    Float64 barStartY, barEndY;
+                    barStart->get_Y(&barStartY);
+                    barEnd->get_Y(&barEndY);
+
+                    rebarDistToBottom = Max(depthStart + barStartY, depthEnd + barEndY);
+
+                    WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, rebarDistToBottom, false, true);
 
                     WriteRowToDevelopmentTable(pTable, row, barname, details, area, length, stress, scalar, is_LocationFactor);
-
 
                     row++;
                 } // end if

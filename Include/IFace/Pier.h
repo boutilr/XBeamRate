@@ -25,10 +25,10 @@
 #include <XBeamRateExt\PointOfInterest.h>
 
 interface IShape;
-interface IPier;
 interface IPoint2d;
 interface IPoint2dCollection;
 interface IRebarSection;
+interface IRebarLayout;
 interface IRebarSectionItem;
 
 // {7F04A0B9-FD4E-4965-8F26-8BE78B063803}
@@ -38,9 +38,7 @@ class IXBRPier
 {
 public:
 
-   virtual void GetPierModel(PierIDType pierID, IPier** ppPierModel) const = 0;
    virtual Float64 GetSkewAngle(PierIDType pierID) const = 0;
-
    virtual IndexType GetBearingLineCount(PierIDType pierID) const = 0;
    virtual IndexType GetBearingCount(PierIDType pierID,IndexType brgLineIdx) const = 0;
    virtual Float64 GetBearingLocation(PierIDType pierID,IndexType brgLineIdx,IndexType brgIdx) const = 0;
@@ -136,6 +134,8 @@ class IXBRRebar
 public:
    // The rebar points obtained through this method are in global cross section coordinates.
    virtual void GetRebarSection(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const = 0;
+
+   virtual void GetRebarLayout(IRebarLayout** rebarLayout) const = 0;
 
    virtual IndexType GetRebarRowCount(PierIDType pierID) const = 0;
    virtual IndexType GetRebarCount(PierIDType pierID,IndexType rowIdx) const = 0;
