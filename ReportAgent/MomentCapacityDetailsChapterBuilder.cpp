@@ -72,6 +72,8 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
       nColumns--; // no alpha column
    }
 
+   *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("XBR_de.png")) << rptNewLine;
+
    for ( int i = 0; i < 2; i++ )
    {
       bool bPositiveMoment = (i == 0 ? true : false);
