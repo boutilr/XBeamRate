@@ -96,7 +96,7 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
       (*pTable)(0,col++) << COLHDR(_T("a"), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
       (*pTable)(0,col++) << COLHDR(_T("b"), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
       (*pTable)(0,col++) << _T("Reinforcement");
-      (*pTable)(0,col++) << Sub2(_T("d"), _T("e"));
+      (*pTable)(0,col++) << COLHDR(Sub2(_T("d"), _T("e")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
       (*pTable)(0,col++) << symbol(phi);
       (*pTable)(0,col++) << COLHDR(Sub2(_T("M"),_T("n")), rptMomentUnitTag, pDisplayUnits->GetMomentUnit());
       (*pTable)(0,col++) << COLHDR(Sub2(_T("M"),_T("r")), rptMomentUnitTag, pDisplayUnits->GetMomentUnit());
@@ -142,7 +142,7 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
          rptRcTable* pReinfTable = rptStyleManager::CreateDefaultTable(4);
          (*pTable)(row,col++) << pReinfTable;
 
-         (*pTable)(row,col++) << mcd.de;
+         (*pTable)(row,col++) << dim.SetValue(mcd.de);
          (*pTable)(row,col++) << mcd.phi;
          (*pTable)(row,col++) << moment.SetValue(mcd.Mn);
          (*pTable)(row,col++) << moment.SetValue(mcd.Mr);
