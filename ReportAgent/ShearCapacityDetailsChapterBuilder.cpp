@@ -29,6 +29,7 @@
 #include <IFace\PointOfInterest.h>
 #include <IFace\Pier.h>
 #include <IFace\Project.h>
+#include <IFace\MomentCapacity.h>
 
 #include "XBeamRateReportSpecification.h"
 
@@ -65,6 +66,7 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
    INIT_UV_PROTOTYPE( rptStressUnitValue, stress, pDisplayUnits->GetStressUnit(), false );
    INIT_UV_PROTOTYPE( rptLengthUnitValue, avs, pDisplayUnits->GetAvOverSUnit(), false );
    INIT_UV_PROTOTYPE( rptAngleUnitValue, angle, pDisplayUnits->GetAngleUnit(), false );
+   INIT_UV_PROTOTYPE( rptMomentUnitValue, moment, pDisplayUnits->GetMomentUnit(), false );
 
    rptParagraph* pPara = new rptParagraph;
    *pChapter << pPara;
@@ -87,7 +89,7 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("EffectiveShearDepth.png")) << rptNewLine;
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("XBeam_dv.png")) << rptNewLine;
 
-   rptRcTable* pDvTable1 = rptStyleManager::CreateDefaultTable(12);
+   rptRcTable* pDvTable1 = rptStyleManager::CreateDefaultTable(15);
    *pPara << pDvTable1 << rptNewLine;
 
    if ( pierType == xbrTypes::pctIntegral )
@@ -225,10 +227,17 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
    (*pDvTable1)(1,DvTableCol++) << COLHDR(_T("Moment Arm"), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
    (*pDvTable1)(1, DvTableCol++) << COLHDR(Sub2(_T("d"), _T("v")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
 
+   pDvTable1->SetColumnSpan(0,DvTableCol,2);
+   (*pDvTable1)(0,DvTableCol) << _T("Strength I Moment Demand");
+   (*pDvTable1)(1,DvTableCol++) << COLHDR(_T("Minimum") << rptNewLine << Sub2(_T("M"),_T("u")), rptMomentUnitTag, pDisplayUnits->GetMomentUnit());
+   (*pDvTable1)(1,DvTableCol++) << COLHDR(_T("Maximum") << rptNewLine << Sub2(_T("M"),_T("u")), rptMomentUnitTag, pDisplayUnits->GetMomentUnit());
+
+   pDvTable1->SetRowSpan(0, DvTableCol, 2);
+   (*pDvTable1)(0, DvTableCol++) << _T("Tension") << rptNewLine << _T("Side");
+
    pDvTable1->SetRowSpan(0,DvTableCol,2);
    (*pDvTable1)(0,DvTableCol++) << COLHDR(_T("Controlling") << rptNewLine << Sub2(_T("d"),_T("v")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
 
-   //
    if ( pierType == xbrTypes::pctIntegral )
    {
       DvTableCol = 0;
@@ -341,6 +350,10 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
       VnTableCol = 0;
 
       const DvDetails& dvDetails1 = pShearCapacity->GetDvDetails(pierID,(pierType == xbrTypes::pctIntegral ? xbrTypes::Stage1 : xbrTypes::Stage2),poi);
+      GET_IFACE2(pBroker, IXBRMomentCapacity, pMomentCapacity);
+      const MinMomentCapacityDetails& min_mcd = pMomentCapacity->GetMinMomentCapacityDetails(pierID, pgsTypes::StrengthI_Inventory, (pierType == xbrTypes::pctIntegral ? xbrTypes::Stage1 : xbrTypes::Stage2), poi, false);
+      const MinMomentCapacityDetails& max_mcd = pMomentCapacity->GetMinMomentCapacityDetails(pierID, pgsTypes::StrengthI_Inventory, (pierType == xbrTypes::pctIntegral ? xbrTypes::Stage1 : xbrTypes::Stage2), poi, true);
+      
 
       (*pDvTable1)(DvTableRow,DvTableCol++) << location.SetValue(poi);
       (*pDvTable1)(DvTableRow,DvTableCol++) << dim.SetValue(dvDetails1.h);
@@ -353,7 +366,20 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
       (*pDvTable1)(DvTableRow,DvTableCol++) << dim.SetValue(0.90*dvDetails1.de[1]);
       (*pDvTable1)(DvTableRow, DvTableCol++) << dim.SetValue(dvDetails1.MomentArm[1]);
       (*pDvTable1)(DvTableRow, DvTableCol++) << dim.SetValue(dvDetails1.MomentDv[1]);
-      (*pDvTable1)(DvTableRow,DvTableCol++) << dim.SetValue(dvDetails1.dv);
+
+      (*pDvTable1)(DvTableRow, DvTableCol++) << moment.SetValue(min_mcd.Mu);
+      (*pDvTable1)(DvTableRow, DvTableCol++) << moment.SetValue(max_mcd.Mu);
+
+      (*pDvTable1)(DvTableRow, DvTableCol++) << (max(abs(min_mcd.Mu), abs(max_mcd.Mu)) == abs(max_mcd.Mu)? _T("Bottom") : _T("Top"));
+
+      if ((max(abs(min_mcd.Mu), abs(max_mcd.Mu)) == abs(max_mcd.Mu)))
+      {
+          (*pDvTable1)(DvTableRow, DvTableCol++) << dim.SetValue(dvDetails1.MomentDv[0]);
+      }
+      else
+      {
+          (*pDvTable1)(DvTableRow, DvTableCol++) << dim.SetValue(dvDetails1.MomentDv[1]);
+      }
 
       if ( pierType == xbrTypes::pctIntegral )
       {
