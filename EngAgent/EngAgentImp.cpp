@@ -129,13 +129,13 @@ bool CEngAgentImp::ShutDown()
 
 //////////////////////////////////////////////////////////////////////
 // IXBRMomentCapacity
-Float64 CEngAgentImp::GetMomentCapacity(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+Float64 CEngAgentImp::GetMomentCapacity(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    const MomentCapacityDetails& capacityDetails = GetMomentCapacityDetails(pierID,stage,poi,bPositiveMoment);
    return capacityDetails.Mr;
 }
 
-const MomentCapacityDetails& CEngAgentImp::GetMomentCapacityDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+const MomentCapacityDetails& CEngAgentImp::GetMomentCapacityDetails(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    std::map<IDType,MomentCapacityDetails>* pCapacity = (bPositiveMoment ? m_pPositiveMomentCapacity[stage].get() : m_pNegativeMomentCapacity[stage].get());
    std::map<IDType,MomentCapacityDetails>::iterator found(pCapacity->find(poi.GetID()));
@@ -155,7 +155,7 @@ const MomentCapacityDetails& CEngAgentImp::GetMomentCapacityDetails(PierIDType p
    return details;
 }
 
-Float64 CEngAgentImp::GetCrackingMoment(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+Float64 CEngAgentImp::GetCrackingMoment(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    const CrackingMomentDetails& McrDetails = GetCrackingMomentDetails(pierID,stage,poi,bPositiveMoment);
    Float64 Mcr = McrDetails.Mcr;
@@ -174,7 +174,7 @@ Float64 CEngAgentImp::GetCrackingMoment(PierIDType pierID,xbrTypes::Stage stage,
    return Mcr;
 }
 
-const CrackingMomentDetails& CEngAgentImp::GetCrackingMomentDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+const CrackingMomentDetails& CEngAgentImp::GetCrackingMomentDetails(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    std::map<IDType,CrackingMomentDetails>* pCapacity = (bPositiveMoment ? m_pPositiveCrackingMoment[stage].get() : m_pNegativeCrackingMoment[stage].get());
    std::map<IDType,CrackingMomentDetails>::iterator found(pCapacity->find(poi.GetID()));
@@ -194,13 +194,13 @@ const CrackingMomentDetails& CEngAgentImp::GetCrackingMomentDetails(PierIDType p
    return details;
 }
 
-Float64 CEngAgentImp::GetMinMomentCapacity(PierIDType pierID,pgsTypes::LimitState limitState,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+Float64 CEngAgentImp::GetMinMomentCapacity(PierIDType pierID,pgsTypes::LimitState limitState,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    const MinMomentCapacityDetails& MminDetails = GetMinMomentCapacityDetails(pierID,limitState,stage,poi,bPositiveMoment);
    return MminDetails.MrMin;
 }
 
-const MinMomentCapacityDetails& CEngAgentImp::GetMinMomentCapacityDetails(PierIDType pierID,pgsTypes::LimitState limitState,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+const MinMomentCapacityDetails& CEngAgentImp::GetMinMomentCapacityDetails(PierIDType pierID,pgsTypes::LimitState limitState,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    ATLASSERT(::IsRatingLimitState(limitState));// must be a load rating limit state
    std::map<IDType,MinMomentCapacityDetails>* pCapacity = (bPositiveMoment ? m_pPositiveMinMomentCapacity[stage][GET_INDEX(limitState)].get() : m_pNegativeMinMomentCapacity[stage][GET_INDEX(limitState)].get());
@@ -221,20 +221,20 @@ const MinMomentCapacityDetails& CEngAgentImp::GetMinMomentCapacityDetails(PierID
    return details;
 }
 
-MinMomentCapacityDetails CEngAgentImp::GetMinMomentCapacityDetails(PierIDType pierID,pgsTypes::LimitState limitState,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx) const
+MinMomentCapacityDetails CEngAgentImp::GetMinMomentCapacityDetails(PierIDType pierID,pgsTypes::LimitState limitState,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx) const
 {
    return ComputeMinMomentCapacity(pierID,limitState,stage,poi,bPositiveMoment,vehicleIdx,llConfigIdx,permitLaneIdx);
 }
 
 //////////////////////////////////////////////////////////////////////
 // IXBRCrackedSection
-Float64 CEngAgentImp::GetIcrack(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const
+Float64 CEngAgentImp::GetIcrack(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const
 {
    const CrackedSectionDetails& details = GetCrackedSectionDetails(pierID,stage,poi,bPositiveMoment,loadType);
    return details.Icr;
 }
 
-const CrackedSectionDetails& CEngAgentImp::GetCrackedSectionDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const
+const CrackedSectionDetails& CEngAgentImp::GetCrackedSectionDetails(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const
 {
    std::map<IDType,CrackedSectionDetails>* pDetails = (bPositiveMoment ? m_pPositiveMomentCrackedSection[stage][loadType].get() : m_pNegativeMomentCrackedSection[stage][loadType].get());
    std::map<IDType,CrackedSectionDetails>::iterator found(pDetails->find(poi.GetID()));
@@ -255,13 +255,13 @@ const CrackedSectionDetails& CEngAgentImp::GetCrackedSectionDetails(PierIDType p
 
 //////////////////////////////////////////////////////////////////////
 // IXBRShearCapacity
-Float64 CEngAgentImp::GetShearCapacity(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CEngAgentImp::GetShearCapacity(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    const ShearCapacityDetails& details = GetShearCapacityDetails(pierID,stage,poi);
    return details.Vr;
 }
 
-const ShearCapacityDetails& CEngAgentImp::GetShearCapacityDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+const ShearCapacityDetails& CEngAgentImp::GetShearCapacityDetails(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    std::map<IDType,ShearCapacityDetails>* pDetails = m_pShearCapacity[stage].get();
    std::map<IDType,ShearCapacityDetails>::iterator found(pDetails->find(poi.GetID()));
@@ -280,7 +280,7 @@ const ShearCapacityDetails& CEngAgentImp::GetShearCapacityDetails(PierIDType pie
    return iter->second;
 }
 
-const AvOverSDetails& CEngAgentImp::GetAverageAvOverSDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+const AvOverSDetails& CEngAgentImp::GetAverageAvOverSDetails(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    std::map<IDType,AvOverSDetails>* pDetails = m_pShearFailurePlane[stage].get();
    std::map<IDType,AvOverSDetails>::iterator found(pDetails->find(poi.GetID()));
@@ -300,13 +300,13 @@ const AvOverSDetails& CEngAgentImp::GetAverageAvOverSDetails(PierIDType pierID,x
    return iter->second;
 }
 
-Float64 CEngAgentImp::GetDv(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CEngAgentImp::GetDv(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    const DvDetails& details = GetDvDetails(pierID,stage,poi);
    return details.dv;
 }
 
-const DvDetails& CEngAgentImp::GetDvDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+const DvDetails& CEngAgentImp::GetDvDetails(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    std::map<IDType,DvDetails>* pDetails = m_pDvDetails[stage].get();
    std::map<IDType,DvDetails>::iterator found(pDetails->find(poi.GetID()));
@@ -394,7 +394,7 @@ HRESULT CEngAgentImp::OnConstructionLoadChanged()
 }
 
 //////////////////////////////////////////////////
-MomentCapacityDetails CEngAgentImp::ComputeMomentCapacity(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+MomentCapacityDetails CEngAgentImp::ComputeMomentCapacity(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    CComPtr<IRCBeam2> rcBeam;
    Float64 dt;
@@ -525,7 +525,7 @@ void CEngAgentImp::GetCrackingMomentFactors(PierIDType pierID,Float64* pG1,Float
    }
 }
 
-CrackingMomentDetails CEngAgentImp::ComputeCrackingMoment(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+CrackingMomentDetails CEngAgentImp::ComputeCrackingMoment(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    CrackingMomentDetails McrDetails;
 
@@ -545,7 +545,7 @@ CrackingMomentDetails CEngAgentImp::ComputeCrackingMoment(PierIDType pierID,xbrT
 
    GET_IFACE(IXBRSectionProperties,pSectProps);
    Float64 Sc  = (bPositiveMoment ? pSectProps->GetSbot(pierID,stage,poi)            : pSectProps->GetStop(pierID,stage,poi));
-   Float64 Snc = (bPositiveMoment ? pSectProps->GetSbot(pierID,xbrTypes::Stage1,poi) : pSectProps->GetStop(pierID,xbrTypes::Stage1,poi));
+   Float64 Snc = (bPositiveMoment ? pSectProps->GetSbot(pierID,pgsTypes::Stage1,poi) : pSectProps->GetStop(pierID,pgsTypes::Stage1,poi));
 
    Float64 Mcr = g3*((g1*fr + g2*fcpe)*Sc - Mdnc*(Sc/Snc-1));
 
@@ -569,7 +569,7 @@ CrackingMomentDetails CEngAgentImp::ComputeCrackingMoment(PierIDType pierID,xbrT
    return McrDetails;
 }
 
-MinMomentCapacityDetails CEngAgentImp::ComputeMinMomentCapacity(PierIDType pierID,pgsTypes::LimitState limitState,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
+MinMomentCapacityDetails CEngAgentImp::ComputeMinMomentCapacity(PierIDType pierID,pgsTypes::LimitState limitState,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const
 {
    Float64 Mr;     // Nominal resistance (phi*Mn)
    Float64 Mcr;    // Cracking moment
@@ -624,7 +624,7 @@ MinMomentCapacityDetails CEngAgentImp::ComputeMinMomentCapacity(PierIDType pierI
    return MminDetails;
 }
 
-MinMomentCapacityDetails CEngAgentImp::ComputeMinMomentCapacity(PierIDType pierID,pgsTypes::LimitState limitState,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx) const
+MinMomentCapacityDetails CEngAgentImp::ComputeMinMomentCapacity(PierIDType pierID,pgsTypes::LimitState limitState,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx) const
 {
    Float64 Mr;     // Nominal resistance (phi*Mn)
    Float64 Mcrack; // Cracking moment
@@ -698,7 +698,7 @@ MinMomentCapacityDetails CEngAgentImp::ComputeMinMomentCapacity(PierIDType pierI
    return MminDetails;
 }
 
-CrackedSectionDetails CEngAgentImp::ComputeCrackedSectionProperties(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const
+CrackedSectionDetails CEngAgentImp::ComputeCrackedSectionProperties(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const
 {
    GET_IFACE(IXBRMaterial,pMaterial);
 
@@ -785,7 +785,7 @@ CrackedSectionDetails CEngAgentImp::ComputeCrackedSectionProperties(PierIDType p
    return csd;
 }
 
-ShearCapacityDetails CEngAgentImp::ComputeShearCapacity(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+ShearCapacityDetails CEngAgentImp::ComputeShearCapacity(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    // LRFD 5.8.3.4.1
    Float64 beta = 2.0;
@@ -826,13 +826,13 @@ ShearCapacityDetails CEngAgentImp::ComputeShearCapacity(PierIDType pierID,xbrTyp
       fy = min(fy, WBFL::Units::ConvertToSysUnits(100.0, WBFL::Units::Measure::KSI));
    }
 
-   Float64 dv1 = GetDv(pierID,xbrTypes::Stage1,poi);
+   Float64 dv1 = GetDv(pierID,pgsTypes::Stage1,poi);
    Float64 dv2 = GetDv(pierID,stage,poi);
    
-   const AvOverSDetails& avs1 = GetAverageAvOverSDetails(pierID,xbrTypes::Stage1,poi);
+   const AvOverSDetails& avs1 = GetAverageAvOverSDetails(pierID,pgsTypes::Stage1,poi);
    const AvOverSDetails& avs2 = GetAverageAvOverSDetails(pierID,stage,poi);
    Float64 Av_over_S1 = avs1.AvgAvOverS;
-   Float64 Av_over_S2 = (stage == xbrTypes::Stage1 ? 0 : avs2.AvgAvOverS);
+   Float64 Av_over_S2 = (stage == pgsTypes::Stage1 ? 0 : avs2.AvgAvOverS);
 
    // if non-integral pier, dv2 is zero so dv1 will be the max, 
    // otherwise dv2 will be the max
@@ -876,7 +876,7 @@ ShearCapacityDetails CEngAgentImp::ComputeShearCapacity(PierIDType pierID,xbrTyp
    return details;
 }
 
-void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,IRCBeam2** ppModel,Float64* pdt) const
+void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,IRCBeam2** ppModel,Float64* pdt) const
 {
    CComPtr<IRCBeam2> rcBeam;
    HRESULT hr = rcBeam.CoCreateInstance(CLSID_RCBeam2);
@@ -942,7 +942,7 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,xbrTypes::Stage st
       // to capacity. but the rebar are measured from the top down of the entire
       // section. deduct the height of the upper cross beam to get the depth of
       // the rebar relative to the top of the lower cross beam
-      if ( connectionType != xbrTypes::pctIntegral && stage == xbrTypes::Stage2 )
+      if ( connectionType != xbrTypes::pctIntegral && stage == pgsTypes::Stage2 )
       {
          Ybar -= d;
       }
@@ -1003,10 +1003,10 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,xbrTypes::Stage st
    *pdt = dt;
 }
 
-DvDetails CEngAgentImp::ComputeDv(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+DvDetails CEngAgentImp::ComputeDv(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    GET_IFACE(IXBRProject,pProject);
-   if ( pProject->GetPierType(pierID) != xbrTypes::pctIntegral && stage == xbrTypes::Stage2 )
+   if ( pProject->GetPierType(pierID) != xbrTypes::pctIntegral && stage == pgsTypes::Stage2 )
    {
       // there isn't stage 2 for non-integral cross beams
       DvDetails details;
@@ -1040,12 +1040,12 @@ DvDetails CEngAgentImp::ComputeDv(PierIDType pierID,xbrTypes::Stage stage,const 
    return details;
 }
 
-AvOverSDetails CEngAgentImp::ComputeAverageAvOverS(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,Float64 theta) const
+AvOverSDetails CEngAgentImp::ComputeAverageAvOverS(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,Float64 theta) const
 {
    AvOverSDetails details;
 
    GET_IFACE(IXBRProject,pProject);
-   if ( pProject->GetPierType(pierID) != xbrTypes::pctIntegral && stage == xbrTypes::Stage2 )
+   if ( pProject->GetPierType(pierID) != xbrTypes::pctIntegral && stage == pgsTypes::Stage2 )
    {
       // there isn't stage 2 for non-integral cross beams
       details.ShearFailurePlaneLength = 0;

@@ -63,8 +63,8 @@ public:
    virtual void GetLowerXBeamProfile(PierIDType pierID,IShape** ppShape) const = 0;
 
    // Returns points that define the top/bottom surface of the cross beam
-   virtual void GetTopSurface(PierIDType pierID,xbrTypes::Stage stage,IPoint2dCollection** ppPoints) const = 0;
-   virtual void GetBottomSurface(PierIDType pierID,xbrTypes::Stage stage,IPoint2dCollection** ppPoints) const = 0;
+   virtual void GetTopSurface(PierIDType pierID,pgsTypes::Stage stage,IPoint2dCollection** ppPoints) const = 0;
+   virtual void GetBottomSurface(PierIDType pierID,pgsTypes::Stage stage,IPoint2dCollection** ppPoints) const = 0;
 
    // Returns the offset of the crown point from the alignment
    virtual Float64 GetCrownPointOffset(PierIDType pierID) const = 0;
@@ -92,21 +92,21 @@ DEFINE_GUID(IID_IXBRSectionProperties,
 class IXBRSectionProperties
 {
 public:
-   virtual Float64 GetDepth(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
-   virtual Float64 GetArea(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
-   virtual Float64 GetIxx(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
-   virtual Float64 GetIyy(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
-   virtual Float64 GetYtop(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
-   virtual Float64 GetYbot(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
-   virtual Float64 GetStop(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
-   virtual Float64 GetSbot(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual Float64 GetDepth(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual Float64 GetArea(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual Float64 GetIxx(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual Float64 GetIyy(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual Float64 GetYtop(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual Float64 GetYbot(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual Float64 GetStop(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual Float64 GetSbot(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
 
    // Returns the total shape of the cross beam cross section at a POI.
    virtual void GetXBeamShape(PierIDType pierID,const xbrPointOfInterest& poi,IShape** ppShape) const = 0;
 
    // Returns the shape of the cross beam cross section at a POI, taking into account the pier type
    // and the stage.
-   virtual void GetXBeamShape(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,IShape** ppShape) const = 0;
+   virtual void GetXBeamShape(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IShape** ppShape) const = 0;
 };
 
 // {BE372349-0F8D-48e4-90F2-536AC90BEBBE}
@@ -132,7 +132,7 @@ class IXBRRebar
 {
 public:
    // The rebar points obtained through this method are in global cross section coordinates.
-   virtual void GetRebarSection(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const = 0;
+   virtual void GetRebarSection(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const = 0;
 
    virtual IndexType GetRebarRowCount(PierIDType pierID) const = 0;
    virtual IndexType GetRebarCount(PierIDType pierID,IndexType rowIdx) const = 0;
@@ -146,7 +146,7 @@ public:
 
    // Returns the depth of the rebar, measured down from top of the cross beam
    // for stage 1, measures from the top of the lower cross beam
-   virtual Float64 GetRebarDepth(PierIDType pierID,const xbrPointOfInterest& poi,xbrTypes::Stage stage,IPoint2d* pRebarLocation) const = 0;
+   virtual Float64 GetRebarDepth(PierIDType pierID,const xbrPointOfInterest& poi,pgsTypes::Stage stage,IPoint2d* pRebarLocation) const = 0;
 };
 
 // {025A63FF-9FE0-4733-8AB9-B1B6B96E0F7B}
@@ -158,12 +158,12 @@ public:
    // Stage 1 = Lower cross beam
    // Stage 2 = Full depth cross beam
 
-   virtual ZoneIndexType FindStirrupZone(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
-   virtual ZoneIndexType GetStirrupZoneCount(PierIDType pierID,xbrTypes::Stage stage) const = 0;
-   virtual void GetStirrupZoneBoundary(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx,Float64* pXstart,Float64* pXend) const = 0;
-   virtual Float64 GetStirrupZoneLength(PierIDType pierID, xbrTypes::Stage stage, ZoneIndexType zoneIdx) const = 0;
-   virtual Float64 GetStirrupZoneSpacing(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const = 0;
-   virtual Float64 GetStirrupZoneReinforcement(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const = 0;
-   virtual Float64 GetStirrupLegCount(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const = 0;
-   virtual IndexType GetStirrupCount(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const = 0;
+   virtual ZoneIndexType FindStirrupZone(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
+   virtual ZoneIndexType GetStirrupZoneCount(PierIDType pierID,pgsTypes::Stage stage) const = 0;
+   virtual void GetStirrupZoneBoundary(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx,Float64* pXstart,Float64* pXend) const = 0;
+   virtual Float64 GetStirrupZoneLength(PierIDType pierID, pgsTypes::Stage stage, ZoneIndexType zoneIdx) const = 0;
+   virtual Float64 GetStirrupZoneSpacing(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const = 0;
+   virtual Float64 GetStirrupZoneReinforcement(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const = 0;
+   virtual Float64 GetStirrupLegCount(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const = 0;
+   virtual IndexType GetStirrupCount(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const = 0;
 };

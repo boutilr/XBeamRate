@@ -39,12 +39,6 @@ typedef struct xbrTypes
       tdmPlaneOfPier        // transverse dimensions are in the plane of the pier
    } TransverseDimensionMeasurementType;
 
-   typedef enum Stage
-   {
-      Stage1, // lower cross beam only
-      Stage2  // upper and lower cross beam together
-   } Stage;
-
    typedef enum LongitudinalRebarDatumType
    {
       Top,           // rebar cover is measured from top of upper cross beam

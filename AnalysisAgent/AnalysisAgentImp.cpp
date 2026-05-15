@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright � 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -252,8 +252,8 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
 
       // Get properties
       Float64 Exb = pMaterial->GetXBeamEc(pierID);
-      Float64 Axb = pSectProp->GetArea(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,L/2));
-      Float64 Ixb = pSectProp->GetIxx(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,L/2));
+      Float64 Axb = pSectProp->GetArea(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,L/2));
+      Float64 Ixb = pSectProp->GetIxx(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,L/2));
       Float64 EAb = Exb*Axb;
       Float64 EIb = Exb*Ixb;
 
@@ -307,8 +307,8 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
 
             // create column member
             Float64 Ecol = pMaterial->GetColumnEc(pierID,colIdx);
-            Float64 Acol = pSectProp->GetArea(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,colIdx,0.0));
-            Float64 Icol = pSectProp->GetIyy(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,colIdx,0.0));
+            Float64 Acol = pSectProp->GetArea(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,colIdx,0.0));
+            Float64 Icol = pSectProp->GetIyy(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,colIdx,0.0));
             WBFL::FEA2D::Member& mbr = femModel.CreateMember(columnMbrID--,thisJointID,jntID-1,Ecol*Acol,Ecol*Icol);
 
 
@@ -805,14 +805,14 @@ void CAnalysisAgentImp::ValidateLowerXBeamDeadLoad(PierIDType pierID,ModelData* 
 
    std::vector<xbrPointOfInterest>::iterator iter(vPoi.begin());
    std::vector<xbrPointOfInterest>::iterator end(vPoi.end());
-   Float64 Astart = pSectProp->GetArea(pierID,xbrTypes::Stage1,*iter);
+   Float64 Astart = pSectProp->GetArea(pierID,pgsTypes::Stage1,*iter);
    Float64 Wstart = unitWeight*Astart;
    Float64 Xstart = (*iter).GetDistFromStart();
 
    iter++;
    for ( ; iter != end; iter++ )
    {
-      Float64 Aend = pSectProp->GetArea(pierID,xbrTypes::Stage1,*iter);
+      Float64 Aend = pSectProp->GetArea(pierID,pgsTypes::Stage1,*iter);
       Float64 Wend = unitWeight*Aend;
       Float64 Xend = (*iter).GetDistFromStart();
 

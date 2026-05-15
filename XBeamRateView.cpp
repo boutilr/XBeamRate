@@ -722,7 +722,7 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
    // cross beam.
    WBFL::Math::PiecewiseFunction fn;
    CComPtr<IPoint2dCollection> points;
-   pPier->GetBottomSurface(pierID,xbrTypes::Stage1,&points);
+   pPier->GetBottomSurface(pierID,pgsTypes::Stage1,&points);
    CComPtr<IEnumPoint2d> enumPoints;
    points->get__Enum(&enumPoints);
    CComPtr<IPoint2d> pnt;
@@ -830,7 +830,7 @@ void CXBeamRateView::UpdateRebarDisplayObjects()
    Float64 XxbCut = pPier->ConvertPierToCrossBeamCoordinate(pierID,m_pFrame->GetCurrentCutLocation());
 
    CComPtr<IRebarSection> rebarSection;
-   pRebar->GetRebarSection(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,XxbCut),&rebarSection);
+   pRebar->GetRebarSection(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,XxbCut),&rebarSection);
 
    CComPtr<IEnumRebarSectionItem> enumSectionItems;
    rebarSection->get__EnumRebarSectionItem(&enumSectionItems);
@@ -876,8 +876,8 @@ void CXBeamRateView::UpdateStirrupDisplayObjects()
    // drawn second and not covered up by the full depth stirrups
    for ( int i = 1; 0 <= i; i-- ) 
    {
-      xbrTypes::Stage stage = (xbrTypes::Stage)i;
-      COLORREF color = (stage == xbrTypes::Stage1 ? STAGE1_STIRRUP_COLOR : STAGE2_STIRRUP_COLOR);
+      pgsTypes::Stage stage = (pgsTypes::Stage)i;
+      COLORREF color = (stage == pgsTypes::Stage1 ? STAGE1_STIRRUP_COLOR : STAGE2_STIRRUP_COLOR);
       IndexType nStirrupZones = pStirrups->GetStirrupZoneCount(pierID,stage);
       for ( IndexType zoneIdx = 0; zoneIdx < nStirrupZones; zoneIdx++ )
       {
@@ -908,7 +908,7 @@ void CXBeamRateView::UpdateStirrupDisplayObjects()
 
             Ytop -= tDeck;
 
-            Float64 D = pSectProps->GetDepth(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,Xxb));
+            Float64 D = pSectProps->GetDepth(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,Xxb));
             Float64 Ybot = Ytop - D;
 
             if ( pierType != xbrTypes::pctIntegral )
@@ -917,7 +917,7 @@ void CXBeamRateView::UpdateStirrupDisplayObjects()
                Ybot -= H;
             }
 
-            if ( stage == xbrTypes::Stage1 || pierType != xbrTypes::pctIntegral )
+            if ( stage == pgsTypes::Stage1 || pierType != xbrTypes::pctIntegral )
             {
                Ytop -= H;
             }
@@ -1213,9 +1213,9 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    pProject->GetDiaphragmDimensions(pierID,&Hu,&D);
 
    CComPtr<IPoint2dCollection> topUpperXBeamProfile, topLowerXBeamProfile, bottomXBeamProfile;
-   pPier->GetTopSurface(pierID, xbrTypes::Stage1, &topLowerXBeamProfile);
-   pPier->GetTopSurface(pierID, xbrTypes::Stage2, &topUpperXBeamProfile);
-   pPier->GetBottomSurface(pierID, xbrTypes::Stage1, &bottomXBeamProfile);
+   pPier->GetTopSurface(pierID, pgsTypes::Stage1, &topLowerXBeamProfile);
+   pPier->GetTopSurface(pierID, pgsTypes::Stage2, &topUpperXBeamProfile);
+   pPier->GetBottomSurface(pierID, pgsTypes::Stage1, &bottomXBeamProfile);
 
    // Upper Cross Beam - Top Left
    CComPtr<IPoint2d> pnt;
@@ -1363,7 +1363,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    {
       // Upper Cross Beam (End View)
       CComPtr<IShape> upperXBeamShape;
-      pSectProp->GetXBeamShape(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,Z),&upperXBeamShape);
+      pSectProp->GetXBeamShape(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,Z),&upperXBeamShape);
 
       CComQIPtr<ICompositeShape> composite(upperXBeamShape);
       CComPtr<IShape> shape;
@@ -1390,7 +1390,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 
    // Lower Cross Beam (End View)
    CComPtr<IShape> lowerXBeamShape;
-   pSectProp->GetXBeamShape(pierID,xbrTypes::Stage1,xbrPointOfInterest(INVALID_ID,Z),&lowerXBeamShape);
+   pSectProp->GetXBeamShape(pierID,pgsTypes::Stage1,xbrPointOfInterest(INVALID_ID,Z),&lowerXBeamShape);
 
    CComQIPtr<IXYPosition> position(lowerXBeamShape);
    CComPtr<IPoint2d> pnt_left, pnt_right;
@@ -1402,7 +1402,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 
    // End View Height
    CComPtr<IShape> xbeamShape;
-   pSectProp->GetXBeamShape(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,Z),&xbeamShape);
+   pSectProp->GetXBeamShape(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,Z),&xbeamShape);
 
    position.Release();
    xbeamShape->QueryInterface(&position);

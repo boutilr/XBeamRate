@@ -54,7 +54,7 @@ xbrRatingArtifact xbrLoadRater::RateXBeam(PierIDType pierID,pgsTypes::LoadRating
 
    GET_IFACE2(GetBroker(),IXBRProject, pProject);
    xbrTypes::PierType pierType = pProject->GetPierType(pierID);
-   xbrTypes::Stage stage = (pierType == xbrTypes::pctIntegral ? xbrTypes::Stage2 : xbrTypes::Stage1);
+   pgsTypes::Stage stage = (pierType == xbrTypes::pctIntegral ? pgsTypes::Stage2 : pgsTypes::Stage1);
 
    xbrRatingArtifact ratingArtifact(ratingType);
 
@@ -79,7 +79,7 @@ xbrRatingArtifact xbrLoadRater::RateXBeam(PierIDType pierID,pgsTypes::LoadRating
    return ratingArtifact;
 }
 
-void xbrLoadRater::MomentRating(PierIDType pierID, xbrTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
+void xbrLoadRater::MomentRating(PierIDType pierID, pgsTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
 {
    GET_IFACE2(GetBroker(),IEAFDisplayUnits,pDisplayUnits);
    GET_IFACE2(GetBroker(),IXBRPointOfInterest,pPOI);
@@ -223,7 +223,7 @@ void xbrLoadRater::MomentRating(PierIDType pierID, xbrTypes::Stage stage,pgsType
    }
 }
 
-void xbrLoadRater::ShearRating(PierIDType pierID, xbrTypes::Stage stage, const std::vector<xbrPointOfInterest>& vPoi,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
+void xbrLoadRater::ShearRating(PierIDType pierID, pgsTypes::Stage stage, const std::vector<xbrPointOfInterest>& vPoi,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
 {
    GET_IFACE2(GetBroker(),IEAFDisplayUnits,pDisplayUnits);
    GET_IFACE2(GetBroker(),IEAFProgress, pProgress);
@@ -395,7 +395,7 @@ void xbrLoadRater::ShearRating(PierIDType pierID, xbrTypes::Stage stage, const s
    }
 }
 
-void xbrLoadRater::CheckReinforcementYielding(PierIDType pierID, xbrTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
+void xbrLoadRater::CheckReinforcementYielding(PierIDType pierID, pgsTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
 {
    GET_IFACE2(GetBroker(),IEAFDisplayUnits,pDisplayUnits);
    GET_IFACE2(GetBroker(),IEAFProgress, pProgress);

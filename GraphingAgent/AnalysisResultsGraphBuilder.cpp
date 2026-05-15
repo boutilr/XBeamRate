@@ -641,7 +641,7 @@ void CXBRAnalysisResultsGraphBuilder::BuildCapacityGraph(PierIDType pierID,const
    GET_IFACE2_NOCHECK(pBroker,IXBRMomentCapacity,pMomentCapacity);
    GET_IFACE2_NOCHECK(pBroker,IXBRShearCapacity,pShearCapacity);
 
-   xbrTypes::Stage stage = xbrTypes::Stage2;
+   pgsTypes::Stage stage = pgsTypes::Stage2;
 
    for (const auto& poi : vPoi)
    {

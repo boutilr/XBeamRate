@@ -144,7 +144,7 @@ void CSectionCutDisplayImpl::GetBoundingBox(std::shared_ptr<const WBFL::DManip::
    Float64 Ytop = pPier->GetElevation(pierID,Xcl);
 
    GET_IFACE2(pBroker,IXBRSectionProperties,pSectProp);
-   Float64 H = pSectProp->GetDepth(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,Xxb));
+   Float64 H = pSectProp->GetDepth(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,Xxb));
 
    GET_IFACE2(pBroker,IXBRProject,pProject);
    if ( pProject->GetPierType(pierID) != xbrTypes::pctIntegral )

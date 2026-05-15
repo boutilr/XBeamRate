@@ -340,7 +340,7 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
       VsTableCol = 0;
       VnTableCol = 0;
 
-      const DvDetails& dvDetails1 = pShearCapacity->GetDvDetails(pierID,(pierType == xbrTypes::pctIntegral ? xbrTypes::Stage1 : xbrTypes::Stage2),poi);
+      const DvDetails& dvDetails1 = pShearCapacity->GetDvDetails(pierID,(pierType == xbrTypes::pctIntegral ? pgsTypes::Stage1 : pgsTypes::Stage2),poi);
 
       (*pDvTable1)(DvTableRow,DvTableCol++) << location.SetValue(poi);
       (*pDvTable1)(DvTableRow,DvTableCol++) << dim.SetValue(dvDetails1.h);
@@ -358,7 +358,7 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
       if ( pierType == xbrTypes::pctIntegral )
       {
          DvTableCol = 0;
-         const DvDetails& dvDetails2 = pShearCapacity->GetDvDetails(pierID,xbrTypes::Stage2,poi);
+         const DvDetails& dvDetails2 = pShearCapacity->GetDvDetails(pierID,pgsTypes::Stage2,poi);
          (*pDvTable2)(DvTableRow,DvTableCol++) << location.SetValue(poi);
          (*pDvTable2)(DvTableRow,DvTableCol++) << dim.SetValue(dvDetails2.h);
          (*pDvTable2)(DvTableRow,DvTableCol++) << dim.SetValue(0.72*dvDetails2.h);
@@ -375,7 +375,7 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
 
       if ( WBFL::LRFD::MBEManager::Edition::SecondEditionWith2015Interims <= WBFL::LRFD::MBEManager::GetEdition() )
       {
-         const AvOverSDetails& avsDetails = pShearCapacity->GetAverageAvOverSDetails(pierID,xbrTypes::Stage1,poi);
+         const AvOverSDetails& avsDetails = pShearCapacity->GetAverageAvOverSDetails(pierID,pgsTypes::Stage1,poi);
          (*pAvSTable1)(row,AvSTableCol++) << location.SetValue(poi);
 
          rptRcTable* pAvTable = rptStyleManager::CreateDefaultTable(4);
@@ -403,7 +403,7 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
          if ( pierType == xbrTypes::pctIntegral )
          {
             AvSTableCol = 0;
-            const AvOverSDetails& avsDetails = pShearCapacity->GetAverageAvOverSDetails(pierID,xbrTypes::Stage2,poi);
+            const AvOverSDetails& avsDetails = pShearCapacity->GetAverageAvOverSDetails(pierID,pgsTypes::Stage2,poi);
             (*pAvSTable2)(row,AvSTableCol++) << location.SetValue(poi);
 
             rptRcTable* pAvTable = rptStyleManager::CreateDefaultTable(4);
@@ -431,7 +431,7 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
       }
 
 
-      const ShearCapacityDetails& scd = pShearCapacity->GetShearCapacityDetails(pierID,xbrTypes::Stage2,poi);
+      const ShearCapacityDetails& scd = pShearCapacity->GetShearCapacityDetails(pierID,pgsTypes::Stage2,poi);
       
       (*pVcTable)(row,VcTableCol++) << location.SetValue(poi);
       (*pVcTable)(row,VcTableCol++) << scd.beta;

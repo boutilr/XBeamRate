@@ -78,9 +78,9 @@ bool ComparePoiLocation(const xbrPointOfInterest& poi1,const xbrPointOfInterest&
    return true;
 }
 
-StageIndexType GetStageIndex(xbrTypes::Stage stage)
+StageIndexType GetStageIndex(pgsTypes::Stage stage)
 {
-   return (stage == xbrTypes::Stage1 ? 0 : 1);
+   return (stage == pgsTypes::Stage1 ? 0 : 1);
 }
 
 
@@ -396,7 +396,7 @@ void CPierAgentImp::GetLowerXBeamProfile(PierIDType pierID,IShape** ppShape) con
    xbeam->get_Profile(0,ppShape); // stage 0 is lower x-beam
 }
 
-void CPierAgentImp::GetTopSurface(PierIDType pierID,xbrTypes::Stage stage,IPoint2dCollection** ppPoints) const
+void CPierAgentImp::GetTopSurface(PierIDType pierID,pgsTypes::Stage stage,IPoint2dCollection** ppPoints) const
 {
    CComPtr<IPier> pier;
    GetPierModel(pierID,&pier);
@@ -408,7 +408,7 @@ void CPierAgentImp::GetTopSurface(PierIDType pierID,xbrTypes::Stage stage,IPoint
    xbeam->get_TopSurface(stageIdx,ppPoints);
 }
 
-void CPierAgentImp::GetBottomSurface(PierIDType pierID,xbrTypes::Stage stage,IPoint2dCollection** ppPoints) const
+void CPierAgentImp::GetBottomSurface(PierIDType pierID,pgsTypes::Stage stage,IPoint2dCollection** ppPoints) const
 {
    CComPtr<IPier> pier;
    GetPierModel(pierID,&pier);
@@ -517,7 +517,7 @@ Float64 CPierAgentImp::ConvertCurbLineToPierCoordinate(PierIDType pierID,Float64
 
 //////////////////////////////////////////
 // IXBRSectionProperties
-Float64 CPierAgentImp::GetDepth(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CPierAgentImp::GetDepth(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    if ( poi.IsColumnPOI() )
    {
@@ -549,7 +549,7 @@ Float64 CPierAgentImp::GetDepth(PierIDType pierID,xbrTypes::Stage stage,const xb
    }
 }
 
-Float64 CPierAgentImp::GetArea(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CPierAgentImp::GetArea(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    if ( poi.IsColumnPOI() )
    {
@@ -585,7 +585,7 @@ Float64 CPierAgentImp::GetArea(PierIDType pierID,xbrTypes::Stage stage,const xbr
    }
 }
 
-Float64 CPierAgentImp::GetIxx(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CPierAgentImp::GetIxx(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    if ( poi.IsColumnPOI() )
    {
@@ -621,7 +621,7 @@ Float64 CPierAgentImp::GetIxx(PierIDType pierID,xbrTypes::Stage stage,const xbrP
    }
 }
 
-Float64 CPierAgentImp::GetIyy(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CPierAgentImp::GetIyy(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    if ( poi.IsColumnPOI() )
    {
@@ -657,7 +657,7 @@ Float64 CPierAgentImp::GetIyy(PierIDType pierID,xbrTypes::Stage stage,const xbrP
    }
 }
 
-Float64 CPierAgentImp::GetYtop(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CPierAgentImp::GetYtop(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    if ( poi.IsColumnPOI() )
    {
@@ -693,7 +693,7 @@ Float64 CPierAgentImp::GetYtop(PierIDType pierID,xbrTypes::Stage stage,const xbr
    }
 }
 
-Float64 CPierAgentImp::GetYbot(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CPierAgentImp::GetYbot(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    if ( poi.IsColumnPOI() )
    {
@@ -729,14 +729,14 @@ Float64 CPierAgentImp::GetYbot(PierIDType pierID,xbrTypes::Stage stage,const xbr
    }
 }
 
-Float64 CPierAgentImp::GetStop(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CPierAgentImp::GetStop(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    Float64 Ixx = GetIxx(pierID,stage,poi);
    Float64 Yt  = GetYtop(pierID,stage,poi);
    return Ixx/Yt;
 }
 
-Float64 CPierAgentImp::GetSbot(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const
+Float64 CPierAgentImp::GetSbot(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    Float64 Ixx = GetIxx(pierID,stage,poi);
    Float64 Yb  = GetYbot(pierID,stage,poi);
@@ -755,7 +755,7 @@ void CPierAgentImp::GetXBeamShape(PierIDType pierID,const xbrPointOfInterest& po
    xbeam->get_BasicShape(Xxb,ppShape);
 }
 
-void CPierAgentImp::GetXBeamShape(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,IShape** ppShape) const
+void CPierAgentImp::GetXBeamShape(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IShape** ppShape) const
 {
    CComPtr<IPier> pier;
    GetPierModel(pierID,&pier);
@@ -844,7 +844,7 @@ void CPierAgentImp::GetRebarProperties(PierIDType pierID,Float64* pE,Float64* pF
 
 //////////////////////////////////////////
 // IXBRRebar
-void CPierAgentImp::GetRebarSection(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const
+void CPierAgentImp::GetRebarSection(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const
 {
    CComPtr<IPier> pier;
    GetPierModel(pierID,&pier);
@@ -1061,7 +1061,7 @@ void CPierAgentImp::GetRebarLocation(PierIDType pierID,const xbrPointOfInterest&
    rebarSectionItem->get_Location(ppPoint);
 }
 
-Float64 CPierAgentImp::GetRebarDepth(PierIDType pierID,const xbrPointOfInterest& poi,xbrTypes::Stage stage,IPoint2d* pRebarLocation) const
+Float64 CPierAgentImp::GetRebarDepth(PierIDType pierID,const xbrPointOfInterest& poi,pgsTypes::Stage stage,IPoint2d* pRebarLocation) const
 {
    Float64 Xcl = ConvertCrossBeamToCurbLineCoordinate(pierID,poi.GetDistFromStart());
    Float64 Ydeck = GetElevation(pierID,Xcl);
@@ -1076,7 +1076,7 @@ Float64 CPierAgentImp::GetRebarDepth(PierIDType pierID,const xbrPointOfInterest&
 
    Float64 Yb = Ydeck - Y - tDeck;
 
-   if ( stage == xbrTypes::Stage1 )
+   if ( stage == pgsTypes::Stage1 )
    {
       // for Stage 1, measure from the top of the lower cross beam
       CComPtr<ICrossBeam> xbeam;
@@ -1098,7 +1098,7 @@ Float64 CPierAgentImp::GetRebarDepth(PierIDType pierID,const xbrPointOfInterest&
 
 //////////////////////////////////////////
 // IXBRStirrups
-ZoneIndexType CPierAgentImp::FindStirrupZone(PierIDType pierID, xbrTypes::Stage stage, const xbrPointOfInterest& poi) const
+ZoneIndexType CPierAgentImp::FindStirrupZone(PierIDType pierID, pgsTypes::Stage stage, const xbrPointOfInterest& poi) const
 {
    ATLASSERT(!poi.IsColumnPOI());
 
@@ -1123,20 +1123,20 @@ ZoneIndexType CPierAgentImp::FindStirrupZone(PierIDType pierID, xbrTypes::Stage 
    return zoneIdx;
 }
 
-ZoneIndexType CPierAgentImp::GetStirrupZoneCount(PierIDType pierID,xbrTypes::Stage stage) const
+ZoneIndexType CPierAgentImp::GetStirrupZoneCount(PierIDType pierID,pgsTypes::Stage stage) const
 {
    const auto& vStirrupZones = GetStirrupZones(pierID,stage);
    return vStirrupZones.size();
 }
 
-Float64 CPierAgentImp::GetStirrupZoneLength(PierIDType pierID, xbrTypes::Stage stage, ZoneIndexType zoneIdx) const
+Float64 CPierAgentImp::GetStirrupZoneLength(PierIDType pierID, pgsTypes::Stage stage, ZoneIndexType zoneIdx) const
 {
    const auto& vStirrupZones = GetStirrupZones(pierID, stage);
    const auto& zone = vStirrupZones[zoneIdx];
    return zone.Length;
 }
 
-void CPierAgentImp::GetStirrupZoneBoundary(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx,Float64* pXstart,Float64* pXend) const
+void CPierAgentImp::GetStirrupZoneBoundary(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx,Float64* pXstart,Float64* pXend) const
 {
    const auto& vStirrupZones = GetStirrupZones(pierID,stage);
    const auto& zone = vStirrupZones[zoneIdx];
@@ -1144,28 +1144,28 @@ void CPierAgentImp::GetStirrupZoneBoundary(PierIDType pierID,xbrTypes::Stage sta
    *pXend   = zone.Xend;
 }
 
-Float64 CPierAgentImp::GetStirrupZoneSpacing(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const
+Float64 CPierAgentImp::GetStirrupZoneSpacing(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const
 {
    const auto& vStirrupZones = GetStirrupZones(pierID,stage);
    const auto& zone = vStirrupZones[zoneIdx];
    return zone.S;
 }
 
-Float64 CPierAgentImp::GetStirrupZoneReinforcement(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const
+Float64 CPierAgentImp::GetStirrupZoneReinforcement(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const
 {
    const auto& vStirrupZones = GetStirrupZones(pierID,stage);
    const auto& zone = vStirrupZones[zoneIdx];
    return zone.Av_over_S;
 }
 
-Float64 CPierAgentImp::GetStirrupLegCount(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const
+Float64 CPierAgentImp::GetStirrupLegCount(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const
 {
    const auto& vStirrupZones = GetStirrupZones(pierID,stage);
    const auto& zone = vStirrupZones[zoneIdx];
    return zone.nLegs;
 }
 
-IndexType CPierAgentImp::GetStirrupCount(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const
+IndexType CPierAgentImp::GetStirrupCount(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const
 {
    const auto& vStirrupZones = GetStirrupZones(pierID,stage);
    const auto& zone = vStirrupZones[zoneIdx];
@@ -1668,11 +1668,11 @@ void CPierAgentImp::Invalidate()
    m_NextPoiID = 0;
    m_PierModels.clear();
    m_XBeamPoi.clear();
-   m_StirrupZones[xbrTypes::Stage1].clear();
-   m_StirrupZones[xbrTypes::Stage2].clear();
+   m_StirrupZones[pgsTypes::Stage1].clear();
+   m_StirrupZones[pgsTypes::Stage2].clear();
 }
 
-const std::vector<CPierAgentImp::StirrupZone>& CPierAgentImp::GetStirrupZones(PierIDType pierID,xbrTypes::Stage stage) const
+const std::vector<CPierAgentImp::StirrupZone>& CPierAgentImp::GetStirrupZones(PierIDType pierID,pgsTypes::Stage stage) const
 {
    auto found(m_StirrupZones[stage].find(pierID));
    if ( found == m_StirrupZones[stage].end() )
@@ -1684,12 +1684,12 @@ const std::vector<CPierAgentImp::StirrupZone>& CPierAgentImp::GetStirrupZones(Pi
    return found->second;
 }
 
-void CPierAgentImp::ValidateStirrupZones(PierIDType pierID,xbrTypes::Stage stage) const
+void CPierAgentImp::ValidateStirrupZones(PierIDType pierID,pgsTypes::Stage stage) const
 {
    GET_IFACE(IXBRProject,pProject);
    const xbrPierData& pierData = pProject->GetPierData(pierID);
    std::vector<StirrupZone> vStirrupZones;
-   if ( stage == xbrTypes::Stage1 )
+   if ( stage == pgsTypes::Stage1 )
    {
       ValidateStirrupZones(pierID,pierData.GetLowerXBeamStirrups(),&vStirrupZones);
    }
@@ -1985,7 +1985,7 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
 
    // Left face, with D/2 and D
    vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,LeftOH-D1/2,       POI_FACEOFCOLUMN));
-   Float64 capDv = pShearCap->GetDv(pierID, xbrTypes::Stage::Stage1, vPoi.back());
+   Float64 capDv = pShearCap->GetDv(pierID, pgsTypes::Stage::Stage1, vPoi.back());
 
    Float64 ploc = LeftOH - D1/2 - capDv/2;
    if (ploc > 0.0)
@@ -2001,7 +2001,7 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
 
    // Right face
    vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,LeftOH+D1/2,POI_FACEOFCOLUMN));
-   capDv = pShearCap->GetDv(pierID, xbrTypes::Stage::Stage1, vPoi.back());
+   capDv = pShearCap->GetDv(pierID, pgsTypes::Stage::Stage1, vPoi.back());
 
    ploc = LeftOH + D1/2 + capDv/2;
    if (ploc < L)
@@ -2035,7 +2035,7 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
          // put POI at faces of column
          pProject->GetColumnProperties(pierID,spaceIdx,&shapeType,&D1,&D2,&measureType,&H);
          vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,X-D1/2,POI_FACEOFCOLUMN));
-         capDv = pShearCap->GetDv(pierID, xbrTypes::Stage::Stage1, vPoi.back());
+         capDv = pShearCap->GetDv(pierID, pgsTypes::Stage::Stage1, vPoi.back());
 
          ploc = X - D1/2 - capDv/2;
          if (ploc > 0.0)
@@ -2050,7 +2050,7 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
          }
 
          vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,X+D1/2,POI_FACEOFCOLUMN));
-         capDv = pShearCap->GetDv(pierID, xbrTypes::Stage::Stage1, vPoi.back());
+         capDv = pShearCap->GetDv(pierID, pgsTypes::Stage::Stage1, vPoi.back());
 
          ploc = X + D1/2 + capDv/2;
          if (ploc < L)

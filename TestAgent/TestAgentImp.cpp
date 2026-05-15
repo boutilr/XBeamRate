@@ -257,8 +257,8 @@ void CTestAgentImp::RunMomentCapacityTest(std::_tostream& os,LPCTSTR lpszProcess
 
       for (const auto& poi : vPoi)
       {
-         const MomentCapacityDetails& mcd = pMomentCapacity->GetMomentCapacityDetails(pierID,xbrTypes::Stage2,poi,bPositiveMoment);
-         const CrackingMomentDetails& cmd = pMomentCapacity->GetCrackingMomentDetails(pierID,xbrTypes::Stage2,poi,bPositiveMoment);
+         const MomentCapacityDetails& mcd = pMomentCapacity->GetMomentCapacityDetails(pierID,pgsTypes::Stage2,poi,bPositiveMoment);
+         const CrackingMomentDetails& cmd = pMomentCapacity->GetCrackingMomentDetails(pierID,pgsTypes::Stage2,poi,bPositiveMoment);
 
          os << lpszProcessID << _T(", ") << (LPCTSTR)(strMomentCapacityBaseTestID+_T("00, ")) << poi.GetDistFromStart() << _T(", ") << mcd.dt << std::endl;
          os << lpszProcessID << _T(", ") << (LPCTSTR)(strMomentCapacityBaseTestID+_T("01, ")) << poi.GetDistFromStart() << _T(", ") << mcd.de << std::endl;
@@ -280,7 +280,7 @@ void CTestAgentImp::RunMomentCapacityTest(std::_tostream& os,LPCTSTR lpszProcess
          {
             CString strBaseTestID;
             strBaseTestID.Format(_T("%s%d"),strMomentCapacityBaseTestID,(int)limitState);
-            const MinMomentCapacityDetails& mmcd = pMomentCapacity->GetMinMomentCapacityDetails(pierID,limitState,xbrTypes::Stage2,poi,bPositiveMoment);
+            const MinMomentCapacityDetails& mmcd = pMomentCapacity->GetMinMomentCapacityDetails(pierID,limitState,pgsTypes::Stage2,poi,bPositiveMoment);
             os << lpszProcessID << _T(", ") << (LPCTSTR)(strBaseTestID+_T("0, ")) << poi.GetDistFromStart() << _T(", ") << mmcd.Mr << std::endl;
             os << lpszProcessID << _T(", ") << (LPCTSTR)(strBaseTestID+_T("1, ")) << poi.GetDistFromStart() << _T(", ") << mmcd.Mcr << std::endl;
             os << lpszProcessID << _T(", ") << (LPCTSTR)(strBaseTestID+_T("2, ")) << poi.GetDistFromStart() << _T(", ") << mmcd.MrMin1 << std::endl;
@@ -300,9 +300,9 @@ void CTestAgentImp::RunShearCapacityTest(std::_tostream& os,LPCTSTR lpszProcessI
 
    for (const auto& poi : vPoi)
    {
-      const ShearCapacityDetails& scd = pShearCapacity->GetShearCapacityDetails(pierID,xbrTypes::Stage2,poi);
-      const AvOverSDetails& AvSDetails = pShearCapacity->GetAverageAvOverSDetails(pierID,xbrTypes::Stage2,poi);
-      const DvDetails& dvDetails = pShearCapacity->GetDvDetails(pierID,xbrTypes::Stage2,poi);
+      const ShearCapacityDetails& scd = pShearCapacity->GetShearCapacityDetails(pierID,pgsTypes::Stage2,poi);
+      const AvOverSDetails& AvSDetails = pShearCapacity->GetAverageAvOverSDetails(pierID,pgsTypes::Stage2,poi);
+      const DvDetails& dvDetails = pShearCapacity->GetDvDetails(pierID,pgsTypes::Stage2,poi);
 
       os << lpszProcessID << _T(", ") << (LPCTSTR)(strShearCapacityBaseTestID+_T("00, ")) << poi.GetDistFromStart() << _T(", ") << scd.beta << std::endl;
       os << lpszProcessID << _T(", ") << (LPCTSTR)(strShearCapacityBaseTestID+_T("01, ")) << poi.GetDistFromStart() << _T(", ") << scd.theta << std::endl;
@@ -348,7 +348,7 @@ void CTestAgentImp::RunCrackedSectionTest(std::_tostream& os,LPCTSTR lpszProcess
 
          for (const auto& poi : vPoi)
          {
-            const CrackedSectionDetails& csd = pCrackedSection->GetCrackedSectionDetails(pierID,xbrTypes::Stage2,poi,bPositiveMoment,loadType);
+            const CrackedSectionDetails& csd = pCrackedSection->GetCrackedSectionDetails(pierID,pgsTypes::Stage2,poi,bPositiveMoment,loadType);
 
             os << lpszProcessID << _T(", ") << (LPCTSTR)(strBaseTestID+_T("0, ")) << poi.GetDistFromStart() << _T(", ") << csd.n << std::endl;
             os << lpszProcessID << _T(", ") << (LPCTSTR)(strBaseTestID+_T("1, ")) << poi.GetDistFromStart() << _T(", ") << csd.c << std::endl;

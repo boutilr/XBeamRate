@@ -107,7 +107,7 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
       {
          col = 0;
 
-         const MomentCapacityDetails& mcd = pMomentCapacity->GetMomentCapacityDetails(pierID,xbrTypes::Stage2,poi,bPositiveMoment);
+         const MomentCapacityDetails& mcd = pMomentCapacity->GetMomentCapacityDetails(pierID,pgsTypes::Stage2,poi,bPositiveMoment);
 
          Float64 alpha1,beta1,c;
          mcd.solution->get_Alpha1(&alpha1);

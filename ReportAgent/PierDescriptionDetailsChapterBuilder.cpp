@@ -42,7 +42,7 @@ void write_substructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::sha
 void write_concrete_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
 void write_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
 void write_longitudinal_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_transverse_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID,xbrTypes::Stage stage);
+void write_transverse_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID,pgsTypes::Stage stage);
 
 CPierDescriptionDetailsChapterBuilder::CPierDescriptionDetailsChapterBuilder()
 {
@@ -74,8 +74,8 @@ rptChapter* CPierDescriptionDetailsChapterBuilder::Build(const std::shared_ptr<c
    write_concrete_data(pBroker,pDisplayUnits,pChapter,pierID);
    write_reinforcement_data(pBroker,pDisplayUnits,pChapter,pierID);
    write_longitudinal_reinforcement_data(pBroker,pDisplayUnits,pChapter,pierID);
-   write_transverse_reinforcement_data(pBroker,pDisplayUnits,pChapter,pierID,xbrTypes::Stage1);
-   write_transverse_reinforcement_data(pBroker,pDisplayUnits,pChapter,pierID,xbrTypes::Stage2);
+   write_transverse_reinforcement_data(pBroker,pDisplayUnits,pChapter,pierID,pgsTypes::Stage1);
+   write_transverse_reinforcement_data(pBroker,pDisplayUnits,pChapter,pierID,pgsTypes::Stage2);
 
    return pChapter;
 }
@@ -530,12 +530,12 @@ void write_longitudinal_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pB
    }
 }
 
-void write_transverse_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID,xbrTypes::Stage stage)
+void write_transverse_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID,pgsTypes::Stage stage)
 {
    rptParagraph* pPara = new rptParagraph(rptStyleManager::GetHeadingStyle());
    *pChapter << pPara;
    *pPara << _T("Stirrups");
-   if ( stage == xbrTypes::Stage1 )
+   if ( stage == pgsTypes::Stage1 )
    {
       *pPara << _T(" - Lower Cross Beam") << rptNewLine;
    }
@@ -546,7 +546,7 @@ void write_transverse_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBro
 
    GET_IFACE2(pBroker,IXBRProject,pProject);
    const xbrStirrupData* pStirrups;
-   if ( stage == xbrTypes::Stage1 )
+   if ( stage == pgsTypes::Stage1 )
    {
       pStirrups = &(pProject->GetLowerXBeamStirrups(pierID));
    }

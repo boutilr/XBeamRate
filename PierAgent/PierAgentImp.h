@@ -75,8 +75,8 @@ public:
    Float64 GetXBeamLength(xbrTypes::XBeamLocation location,PierIDType pierID) const override;
    void GetUpperXBeamProfile(PierIDType pierID,IShape** ppShape) const override;
    void GetLowerXBeamProfile(PierIDType pierID,IShape** ppShape) const override;
-   void GetTopSurface(PierIDType pierID,xbrTypes::Stage stage,IPoint2dCollection** ppPoints) const override;
-   void GetBottomSurface(PierIDType pierID,xbrTypes::Stage stage,IPoint2dCollection** ppPoints) const override;
+   void GetTopSurface(PierIDType pierID,pgsTypes::Stage stage,IPoint2dCollection** ppPoints) const override;
+   void GetBottomSurface(PierIDType pierID,pgsTypes::Stage stage,IPoint2dCollection** ppPoints) const override;
 
    Float64 GetCrownPointOffset(PierIDType pierID) const override;
    Float64 GetCrownPointLocation(PierIDType pierID) const override;
@@ -94,16 +94,16 @@ public:
 
 // IXBRSectionProperties
 public:
-   Float64 GetDepth(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
-   Float64 GetArea(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
-   Float64 GetIxx(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
-   Float64 GetIyy(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
-   Float64 GetYtop(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
-   Float64 GetYbot(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
-   Float64 GetStop(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
-   Float64 GetSbot(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   Float64 GetDepth(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   Float64 GetArea(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   Float64 GetIxx(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   Float64 GetIyy(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   Float64 GetYtop(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   Float64 GetYbot(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   Float64 GetStop(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   Float64 GetSbot(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
    void GetXBeamShape(PierIDType pierID,const xbrPointOfInterest& poi,IShape** ppShape) const override;
-   void GetXBeamShape(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,IShape** ppShape) const override;
+   void GetXBeamShape(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IShape** ppShape) const override;
 
 // IXBRMaterial
 public:
@@ -117,25 +117,25 @@ public:
 
 // IXBRRebar
 public:
-   void GetRebarSection(PierIDType pierIdx,xbrTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const override;
+   void GetRebarSection(PierIDType pierIdx,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const override;
    IndexType GetRebarRowCount(PierIDType pierID) const override;
    IndexType GetRebarCount(PierIDType pierID,IndexType rowIdx) const override;
    void GetRebarProfile(PierIDType pierID,IndexType rowIdx,IPoint2dCollection** ppPoints) const override;
    Float64 GetDevLengthFactor(PierIDType pierID,const xbrPointOfInterest& poi,IRebarSectionItem* pRebarSectionItem) const override;
    Float64 GetRebarRowLocation(PierIDType pierID,const xbrPointOfInterest& poi,IndexType rowIdx) const override;
    void GetRebarLocation(PierIDType pierID,const xbrPointOfInterest& poi,IndexType rowIdx,IndexType barIdx,IPoint2d** ppPoint) const override;
-   Float64 GetRebarDepth(PierIDType pierID,const xbrPointOfInterest& poi,xbrTypes::Stage stage,IPoint2d* pRebarLocation) const override;
+   Float64 GetRebarDepth(PierIDType pierID,const xbrPointOfInterest& poi,pgsTypes::Stage stage,IPoint2d* pRebarLocation) const override;
 
 // IXBRStirrups
 public:
-   ZoneIndexType FindStirrupZone(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const override;
-   ZoneIndexType GetStirrupZoneCount(PierIDType pierID,xbrTypes::Stage stage) const override;
-   void GetStirrupZoneBoundary(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx,Float64* pXstart,Float64* pXend) const override;
-   Float64 GetStirrupZoneLength(PierIDType pierID, xbrTypes::Stage stage, ZoneIndexType zoneIdx) const override;
-   Float64 GetStirrupZoneSpacing(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const override;
-   Float64 GetStirrupZoneReinforcement(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const override;
-   Float64 GetStirrupLegCount(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const override;
-   IndexType GetStirrupCount(PierIDType pierID,xbrTypes::Stage stage,ZoneIndexType zoneIdx) const override;
+   ZoneIndexType FindStirrupZone(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const override;
+   ZoneIndexType GetStirrupZoneCount(PierIDType pierID,pgsTypes::Stage stage) const override;
+   void GetStirrupZoneBoundary(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx,Float64* pXstart,Float64* pXend) const override;
+   Float64 GetStirrupZoneLength(PierIDType pierID, pgsTypes::Stage stage, ZoneIndexType zoneIdx) const override;
+   Float64 GetStirrupZoneSpacing(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const override;
+   Float64 GetStirrupZoneReinforcement(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const override;
+   Float64 GetStirrupLegCount(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const override;
+   IndexType GetStirrupCount(PierIDType pierID,pgsTypes::Stage stage,ZoneIndexType zoneIdx) const override;
 
 // IXBRPointOfInterest
 public:
@@ -188,9 +188,9 @@ private:
       Float64 nLegs;
       IndexType nStirrups;
    } StirrupZone;
-   mutable std::map<PierIDType,std::vector<StirrupZone>> m_StirrupZones[2]; // use xbrTypes::Stage to access array
-   const std::vector<StirrupZone>& GetStirrupZones(PierIDType pierID,xbrTypes::Stage stage) const;
-   void ValidateStirrupZones(PierIDType pierID,xbrTypes::Stage stage) const;
+   mutable std::map<PierIDType,std::vector<StirrupZone>> m_StirrupZones[2]; // use pgsTypes::Stage to access array
+   const std::vector<StirrupZone>& GetStirrupZones(PierIDType pierID,pgsTypes::Stage stage) const;
+   void ValidateStirrupZones(PierIDType pierID,pgsTypes::Stage stage) const;
    void ValidateStirrupZones(PierIDType pierID,const xbrStirrupData& stirrupData,std::vector<StirrupZone>* pvStirrupZones) const;
 
    std::vector<xbrPointOfInterest> GetRatingPointsOfInterest(PierIDType pierID,bool bShear, bool bNegativeMoment) const;

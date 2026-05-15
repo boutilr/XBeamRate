@@ -498,7 +498,7 @@ Float64 xbrMomentRatingArtifact::GetRatingFactor() const
                if ( bFirst || m_K < 1.0 || rf < 1.1*RFmin ) // if first time, or rf with assumed K is near the controlling RF... re-compute it with the actual K
                {
                   // compute the actual K for this case
-                  MinMomentCapacityDetails minCapacityDetails = pMomentCapacity->GetMinMomentCapacityDetails(m_PierID,ls,xbrTypes::Stage2,m_POI,bPositiveMoment,vehicleIdx,llConfigIdx,permitLaneIdx);
+                  MinMomentCapacityDetails minCapacityDetails = pMomentCapacity->GetMinMomentCapacityDetails(m_PierID,ls,pgsTypes::Stage2,m_POI,bPositiveMoment,vehicleIdx,llConfigIdx,permitLaneIdx);
                   Float64 Mr = minCapacityDetails.Mr;
                   Float64 MrMin = minCapacityDetails.MrMin;
                   Float64 k = (IsZero(MrMin) ? 1.0 : Mr/MrMin); // MBE 6A.5.6
@@ -549,7 +549,7 @@ Float64 xbrMomentRatingArtifact::GetRatingFactor() const
 
 
                // compute the actual K for this case
-               MinMomentCapacityDetails minCapacityDetails = pMomentCapacity->GetMinMomentCapacityDetails(m_PierID,ls,xbrTypes::Stage2,m_POI,bPositiveMoment,vehicleIdx,llConfigIdx,permitLaneIdx);
+               MinMomentCapacityDetails minCapacityDetails = pMomentCapacity->GetMinMomentCapacityDetails(m_PierID,ls,pgsTypes::Stage2,m_POI,bPositiveMoment,vehicleIdx,llConfigIdx,permitLaneIdx);
                Float64 Mr = minCapacityDetails.Mr;
                Float64 MrMin = minCapacityDetails.MrMin;
                Float64 k = (IsZero(MrMin) ? 1.0 : Mr/MrMin); // MBE 6A.5.6
