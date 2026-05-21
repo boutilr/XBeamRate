@@ -45,7 +45,7 @@ interface IReinforcementPageParent
    virtual xbrPierData* GetXBRPierData() = 0;
 
    virtual CConcreteMaterial& GetConcrete() = 0;
-   virtual xbrTypes::PierType GetPierType() = 0;
+   virtual pgsTypes::PierType GetPierType() = 0;
 
    virtual WBFL::Materials::Rebar::Type& GetRebarType() = 0;
    virtual WBFL::Materials::Rebar::Grade& GetRebarGrade() = 0;

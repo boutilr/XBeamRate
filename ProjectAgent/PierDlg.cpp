@@ -81,7 +81,7 @@ CConcreteMaterial& CPierDlg::GetConcrete()
    return m_PierData.m_PierData.GetConcreteMaterial();
 }
 
-xbrTypes::PierType CPierDlg::GetPierType()
+pgsTypes::PierType CPierDlg::GetPierType()
 {
    return m_PierData.m_PierData.GetPierType();
 }
@@ -164,7 +164,7 @@ void CPierDlg::VerifyLongitudinalReinforcement()
    // make sure the reinforcement in the pier data is correct
    // If the pier type was changed from Integral to Expansion or Continuous
    // the Top cross beam bars are not valid and should be removed
-   if ( m_PierData.m_PierData.GetPierType() != xbrTypes::pctIntegral )
+   if ( m_PierData.m_PierData.GetPierType() != pgsTypes::pctIntegral )
    {
       xbrLongitudinalRebarData& rebar( m_PierData.m_PierData.GetLongitudinalRebar() );
       rebar.RebarRows.erase(std::remove_if(rebar.RebarRows.begin(),rebar.RebarRows.end(),RemoveTopBars),rebar.RebarRows.end());

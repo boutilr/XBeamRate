@@ -614,7 +614,7 @@ void CXBeamRateView::UpdateXBeamDisplayObjects()
    // Model Upper Cross Beam (Elevation)
    WBFL::Geometry::Point2d point(0, 0);
 
-   if ( pProject->GetPierType(pierID) != xbrTypes::pctExpansion )
+   if ( pProject->GetPierType(pierID) != pgsTypes::pctExpansion )
    {
       auto doUpperXBeam = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
       doUpperXBeam->SetPosition(point,false,false);
@@ -869,7 +869,7 @@ void CXBeamRateView::UpdateStirrupDisplayObjects()
 
    Float64 tDeck = pProject->GetDeckThickness(pierID);
 
-   xbrTypes::PierType pierType = pProject->GetPierType(pierID);
+   pgsTypes::PierType pierType = pProject->GetPierType(pierID);
 
    GET_IFACE2(pBroker,IXBRStirrups,pStirrups);
    // work backwards when drawing stirrups so lower XBeam stirrups are 
@@ -911,13 +911,13 @@ void CXBeamRateView::UpdateStirrupDisplayObjects()
             Float64 D = pSectProps->GetDepth(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,Xxb));
             Float64 Ybot = Ytop - D;
 
-            if ( pierType != xbrTypes::pctIntegral )
+            if ( pierType != pgsTypes::pctIntegral )
             {
                // for non-integral, D is just the depth of the lower portion
                Ybot -= H;
             }
 
-            if ( stage == pgsTypes::Stage1 || pierType != xbrTypes::pctIntegral )
+            if ( stage == pgsTypes::Stage1 || pierType != pgsTypes::pctIntegral )
             {
                Ytop -= H;
             }
@@ -1199,7 +1199,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 
    Float64 tDeck = pProject->GetDeckThickness(pierID);
 
-   xbrTypes::PierType pierType = pProject->GetPierType(pierID);
+   pgsTypes::PierType pierType = pProject->GetPierType(pierID);
 
    Float64 CPO = pPier->GetCrownPointOffset(pierID);
    Float64 Xcrown = pPier->GetCrownPointLocation(pierID);
@@ -1264,7 +1264,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    lxbBR.X() = Xr;
 
    // Height of upper cross beam
-   if (pierType != xbrTypes::pctExpansion)
+   if (pierType != pgsTypes::pctExpansion)
    {
       BuildDimensionLine(displayList, uxbBL, uxbTL);
       BuildDimensionLine(displayList, uxbTR, uxbBR);
@@ -1359,7 +1359,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 
    Float64 Z = pPier->ConvertPierToCrossBeamCoordinate(pierID,m_pFrame->GetCurrentCutLocation());
 
-   if ( pProject->GetPierType(pierID) != xbrTypes::pctExpansion )
+   if ( pProject->GetPierType(pierID) != pgsTypes::pctExpansion )
    {
       // Upper Cross Beam (End View)
       CComPtr<IShape> upperXBeamShape;

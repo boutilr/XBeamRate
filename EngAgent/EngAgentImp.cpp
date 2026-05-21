@@ -895,7 +895,7 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage st
    rcBeam->put_bw(w);
    rcBeam->put_b(w); // model the top flange width equal to the web (maybe change this in the future for T-section capacity)
 
-   xbrTypes::PierType connectionType = pProject->GetPierType(pierID);
+   pgsTypes::PierType connectionType = pProject->GetPierType(pierID);
    Float64 d;
    pProject->GetDiaphragmDimensions(pierID,&d,&w); // dimensions of upper diaphragm/xbeam
 
@@ -942,7 +942,7 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage st
       // to capacity. but the rebar are measured from the top down of the entire
       // section. deduct the height of the upper cross beam to get the depth of
       // the rebar relative to the top of the lower cross beam
-      if ( connectionType != xbrTypes::pctIntegral && stage == pgsTypes::Stage2 )
+      if ( connectionType != pgsTypes::pctIntegral && stage == pgsTypes::Stage2 )
       {
          Ybar -= d;
       }
@@ -1006,7 +1006,7 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage st
 DvDetails CEngAgentImp::ComputeDv(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const
 {
    GET_IFACE(IXBRProject,pProject);
-   if ( pProject->GetPierType(pierID) != xbrTypes::pctIntegral && stage == pgsTypes::Stage2 )
+   if ( pProject->GetPierType(pierID) != pgsTypes::pctIntegral && stage == pgsTypes::Stage2 )
    {
       // there isn't stage 2 for non-integral cross beams
       DvDetails details;
@@ -1045,7 +1045,7 @@ AvOverSDetails CEngAgentImp::ComputeAverageAvOverS(PierIDType pierID,pgsTypes::S
    AvOverSDetails details;
 
    GET_IFACE(IXBRProject,pProject);
-   if ( pProject->GetPierType(pierID) != xbrTypes::pctIntegral && stage == pgsTypes::Stage2 )
+   if ( pProject->GetPierType(pierID) != pgsTypes::pctIntegral && stage == pgsTypes::Stage2 )
    {
       // there isn't stage 2 for non-integral cross beams
       details.ShearFailurePlaneLength = 0;

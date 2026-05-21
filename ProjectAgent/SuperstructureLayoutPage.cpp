@@ -124,17 +124,17 @@ CString CSuperstructureLayoutPage::GetImageName()
 
    CComboBox* pcbPierType = (CComboBox*)GetDlgItem(IDC_PIER_TYPE);
    idx = pcbPierType->GetCurSel();
-   xbrTypes::PierType pierType = (xbrTypes::PierType)pcbPierType->GetItemData(idx);
+   pgsTypes::PierType pierType = (pgsTypes::PierType)pcbPierType->GetItemData(idx);
 
    if ( datum == pgsTypes::omtAlignment )
    {
       switch(pierType)
       {
-      case xbrTypes::pctIntegral:
+      case pgsTypes::pctIntegral:
          return _T("DIMENSIONS_ALIGNMENT_INTEGRAL");
-      case xbrTypes::pctContinuous:
+      case pgsTypes::pctContinuous:
          return _T("DIMENSIONS_ALIGNMENT_CONTINUOUS");
-      case xbrTypes::pctExpansion:
+      case pgsTypes::pctExpansion:
          return _T("DIMENSIONS_ALIGNMENT_EXPANSION");
       }
    }
@@ -142,11 +142,11 @@ CString CSuperstructureLayoutPage::GetImageName()
    {
       switch(pierType)
       {
-      case xbrTypes::pctIntegral:
+      case pgsTypes::pctIntegral:
          return _T("DIMENSIONS_BRIDGELINE_INTEGRAL");
-      case xbrTypes::pctContinuous:
+      case pgsTypes::pctContinuous:
          return _T("DIMENSIONS_BRIDGELINE_CONTINUOUS");
-      case xbrTypes::pctExpansion:
+      case pgsTypes::pctExpansion:
          return _T("DIMENSIONS_BRIDGELINE_EXPANSION");
       }
    }
@@ -172,13 +172,13 @@ void CSuperstructureLayoutPage::FillPierTypeComboBox()
    CComboBox* pcbPierType = (CComboBox*)GetDlgItem(IDC_PIER_TYPE);
    pcbPierType->ResetContent();
    int idx = pcbPierType->AddString(_T("Continuous"));
-   pcbPierType->SetItemData(idx,(DWORD_PTR)xbrTypes::pctContinuous);
+   pcbPierType->SetItemData(idx,(DWORD_PTR)pgsTypes::pctContinuous);
 
    idx = pcbPierType->AddString(_T("Integral"));
-   pcbPierType->SetItemData(idx,(DWORD_PTR)xbrTypes::pctIntegral);
+   pcbPierType->SetItemData(idx,(DWORD_PTR)pgsTypes::pctIntegral);
 
    idx = pcbPierType->AddString(_T("Expansion"));
-   pcbPierType->SetItemData(idx,(DWORD_PTR)xbrTypes::pctExpansion);
+   pcbPierType->SetItemData(idx,(DWORD_PTR)pgsTypes::pctExpansion);
 }
 
 void CSuperstructureLayoutPage::UpdateImage()

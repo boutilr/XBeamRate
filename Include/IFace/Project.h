@@ -95,8 +95,8 @@ public:
    virtual void SetPierData(const xbrPierData& pierData) = 0;
    virtual const xbrPierData& GetPierData(PierIDType pierID) const = 0;
 
-   virtual xbrTypes::PierType GetPierType(PierIDType pierID) const = 0;
-   virtual void SetPierType(PierIDType pierID,xbrTypes::PierType pierType) = 0;
+   virtual pgsTypes::PierType GetPierType(PierIDType pierID) const = 0;
+   virtual void SetPierType(PierIDType pierID,pgsTypes::PierType pierType) = 0;
 
    // Elevation of the deck on the alignment at the CL Pier
    virtual void SetDeckElevation(PierIDType pierID,Float64 deckElevation) = 0;

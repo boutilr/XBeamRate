@@ -52,7 +52,7 @@ CConcreteMaterial& CReinforcementPageParent::GetConcrete()
    return m_pEditPierData->GetPierData()->GetConcrete();
 }
 
-xbrTypes::PierType CReinforcementPageParent::GetPierType()
+pgsTypes::PierType CReinforcementPageParent::GetPierType()
 {
    if ( m_pEditPierData->GetPierData()->IsBoundaryPier() )
    {

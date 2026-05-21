@@ -25,8 +25,8 @@
 #include <XBeamRateExt\XBRExtExp.h>
 #include <PsgLib\PierData2.h>
 
-xbrTypes::PierType XBREXTFUNC GetPierType(pgsTypes::BoundaryConditionType bcType);
-xbrTypes::PierType XBREXTFUNC GetPierType(pgsTypes::PierSegmentConnectionType connType);
+pgsTypes::PierType XBREXTFUNC GetPierType(pgsTypes::BoundaryConditionType bcType);
+pgsTypes::PierType XBREXTFUNC GetPierType(pgsTypes::PierSegmentConnectionType connType);
 bool XBREXTFUNC IsStandAlone();
 bool XBREXTFUNC IsPGSExtension();
 bool XBREXTFUNC CanModelPier(PierIDType pierID,StatusGroupIDType statusGroupID,StatusCallbackIDType callbackID);

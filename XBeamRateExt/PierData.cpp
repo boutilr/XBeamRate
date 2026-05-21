@@ -28,7 +28,7 @@
 xbrPierData::xbrPierData()
 {
    m_ID = INVALID_ID;
-   m_ConnectionType = xbrTypes::pctIntegral;
+   m_ConnectionType = pgsTypes::pctIntegral;
    m_strSkew = _T("00 00 00.0 L");
    m_BridgeLineOffset = 0;
    m_CurbLineDatum = pgsTypes::omtAlignment;
@@ -214,17 +214,17 @@ Float64& xbrPierData::GetBridgeLineOffset()
    return m_BridgeLineOffset;
 }
 
-void xbrPierData::SetPierType(xbrTypes::PierType type)
+void xbrPierData::SetPierType(pgsTypes::PierType type)
 {
    m_ConnectionType = type;
 }
 
-xbrTypes::PierType xbrPierData::GetPierType() const
+pgsTypes::PierType xbrPierData::GetPierType() const
 {
    return m_ConnectionType;
 }
 
-xbrTypes::PierType& xbrPierData::GetPierType()
+pgsTypes::PierType& xbrPierData::GetPierType()
 {
    return m_ConnectionType;
 }
@@ -828,7 +828,7 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
          hr = pStrLoad->BeginUnit(_T("Layout"));
          var.vt = VT_I4;
          hr = pStrLoad->get_Property(_T("SuperstructureConnectionType"),&var);
-         m_ConnectionType = (xbrTypes::PierType)(var.lVal);
+         m_ConnectionType = (pgsTypes::PierType)(var.lVal);
 
          var.vt = VT_BSTR;
          hr = pStrLoad->get_Property(_T("Skew"),&var);

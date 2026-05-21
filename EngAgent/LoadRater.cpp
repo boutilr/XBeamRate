@@ -53,8 +53,8 @@ xbrRatingArtifact xbrLoadRater::RateXBeam(PierIDType pierID,pgsTypes::LoadRating
    GET_IFACE2(GetBroker(),IXBRPointOfInterest,pPOI);
 
    GET_IFACE2(GetBroker(),IXBRProject, pProject);
-   xbrTypes::PierType pierType = pProject->GetPierType(pierID);
-   pgsTypes::Stage stage = (pierType == xbrTypes::pctIntegral ? pgsTypes::Stage2 : pgsTypes::Stage1);
+   pgsTypes::PierType pierType = pProject->GetPierType(pierID);
+   pgsTypes::Stage stage = (pierType == pgsTypes::pctIntegral ? pgsTypes::Stage2 : pgsTypes::Stage1);
 
    xbrRatingArtifact ratingArtifact(ratingType);
 

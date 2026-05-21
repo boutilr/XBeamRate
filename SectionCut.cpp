@@ -147,7 +147,7 @@ void CSectionCutDisplayImpl::GetBoundingBox(std::shared_ptr<const WBFL::DManip::
    Float64 H = pSectProp->GetDepth(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,Xxb));
 
    GET_IFACE2(pBroker,IXBRProject,pProject);
-   if ( pProject->GetPierType(pierID) != xbrTypes::pctIntegral )
+   if ( pProject->GetPierType(pierID) != pgsTypes::pctIntegral )
    {
       Float64 d,w;
       pProject->GetDiaphragmDimensions(pierID,&d,&w);

@@ -1573,12 +1573,12 @@ const xbrPierData& CProjectAgentImp::GetPierData(PierIDType pierID) const
    return GetPrivatePierData(pierID);
 }
 
-xbrTypes::PierType CProjectAgentImp::GetPierType(PierIDType pierID) const
+pgsTypes::PierType CProjectAgentImp::GetPierType(PierIDType pierID) const
 {
    return GetPrivatePierData(pierID).GetPierType();
 }
 
-void CProjectAgentImp::SetPierType(PierIDType pierID,xbrTypes::PierType pierType)
+void CProjectAgentImp::SetPierType(PierIDType pierID,pgsTypes::PierType pierType)
 {
    GetPrivatePierData(pierID).SetPierType(pierType);
    Fire_OnProjectChanged();
@@ -1796,7 +1796,7 @@ void CProjectAgentImp::GetBearingReactions(PierIDType pierID,IndexType brgLineId
       ResultsType resultsType = rtCumulative;
 
       xbrPierData& pierData = GetPrivatePierData(pierID);
-      if ( pierData.GetPierType() == xbrTypes::pctExpansion )
+      if ( pierData.GetPierType() == pgsTypes::pctExpansion )
       {
          GET_IFACE(IBearingDesign,pBearingDesign);
 
@@ -2023,7 +2023,7 @@ xbrTypes::ReactionLoadApplicationType CProjectAgentImp::GetReactionLoadApplicati
    }
    else
    {
-      if ( GetPierType(pierID) == xbrTypes::pctExpansion && !UseUniformLoads(pierID,0) )
+      if ( GetPierType(pierID) == pgsTypes::pctExpansion && !UseUniformLoads(pierID,0) )
       {
          return xbrTypes::rlaBearings;
       }
@@ -3404,7 +3404,7 @@ void CProjectAgentImp::UpdatePierData(const CPierData2* pPier,xbrPierData& pierD
    pierData.SetConcreteMaterial(pPier->GetConcrete());
 
    // Bearing Lines and Bearing Locations
-   if ( pierData.GetPierType() == xbrTypes::pctExpansion )
+   if ( pierData.GetPierType() == pgsTypes::pctExpansion )
    {
       // two bearing lines
       if ( pPier->IsAbutment() )

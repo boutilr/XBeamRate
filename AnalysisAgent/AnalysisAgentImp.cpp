@@ -986,7 +986,7 @@ Float64 CAnalysisAgentImp::GetUpperCrossBeamLoading(PierIDType pierID) const
    Float64 H, W;
    pProject->GetDiaphragmDimensions(pierID,&H,&W);
 
-   if ( pProject->GetPierType(pierID) == xbrTypes::pctExpansion )
+   if ( pProject->GetPierType(pierID) == pgsTypes::pctExpansion )
    {
       W *= 2;
    }

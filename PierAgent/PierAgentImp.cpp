@@ -1345,7 +1345,7 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
    GET_IFACE(IXBRProject,pProject);
    const xbrPierData& pierData = pProject->GetPierData(pierID);
 
-   xbrTypes::PierType pierType = pProject->GetPierType(pierID);
+   pgsTypes::PierType pierType = pProject->GetPierType(pierID);
    pierModel->put_Type((PierType)pierType);
 
    CComPtr<IAngle> skew;
@@ -1695,7 +1695,7 @@ void CPierAgentImp::ValidateStirrupZones(PierIDType pierID,pgsTypes::Stage stage
    }
    else
    {
-      if ( pProject->GetPierType(pierID) == xbrTypes::pctIntegral )
+      if ( pProject->GetPierType(pierID) == pgsTypes::pctIntegral )
       {
          // there are only full depth stirrups for integral piers
          ValidateStirrupZones(pierID,pierData.GetFullDepthStirrups(), &vStirrupZones);

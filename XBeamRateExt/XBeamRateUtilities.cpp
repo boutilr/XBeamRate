@@ -36,48 +36,48 @@
 
 
 
-xbrTypes::PierType GetPierType(pgsTypes::BoundaryConditionType bcType)
+pgsTypes::PierType GetPierType(pgsTypes::BoundaryConditionType bcType)
 {
    switch( bcType )
    {
    case pgsTypes::bctHinge:
    case pgsTypes::bctRoller:
-      return xbrTypes::pctExpansion;
+      return pgsTypes::pctExpansion;
 
    case pgsTypes::bctContinuousAfterDeck:
    case pgsTypes::bctContinuousBeforeDeck:
-      return xbrTypes::pctContinuous;
+      return pgsTypes::pctContinuous;
 
    case pgsTypes::bctIntegralAfterDeck:
    case pgsTypes::bctIntegralBeforeDeck:
-      return xbrTypes::pctIntegral;
+      return pgsTypes::pctIntegral;
 
    case pgsTypes::bctIntegralAfterDeckHingeBack:
    case pgsTypes::bctIntegralBeforeDeckHingeBack:
    case pgsTypes::bctIntegralAfterDeckHingeAhead:
    case pgsTypes::bctIntegralBeforeDeckHingeAhead:
-      return xbrTypes::pctIntegral;
+      return pgsTypes::pctIntegral;
    }
 
    ATLASSERT(false); // should never get here
-   return xbrTypes::pctIntegral;
+   return pgsTypes::pctIntegral;
 }
 
-xbrTypes::PierType GetPierType(pgsTypes::PierSegmentConnectionType connType)
+pgsTypes::PierType GetPierType(pgsTypes::PierSegmentConnectionType connType)
 {
    switch ( connType )
    {
    case pgsTypes::psctContinousClosureJoint:
    case pgsTypes::psctContinuousSegment:
-      return xbrTypes::pctContinuous;
+      return pgsTypes::pctContinuous;
 
    case pgsTypes::psctIntegralClosureJoint:
    case pgsTypes::psctIntegralSegment:
-      return xbrTypes::pctIntegral;
+      return pgsTypes::pctIntegral;
    }
 
    ATLASSERT(false); // should never get here
-   return xbrTypes::pctIntegral;
+   return pgsTypes::pctIntegral;
 }
 
 bool IsStandAlone()

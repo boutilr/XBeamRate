@@ -112,8 +112,8 @@ public:
    void SetPierData(const xbrPierData& pierData) override;
    const xbrPierData& GetPierData(PierIDType pierID) const override;
 
-   xbrTypes::PierType GetPierType(PierIDType pierID) const override;
-   void SetPierType(PierIDType pierID,xbrTypes::PierType pierType) override;
+   pgsTypes::PierType GetPierType(PierIDType pierID) const override;
+   void SetPierType(PierIDType pierID,pgsTypes::PierType pierType) override;
 
    void SetDeckElevation(PierIDType pierID,Float64 deckElevation) override;
    Float64 GetDeckElevation(PierIDType pierID) const override;
