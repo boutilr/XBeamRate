@@ -115,15 +115,15 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
    DDX_OffsetAndTag(pDX,IDC_REFCOLUMN_OFFSET,IDC_REFCOLUMN_OFFSET_UNIT,pParent->m_PierData.m_PierData.GetRefColumnOffset(), pDisplayUnits->GetSpanLengthUnit() );
    DDX_CBItemData(pDX,IDC_REFCOLUMN_MEASUREMENT,pParent->m_PierData.m_PierData.GetColumnLayoutDatum());
 
-   DDX_UnitValueAndTag(pDX,IDC_H1,IDC_H1_UNIT,pParent->m_PierData.m_PierData.GetH1(),pDisplayUnits->GetSpanLengthUnit() );
-   DDX_UnitValueAndTag(pDX,IDC_H2,IDC_H2_UNIT,pParent->m_PierData.m_PierData.GetH2(),pDisplayUnits->GetSpanLengthUnit() );
-   DDX_UnitValueAndTag(pDX,IDC_X1,IDC_X1_UNIT,pParent->m_PierData.m_PierData.GetX1(),pDisplayUnits->GetSpanLengthUnit() );
-   DDX_UnitValueAndTag(pDX,IDC_X2,IDC_X2_UNIT,pParent->m_PierData.m_PierData.GetX2(),pDisplayUnits->GetSpanLengthUnit() );
+   DDX_UnitValueAndTag(pDX,IDC_H1,IDC_H1_UNIT,pParent->m_PierData.m_PierData.GetH1L(),pDisplayUnits->GetSpanLengthUnit() );
+   DDX_UnitValueAndTag(pDX,IDC_H2,IDC_H2_UNIT,pParent->m_PierData.m_PierData.GetH2L(),pDisplayUnits->GetSpanLengthUnit() );
+   DDX_UnitValueAndTag(pDX,IDC_X1,IDC_X1_UNIT,pParent->m_PierData.m_PierData.GetX2L(),pDisplayUnits->GetSpanLengthUnit() );
+   DDX_UnitValueAndTag(pDX,IDC_X2,IDC_X2_UNIT,pParent->m_PierData.m_PierData.GetX1L(),pDisplayUnits->GetSpanLengthUnit() );
 
-   DDX_UnitValueAndTag(pDX,IDC_H3,IDC_H3_UNIT,pParent->m_PierData.m_PierData.GetH3(),pDisplayUnits->GetSpanLengthUnit() );
-   DDX_UnitValueAndTag(pDX,IDC_H4,IDC_H4_UNIT,pParent->m_PierData.m_PierData.GetH4(),pDisplayUnits->GetSpanLengthUnit() );
-   DDX_UnitValueAndTag(pDX,IDC_X3,IDC_X3_UNIT,pParent->m_PierData.m_PierData.GetX3(),pDisplayUnits->GetSpanLengthUnit() );
-   DDX_UnitValueAndTag(pDX,IDC_X4,IDC_X4_UNIT,pParent->m_PierData.m_PierData.GetX4(),pDisplayUnits->GetSpanLengthUnit() );
+   DDX_UnitValueAndTag(pDX,IDC_H3,IDC_H3_UNIT,pParent->m_PierData.m_PierData.GetH1R(),pDisplayUnits->GetSpanLengthUnit() );
+   DDX_UnitValueAndTag(pDX,IDC_H4,IDC_H4_UNIT,pParent->m_PierData.m_PierData.GetH2R(),pDisplayUnits->GetSpanLengthUnit() );
+   DDX_UnitValueAndTag(pDX,IDC_X3,IDC_X3_UNIT,pParent->m_PierData.m_PierData.GetX2R(),pDisplayUnits->GetSpanLengthUnit() );
+   DDX_UnitValueAndTag(pDX,IDC_X4,IDC_X4_UNIT,pParent->m_PierData.m_PierData.GetX1R(),pDisplayUnits->GetSpanLengthUnit() );
 
    DDX_UnitValueAndTag(pDX,IDC_W,IDC_W_UNIT,pParent->m_PierData.m_PierData.GetW(),pDisplayUnits->GetSpanLengthUnit() );
 
@@ -158,33 +158,33 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
       DDV_UnitValueGreaterThanZero(pDX, IDC_W, pParent->m_PierData.m_PierData.GetW(), pDisplayUnits->GetSpanLengthUnit());
 
       // H1 and H3 must be > 0
-      DDV_UnitValueGreaterThanZero(pDX, IDC_H1, pParent->m_PierData.m_PierData.GetH1(), pDisplayUnits->GetSpanLengthUnit());
-      DDV_UnitValueGreaterThanZero(pDX, IDC_H3, pParent->m_PierData.m_PierData.GetH3(), pDisplayUnits->GetSpanLengthUnit());
+      DDV_UnitValueGreaterThanZero(pDX, IDC_H1, pParent->m_PierData.m_PierData.GetH1L(), pDisplayUnits->GetSpanLengthUnit());
+      DDV_UnitValueGreaterThanZero(pDX, IDC_H3, pParent->m_PierData.m_PierData.GetH1R(), pDisplayUnits->GetSpanLengthUnit());
 
       // X1, X2, X3 and X4 must be >= 0
-      DDV_UnitValueZeroOrMore(pDX, IDC_X1, pParent->m_PierData.m_PierData.GetX1(), pDisplayUnits->GetSpanLengthUnit());
-      DDV_UnitValueZeroOrMore(pDX, IDC_X2, pParent->m_PierData.m_PierData.GetX2(), pDisplayUnits->GetSpanLengthUnit());
-      DDV_UnitValueZeroOrMore(pDX, IDC_X3, pParent->m_PierData.m_PierData.GetX3(), pDisplayUnits->GetSpanLengthUnit());
-      DDV_UnitValueZeroOrMore(pDX, IDC_X4, pParent->m_PierData.m_PierData.GetX4(), pDisplayUnits->GetSpanLengthUnit());
+      DDV_UnitValueZeroOrMore(pDX, IDC_X1, pParent->m_PierData.m_PierData.GetX2L(), pDisplayUnits->GetSpanLengthUnit());
+      DDV_UnitValueZeroOrMore(pDX, IDC_X2, pParent->m_PierData.m_PierData.GetX1L(), pDisplayUnits->GetSpanLengthUnit());
+      DDV_UnitValueZeroOrMore(pDX, IDC_X3, pParent->m_PierData.m_PierData.GetX2R(), pDisplayUnits->GetSpanLengthUnit());
+      DDV_UnitValueZeroOrMore(pDX, IDC_X4, pParent->m_PierData.m_PierData.GetX1R(), pDisplayUnits->GetSpanLengthUnit());
 
       // Left end
-      if (0 < pParent->m_PierData.m_PierData.GetX1())
+      if (0 < pParent->m_PierData.m_PierData.GetX2L())
       {
          // if H2 > 0, then X1 must be > 0
-         if ( IsZero(pParent->m_PierData.m_PierData.GetH2()) )
+         if ( IsZero(pParent->m_PierData.m_PierData.GetH2L()) )
          {
             pDX->PrepareCtrl(IDC_H2);
             AfxMessageBox(_T("H2 must be greater than zero when X1 is greater than zero."));
             pDX->Fail();
          }
-         else if ( pParent->m_PierData.m_PierData.GetX1() < pParent->m_PierData.m_PierData.GetX2() )
+         else if ( pParent->m_PierData.m_PierData.GetX2L() < pParent->m_PierData.m_PierData.GetX1L() )
          {
             pDX->PrepareCtrl(IDC_X1);
             AfxMessageBox(_T("X1 must be greater than X2 when X1 is greater than zero."));
             pDX->Fail();
          }
       }
-      else if ( !IsZero(pParent->m_PierData.m_PierData.GetH2()) )
+      else if ( !IsZero(pParent->m_PierData.m_PierData.GetH2L()) )
       {
          // if X1 is zero, then H2 must also be zero
          pDX->PrepareCtrl(IDC_H2);
@@ -193,23 +193,23 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
       }
 
       // Right end
-      if (0 < pParent->m_PierData.m_PierData.GetX3())
+      if (0 < pParent->m_PierData.m_PierData.GetX2R())
       {
          // if H4 > 0, then X3 must be > 0
-         if ( IsZero(pParent->m_PierData.m_PierData.GetH4()) )
+         if ( IsZero(pParent->m_PierData.m_PierData.GetH2R()) )
          {
             pDX->PrepareCtrl(IDC_H4);
             AfxMessageBox(_T("H4 must be greater than zero when X3 is greater than zero."));
             pDX->Fail();
          }
-         else if ( pParent->m_PierData.m_PierData.GetX3() < pParent->m_PierData.m_PierData.GetX4() )
+         else if ( pParent->m_PierData.m_PierData.GetX2R() < pParent->m_PierData.m_PierData.GetX1R() )
          {
             pDX->PrepareCtrl(IDC_X3);
             AfxMessageBox(_T("X3 must be greater than X4 when X3 is greater than zero."));
             pDX->Fail();
          }
       }
-      else if ( !IsZero(pParent->m_PierData.m_PierData.GetH4()) )
+      else if ( !IsZero(pParent->m_PierData.m_PierData.GetH2R()) )
       {
          // if X3 is zero, then H4 must also be zero
          pDX->PrepareCtrl(IDC_H4);
@@ -235,7 +235,7 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
          S += pParent->m_PierData.m_PierData.GetColumnSpacing(spaIdx);
       }
       Float64 pierWidth = pParent->m_PierData.m_PierData.GetX5() + pParent->m_PierData.m_PierData.GetX6() + S;
-      Float64 sumOverhangs = pParent->m_PierData.m_PierData.GetX1() + pParent->m_PierData.m_PierData.GetX3();
+      Float64 sumOverhangs = pParent->m_PierData.m_PierData.GetX2L() + pParent->m_PierData.m_PierData.GetX2R();
       if (pierWidth < sumOverhangs)
       {
          pDX->PrepareCtrl(IDC_X5);

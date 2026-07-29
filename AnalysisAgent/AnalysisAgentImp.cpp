@@ -350,9 +350,12 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
             // monolithic piers are sometimes modeled with just the lower cross beam. The upper cross beam
             // height is set to 0.0. In this case, use the lower cross beam dimensions to get some sort of reasonable
             // offset for the live load transfer model
-            Float64 H1, H2, H3, H4, X1, X2, X3, X4, W;
-            pProject->GetLowerXBeamDimensions(pierID, &H1, &H2, &H3, &H4, &X1, &X2, &X3, &X4, &W);
-            Y = Max(H1 + H2, H3 + H4);
+
+
+             Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, D;
+             std::vector<CPierPointData> vPoints;
+             pProject->GetLowerXBeamDimensions(pierID, &H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
+             Y = Max(H1L + H2L, H1R + H2R);
          }
 
          Float64 EI = EIb/10000; // use members that are considerably less stiff than the XBeam members (we don't want to attract the dead load into this transfer model)

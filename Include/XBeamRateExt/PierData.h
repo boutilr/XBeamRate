@@ -25,6 +25,7 @@
 #include <XBeamRateExt\XBRExtExp.h>
 #include <PsgLib\ColumnData.h>
 #include <PsgLib\ConcreteMaterial.h>
+#include <PsgLib/PierData2.h>
 #include <XBeamRateExt\LongitudinalRebarData.h>
 #include <XBeamRateExt\StirrupData.h>
 #include <XBeamRateExt\BearingLineData.h>
@@ -48,6 +49,11 @@ public:
 
    void SetID(PierIDType id);
    PierIDType GetID() const;
+
+
+   // Set/Get the pier layout type.
+   pgsTypes::PierLayoutType GetPierLayoutType() const;
+   void SetPierLayoutType(pgsTypes::PierLayoutType layoutType);
 
    // Set/Get the offset from the alignment to the bridge line
    void SetBridgeLineOffset(Float64 blo);
@@ -114,17 +120,20 @@ public:
    Float64& GetDiaphragmHeight();
    Float64& GetDiaphragmWidth();
 
-   void SetLowerXBeamDimensions(Float64 h1,Float64 h2,Float64 h3,Float64 h4,Float64 x1,Float64 x2,Float64 x3,Float64 x4,Float64 w);
-   void GetLowerXBeamDimensions(Float64* ph1,Float64* ph2,Float64* ph3,Float64* ph4,Float64* px1,Float64* px2,Float64* px3,Float64* px4,Float64* pw) const;
-   Float64& GetH1();
-   Float64& GetH2();
-   Float64& GetH3();
-   Float64& GetH4();
-   Float64& GetX1();
-   Float64& GetX2();
-   Float64& GetX3();
-   Float64& GetX4();
+   void SetLowerXBeamDimensions(Float64 h1l, Float64 h1r, Float64 h2l, Float64 h2r, Float64 x1l, Float64 x1r, Float64 x2l, Float64 x2r, Float64 w, Float64 r, Float64 d, std::vector<CPierPointData> vpp);
+   void GetLowerXBeamDimensions(Float64* ph1l, Float64* ph1r, Float64* ph2l, Float64* ph2r, Float64* px1l, Float64* px1r, Float64* px2l, Float64* px2r, Float64* pw, Float64* pr, Float64* pd, std::vector<CPierPointData>* pvpp) const;
+   Float64& GetH1L();
+   Float64& GetH1R();
+   Float64& GetH2L();
+   Float64& GetH2R();
+   Float64& GetX1L();
+   Float64& GetX1R();
+   Float64& GetX2L();
+   Float64& GetX2R();
    Float64& GetW();
+   Float64& GetR();
+   Float64& GetD();
+   std::vector<CPierPointData>& GetPierPointData();
 
    // Establishes the location of the columns with respect to the alignment/bridgeline.
    void SetRefColumnLocation(pgsTypes::OffsetMeasurementType refColumnDatum,IndexType refColumnIdx,Float64 refColumnOffset);
@@ -205,6 +214,9 @@ protected:
 
 protected:
    PierIDType m_ID;
+
+   pgsTypes::PierLayoutType m_PierLayoutType;
+
    std::_tstring m_strSkew;
    Float64 m_BridgeLineOffset; // offset from alignment to bridge line
    pgsTypes::PierType m_ConnectionType;
@@ -223,9 +235,14 @@ protected:
    CComPtr<IPoint2dCollection> m_DeckProfile; // x = offset from alignment, y = elevation
 
    // Lower X-Beam Dimensions
-   Float64 m_H1, m_H2, m_H3, m_H4;
-   Float64 m_X1, m_X2, m_X3, m_X4;
+   Float64 m_H1L, m_H1R;
+   Float64 m_H2L, m_H2R;
+   Float64 m_X1L, m_X1R;
+   Float64 m_X2L, m_X2R;
    Float64 m_XW;
+   Float64 m_XR;
+   Float64 m_XD;
+   std::vector<CPierPointData> m_PierPoints;
 
    // Column Layout
    std::vector<CColumnData> m_vColumnData;

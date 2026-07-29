@@ -245,9 +245,10 @@ Float64 CPierAgentImp::GetBearingLocation(PierIDType pierID,IndexType brgLineIdx
 
    GET_IFACE(IXBRProject, pProject);
    const xbrPierData& pierData = pProject->GetPierData(pierID);
-   Float64 H1, H2, H3, H4, X1, X2, X3, X4, W;
-   pierData.GetLowerXBeamDimensions(&H1, &H2, &H3, &H4, &X1, &X2, &X3, &X4, &W);
-   Xxb -= X2; // now it is the location in cross beam coordinates
+   Float64 H1L, H1R, H2L, H2R, X1L,  X1R, X2L, X2R, W, R, D;
+   std::vector<CPierPointData> vPoints;
+   pierData.GetLowerXBeamDimensions(&H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
+   Xxb -= X1L; // now it is the location in cross beam coordinates
 
    return Xxb;
 }
@@ -292,9 +293,10 @@ Float64 CPierAgentImp::GetColumnLocation(PierIDType pierID,IndexType colIdx) con
 
    GET_IFACE(IXBRProject, pProject);
    const xbrPierData& pierData = pProject->GetPierData(pierID);
-   Float64 H1, H2, H3, H4, X1, X2, X3, X4, W;
-   pierData.GetLowerXBeamDimensions(&H1, &H2, &H3, &H4, &X1, &X2, &X3, &X4, &W);
-   Xxb -= X2; // now it is the location in cross beam coordinates
+   Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, D;
+   std::vector<CPierPointData> vPoints;
+   pierData.GetLowerXBeamDimensions(&H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
+   Xxb -= X1L; // now it is the location in cross beam coordinates
 
    return Xxb;
 }
@@ -1430,25 +1432,28 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
    pierModel->put_DeckThickness(pierData.GetDeckThickness());
 
    // Create Cross Beam
-   CComPtr<ILinearCrossBeam> xbeam;
-   xbeam.CoCreateInstance(CLSID_LinearCrossBeam);
+   CComPtr<IBasicCrossBeam> bxbeam;
 
-   Float64 H1, H2, H3, H4, X1, X2, X3, X4, W1;
-   pierData.GetLowerXBeamDimensions(&H1,&H2,&H3,&H4,&X1,&X2,&X3,&X4,&W1);
-   xbeam->put_H1(H1);
-   xbeam->put_H2(H2);
-   xbeam->put_H3(H3);
-   xbeam->put_H4(H4);
-   xbeam->put_X1(X1);
-   xbeam->put_X2(X2);
-   xbeam->put_X3(X3);
-   xbeam->put_X4(X4);
-   xbeam->put_W1(W1);
+   HRESULT hr = bxbeam.CoCreateInstance(CLSID_BasicCrossBeam);
 
-   Float64 H5, W2;
-   pierData.GetDiaphragmDimensions(&H5,&W2);
-   xbeam->put_H5(H5);
-   xbeam->put_W2(W2);
+   Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, D;
+   std::vector<CPierPointData> vPoints;
+   pierData.GetLowerXBeamDimensions(&H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
+   bxbeam->put_H1L(H1L);
+   bxbeam->put_H2L(H2L);
+   bxbeam->put_H1R(H1R);
+   bxbeam->put_H2R(H2R);
+   bxbeam->put_X2L(X2L);
+   bxbeam->put_X1L(X1L);
+   bxbeam->put_X2R(X2R);
+   bxbeam->put_X1R(X1R);
+   bxbeam->put_W1(W);
+
+   Float64 HU, W2;
+   pierData.GetDiaphragmDimensions(&HU, &W2);
+   bxbeam->put_HU(HU);
+   bxbeam->put_W2(W2);
+ 
 
    // Create Column Layout
    CComPtr<IColumnLayout> columnLayout;
@@ -1538,13 +1543,22 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
    }
 
    // finish the pier model (need pier to be complete because we need its geometry to layout the rebar)
-   pierModel->putref_CrossBeam(xbeam);
+
+   if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+   {
+       pierModel->putref_CrossBeam(bxbeam);
+   }
+
    pierModel->putref_BearingLayout(bearingLayout);
    pierModel->putref_ColumnLayout(columnLayout);
 
    // XBeam Rebar Layout
    CComPtr<IRebarLayout> rebarLayout;
-   xbeam->get_RebarLayout(&rebarLayout);
+
+   if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+   {
+       bxbeam->get_RebarLayout(&rebarLayout);
+   }
 
    CComPtr<IRebarFactory> rebar_factory;
    rebar_factory.CoCreateInstance(CLSID_RebarFactory);
@@ -1552,7 +1566,7 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
    // Rebar factory needs a unit server object for units conversion
    CComPtr<IUnitServer> unitServer;
    unitServer.CoCreateInstance(CLSID_UnitServer);
-   HRESULT hr = ConfigureUnitServer(unitServer);
+   hr = ConfigureUnitServer(unitServer);
    ATLASSERT(SUCCEEDED(hr));
 
    CComPtr<IUnitConvert> unit_convert;
@@ -1580,7 +1594,10 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
       else if ( row.LayoutType == xbrTypes::blRightEnd )
       {
          CComPtr<IPoint2dCollection> points;
-         xbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
+         if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+         {
+             bxbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
+         }
          CComPtr<IPoint2d> pnt;
          IndexType nPoints;
          points->get_Count(&nPoints);
@@ -1595,7 +1612,11 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
       else if ( row.LayoutType == xbrTypes::blFullLength )
       {
          CComPtr<IPoint2dCollection> points;
-         xbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
+
+         if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+         {
+             bxbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
+         }
          CComPtr<IPoint2d> pnt;
          points->get_Item(0, &pnt);
          pnt->get_X(&Xstart);
@@ -1630,7 +1651,10 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 
       CComPtr<ICrossBeamRebarPattern> rebarPattern;
       rebarPattern.CoCreateInstance(CLSID_CrossBeamRebarPattern);
-      rebarPattern->putref_CrossBeam(xbeam);
+      if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+      {
+          rebarPattern->putref_CrossBeam(bxbeam);
+      }
       rebarPattern->putref_Rebar(rebar);
       rebarPattern->put_Datum((CrossBeamRebarDatum)row.Datum);
       rebarPattern->put_Cover(row.Cover);
@@ -1879,10 +1903,9 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
 
    Float64 delta = WBFL::Units::ConvertToSysUnits(0.001,WBFL::Units::Measure::Feet);
 
-   Float64 H1, H2, X1, X2;
-   Float64 H3, H4, X3, X4;
-   Float64 W;
-   pProject->GetLowerXBeamDimensions(pierID,&H1,&H2,&H3,&H4,&X1,&X2,&X3,&X4,&W);
+   Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, D;
+   std::vector<CPierPointData> vPoints;
+   pProject->GetLowerXBeamDimensions(pierID, &H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
 
    Float64 L = GetXBeamLength(xbrTypes::xblBottomXBeam, pierID);
 
@@ -1891,9 +1914,9 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
    // Put a POI at every location the section changes depth
    vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,0.0,POI_SECTIONCHANGE));
 
-   if ( !IsZero(X1) )
+   if ( !IsZero(X2L) )
    {
-      vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,X1-X2,POI_SECTIONCHANGE));
+      vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,X2L-X1L,POI_SECTIONCHANGE));
    }
 
    Float64 crownPoint = GetCrownPointLocation(pierID);
@@ -1902,9 +1925,9 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
       vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,crownPoint,POI_SECTIONCHANGE));
    }
 
-   if ( !IsZero(X3) )
+   if ( !IsZero(X2R) )
    {
-      vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,L-(X3-X4),POI_SECTIONCHANGE));
+      vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,L-(X2R-X1R),POI_SECTIONCHANGE));
    }
 
    vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,L,POI_SECTIONCHANGE));
@@ -1968,7 +1991,7 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
    }
 
    // Put POI at each side of a column so we pick up jumps in the moment and shear diagrams
-   Float64 LeftOH = pProject->GetXBeamLeftOverhang(pierID)-X2; 
+   Float64 LeftOH = pProject->GetXBeamLeftOverhang(pierID)-X1L; 
 
    // left column
    vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,LeftOH,POI_COLUMN_LEFT));

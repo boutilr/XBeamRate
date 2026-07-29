@@ -1206,11 +1206,12 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    Xcrown = pPier->ConvertCurbLineToCrossBeamCoordinate(pierID,Xcrown);
    Float64 Xoffset = CPO - Xcrown;
 
-   Float64 H1, H2, H3, H4, X1, X2, X3, X4, W;
-   pProject->GetLowerXBeamDimensions(pierID,&H1,&H2,&H3,&H4,&X1,&X2,&X3,&X4,&W);
+   Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, Dx;
+   std::vector<CPierPointData> vPoints;
+   pProject->GetLowerXBeamDimensions(pierID , &H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &Dx, &vPoints);
 
-   Float64 D, Hu;
-   pProject->GetDiaphragmDimensions(pierID,&Hu,&D);
+   Float64 Dd, Hu;
+   pProject->GetDiaphragmDimensions(pierID,&Hu,&Dd);
 
    CComPtr<IPoint2dCollection> topUpperXBeamProfile, topLowerXBeamProfile, bottomXBeamProfile;
    pPier->GetTopSurface(pierID, pgsTypes::Stage1, &topLowerXBeamProfile);
@@ -1277,9 +1278,9 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    // Lower cross beam bottom taper, vertical dimensions
    WBFL::Geometry::Point2d lxbBLC, lxbBRC;
    lxbBLC.Move(lxbBL);
-   lxbBLC.Offset(0, -H2);
+   lxbBLC.Offset(0, -H2L);
    lxbBRC.Move(lxbBR);
-   lxbBRC.Offset(0, -H4);
+   lxbBRC.Offset(0, -H2R);
 
    BuildDimensionLine(displayList, lxbBLC, lxbBL); // H2 Dimension
    BuildDimensionLine(displayList, lxbBR, lxbBRC); // H4 Dimension
@@ -1289,21 +1290,21 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    topLowerXBeamProfile->get_Item(0, &pnt);
    WBFL::Geometry::Point2d lxbBL1, lxbBR1;
    lxbBL1.Move(geomUtil::GetPoint(pnt));
-   lxbBL1.Offset(0, -H1 - H2);
+   lxbBL1.Offset(0, -H1L - H2L);
 
    pnt.Release();
    topLowerXBeamProfile->get_Count(&nPoints);
    topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
    lxbBR1.Move(geomUtil::GetPoint(pnt));
-   lxbBR1.Offset(0, -H3 - H4);
+   lxbBR1.Offset(0, -H1R - H2R);
 
    WBFL::Geometry::Point2d lxbBL2, lxbBR2;
    Float64 y;
    std::tie(Xl,y) = lxbBL1.GetLocation(); // TRICKY: changing Xl to now be the x-location of left dimensions for the columns
-   lxbBL2.Move(Xl+X1,y);
+   lxbBL2.Move(Xl+X2L,y);
 
    std::tie(Xr,y) = lxbBR1.GetLocation();
-   lxbBR2.Move(Xr-X3,y); // TRICKY: changing Xr to now be the x-location of right dimensions for the columns
+   lxbBR2.Move(Xr-X2R,y); // TRICKY: changing Xr to now be the x-location of right dimensions for the columns
 
    // Horizontal Cross Beam Dimensions
    BuildDimensionLine(displayList,lxbBL2,lxbBL1); // X1 Dimension

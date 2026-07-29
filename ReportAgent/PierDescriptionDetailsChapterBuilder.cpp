@@ -195,20 +195,24 @@ void write_substructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::sha
    pTable->SetStripeRowColumnStyle(2,rptStyleManager::GetTableStripeRowCellStyle(CB_NONE | CJ_LEFT));
    *pPara << pTable << rptNewLine;
 
-   Float64 H1,H2,H3,H4,X1,X2,X3,X4,X5,X6,W;
-   pProject->GetLowerXBeamDimensions(pierID,&H1,&H2,&H3,&H4,&X1,&X2,&X3,&X4,&W);
+
+   Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, D;
+   std::vector<CPierPointData> vPoints;
+   pProject->GetLowerXBeamDimensions(pierID, &H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
+
+   Float64 X5, X6;
    X5 = pProject->GetXBeamLeftOverhang(pierID);
    X6 = pProject->GetXBeamRightOverhang(pierID);
 
-   (*pTable)(0,0) << _T("H1 = ") << length.SetValue(H1);
-   (*pTable)(0,1) << _T("H2 = ") << length.SetValue(H2);
-   (*pTable)(0,2) << _T("H3 = ") << length.SetValue(H3);
-   (*pTable)(0,3) << _T("H4 = ") << length.SetValue(H4);
+   (*pTable)(0,0) << _T("H1L = ") << length.SetValue(H1L);
+   (*pTable)(0,1) << _T("H2L = ") << length.SetValue(H2L);
+   (*pTable)(0,2) << _T("H1R = ") << length.SetValue(H1R);
+   (*pTable)(0,3) << _T("H2R = ") << length.SetValue(H2R);
 
-   (*pTable)(1,0) << _T("X1 = ") << length.SetValue(X1);
-   (*pTable)(1,1) << _T("X2 = ") << length.SetValue(X2);
-   (*pTable)(1,2) << _T("X3 = ") << length.SetValue(X3);
-   (*pTable)(1,3) << _T("X4 = ") << length.SetValue(X4);
+   (*pTable)(1,0) << _T("X2L = ") << length.SetValue(X2L);
+   (*pTable)(1,1) << _T("X1L = ") << length.SetValue(X1L);
+   (*pTable)(1,2) << _T("X2R = ") << length.SetValue(X2R);
+   (*pTable)(1,3) << _T("X1R = ") << length.SetValue(X1R);
 
    (*pTable)(2,0) << _T("X5 = ") << length.SetValue(X5);
    (*pTable)(2,1) << _T("X5 = ") << length.SetValue(X6);

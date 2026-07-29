@@ -37,6 +37,8 @@ xbrPierData::xbrPierData()
 
    m_tDeck = WBFL::Units::ConvertToSysUnits(8.0,WBFL::Units::Measure::Inch);
 
+   m_PierLayoutType = pgsTypes::pltCommon;
+
    m_DeckSurfaceType = Simplified;
    m_DeckElevation = 0;
    m_CrownPointOffset = 0;
@@ -46,15 +48,17 @@ xbrPierData::xbrPierData()
    m_H = WBFL::Units::ConvertToSysUnits(3,WBFL::Units::Measure::Feet);
    m_W = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
 
-   m_H1 = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
-   m_H2 = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
-   m_H3 = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
-   m_H4 = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
-   m_X1 = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
-   m_X2 = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
-   m_X3 = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
-   m_X4 = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
+   m_H1L = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
+   m_H1R = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
+   m_H2L = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
+   m_H2R = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
+   m_X1L = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
+   m_X1R = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
+   m_X2L = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
+   m_X2R = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
    m_XW = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
+   m_XR = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
+   m_XD = WBFL::Units::ConvertToSysUnits(2,WBFL::Units::Measure::Feet);
 
    CColumnData column;
    m_vColumnData.push_back(column);
@@ -121,6 +125,16 @@ void xbrPierData::SetID(PierIDType id)
 PierIDType xbrPierData::GetID() const
 {
    return m_ID;
+}
+
+pgsTypes::PierLayoutType xbrPierData::GetPierLayoutType() const
+{
+    return m_PierLayoutType;
+}
+
+void xbrPierData::SetPierLayoutType(pgsTypes::PierLayoutType layoutType)
+{
+    m_PierLayoutType = layoutType;
 }
 
 void xbrPierData::SetSkew(LPCTSTR strSkew)
@@ -310,75 +324,102 @@ Float64& xbrPierData::GetDiaphragmWidth()
    return m_W;
 }
 
-void xbrPierData::SetLowerXBeamDimensions(Float64 h1,Float64 h2,Float64 h3,Float64 h4,Float64 x1,Float64 x2,Float64 x3,Float64 x4,Float64 w)
+void xbrPierData::SetLowerXBeamDimensions(Float64 h1l,Float64 h1r,Float64 h2l,Float64 h2r,Float64 x1l, Float64 x1r, Float64 x2l,Float64 x2r,Float64 w, Float64 r, Float64 d, std::vector<CPierPointData> vpp)
 {
-   m_H1 = h1;
-   m_H2 = h2;
-   m_H3 = h3;
-   m_H4 = h4;
-   m_X1 = x1;
-   m_X2 = x2;
-   m_X3 = x3;
-   m_X4 = x4;
+   m_H1L = h1l;
+   m_H1R = h1r;
+   m_H2L = h2l;
+   m_H2R = h2r;
+
+   m_X1L = x1l;
+   m_X1R = x1r;
+   m_X2L = x2l;
+   m_X2R = x2r;
+
    m_XW = w;
+   m_XR = r;
+   m_XW = d;
+
+   m_PierPoints = vpp;
 }
 
-void xbrPierData::GetLowerXBeamDimensions(Float64* ph1,Float64* ph2,Float64* ph3,Float64* ph4,Float64* px1,Float64* px2,Float64* px3,Float64* px4,Float64* pw) const
+void xbrPierData::GetLowerXBeamDimensions(Float64* ph1l, Float64* ph1r, Float64* ph2l, Float64* ph2r, Float64* px1l, Float64* px1r, Float64* px2l, Float64* px2r, Float64* pw, Float64* pr, Float64* pd, std::vector<CPierPointData>* pvpp) const
 {
-   *ph1 = m_H1;
-   *ph2 = m_H2;
-   *ph3 = m_H3;
-   *ph4 = m_H4;
-   *px1 = m_X1;
-   *px2 = m_X2;
-   *px3 = m_X3;
-   *px4 = m_X4;
+   *ph1l = m_H1L;
+   *ph1r = m_H1R;
+   *ph2l = m_H2L;
+   *ph2r = m_H2R;
+
+   *px1l = m_X1L;
+   *px1r = m_X1R;
+   *px2l = m_X2L;
+   *px2r = m_X2R;
+
    *pw  = m_XW;
+   *pr  = m_XR;
+   *pd  = m_XD;
+
+   *pvpp = m_PierPoints;
 }
 
-Float64& xbrPierData::GetH1()
+Float64& xbrPierData::GetH1L()
 {
-   return m_H1;
+   return m_H1L;
 }
 
-Float64& xbrPierData::GetH2()
+Float64& xbrPierData::GetH1R()
 {
-   return m_H2;
+   return m_H1R;
 }
 
-Float64& xbrPierData::GetH3()
+Float64& xbrPierData::GetH2L()
 {
-   return m_H3;
+   return m_H2L;
 }
 
-Float64& xbrPierData::GetH4()
+Float64& xbrPierData::GetH2R()
 {
-   return m_H4;
+   return m_H2R;
 }
 
-Float64& xbrPierData::GetX1()
+Float64& xbrPierData::GetX1L()
 {
-   return m_X1;
+   return m_X1L;
 }
 
-Float64& xbrPierData::GetX2()
+Float64& xbrPierData::GetX1R()
 {
-   return m_X2;
+   return m_X1R;
 }
 
-Float64& xbrPierData::GetX3()
+Float64& xbrPierData::GetX2L()
 {
-   return m_X3;
+   return m_X2L;
 }
 
-Float64& xbrPierData::GetX4()
+Float64& xbrPierData::GetX2R()
 {
-   return m_X4;
+   return m_X2R;
 }
 
 Float64& xbrPierData::GetW()
 {
    return m_XW;
+}
+
+Float64& xbrPierData::GetR()
+{
+   return m_XR;
+}
+
+Float64& xbrPierData::GetD()
+{
+   return m_XD;
+}
+
+std::vector<CPierPointData>& xbrPierData::GetPierPointData()
+{
+   return m_PierPoints;
 }
 
 void xbrPierData::SetRefColumnLocation(pgsTypes::OffsetMeasurementType refColumnDatum,IndexType refColumnIdx,Float64 refColumnOffset)
@@ -691,7 +732,7 @@ Float64 xbrPierData::GetXBeamLength() const
    {
       L += s;
    }
-   L += (m_X5-m_X2) + (m_X6-m_X4);
+   L += (m_X5-m_X1L) + (m_X6-m_X1R);
    return L;
 }
 
@@ -743,16 +784,31 @@ HRESULT xbrPierData::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress
       pStrSave->put_Property(_T("W"),CComVariant(m_W));
    pStrSave->EndUnit(); // Diaphragm
 
-   pStrSave->BeginUnit(_T("LowerCrossBeam"),1.0);
-      pStrSave->put_Property(_T("H1"),CComVariant(m_H1));
-      pStrSave->put_Property(_T("H2"),CComVariant(m_H2));
-      pStrSave->put_Property(_T("H3"),CComVariant(m_H3));
-      pStrSave->put_Property(_T("H4"),CComVariant(m_H4));
-      pStrSave->put_Property(_T("X1"),CComVariant(m_X1));
-      pStrSave->put_Property(_T("X2"),CComVariant(m_X2));
-      pStrSave->put_Property(_T("X3"),CComVariant(m_X3));
-      pStrSave->put_Property(_T("X4"),CComVariant(m_X4));
+   pStrSave->BeginUnit(_T("LowerCrossBeam"),2.0);
+      pStrSave->put_Property(_T("PierLayoutType"),CComVariant(m_PierLayoutType));
+      pStrSave->put_Property(_T("H1L"),CComVariant(m_H1L));
+      pStrSave->put_Property(_T("H1R"),CComVariant(m_H1R));
+      pStrSave->put_Property(_T("H2L"),CComVariant(m_H2L));
+      pStrSave->put_Property(_T("H2R"),CComVariant(m_H2R));
+      pStrSave->put_Property(_T("X1L"),CComVariant(m_X1L));
+      pStrSave->put_Property(_T("X1R"),CComVariant(m_X1R));
+      pStrSave->put_Property(_T("X2L"),CComVariant(m_X2L));
+      pStrSave->put_Property(_T("X2R"),CComVariant(m_X2R));
+      pStrSave->put_Property(_T("XR"), CComVariant(m_XR));
+      pStrSave->put_Property(_T("XD"), CComVariant(m_XD));
+
+      pStrSave->put_Property(_T("PierPointCount"), CComVariant(m_PierPoints.size()));
+      std::vector<CPierPointData>::iterator ppIterBegin = m_PierPoints.begin();
+      std::vector<CPierPointData>::iterator ppIter = ppIterBegin;
+      std::vector<CPierPointData>::iterator ppIterEnd = m_PierPoints.end();
+      for (; ppIter != ppIterEnd; ppIter++)
+      {
+          CPierPointData& pierPointData = *ppIter;
+          pierPointData.Save(pStrSave, pProgress);
+      }
+
       pStrSave->put_Property(_T("W"), CComVariant(m_XW));
+
    pStrSave->EndUnit(); // LowerCrossBeam
 
    pStrSave->BeginUnit(_T("Columns"),1.0);
@@ -928,37 +984,101 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
       {
          hr = pStrLoad->BeginUnit(_T("LowerCrossBeam"));
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("H1"),&var);
-         m_H1 = var.dblVal;
+         Float64 version;
+         pStrLoad->get_Version(&version);
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("H2"),&var);
-         m_H2 = var.dblVal;
+         if (version < 2.0)
+         {
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("H1"), &var);
+             m_H1L = var.dblVal;
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("H3"),&var);
-         m_H3 = var.dblVal;
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("H2"), &var);
+             m_H2L = var.dblVal;
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("H4"),&var);
-         m_H4 = var.dblVal;
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("H3"), &var);
+             m_H1R = var.dblVal;
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("X1"),&var);
-         m_X1 = var.dblVal;
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("H4"), &var);
+             m_H2R = var.dblVal;
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("X2"),&var);
-         m_X2 = var.dblVal;
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X1"), &var);
+             m_X2L = var.dblVal;
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("X3"),&var);
-         m_X3 = var.dblVal;
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X2"), &var);
+             m_X1L = var.dblVal;
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("X4"),&var);
-         m_X4 = var.dblVal;
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X3"), &var);
+             m_X1R = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X4"), &var);
+             m_X2R = var.dblVal;
+         }
+         else
+         {
+             var.vt = VT_I4;
+             hr = pStrLoad->get_Property(_T("PierLayoutType"), &var);
+             m_PierLayoutType = (pgsTypes::PierLayoutType)(var.lVal);
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("H1L"), &var);
+             m_H1L = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("H1R"), &var);
+             m_H1R = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("H2L"), &var);
+             m_H2L = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("H2R"), &var);
+             m_H2R = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X1L"), &var);
+             m_X1L = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X1R"), &var);
+             m_X1R = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X2L"), &var);
+             m_X2L = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X2R"), &var);
+             m_X2R = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("XR"), &var);
+             m_XR = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("XD"), &var);
+             m_XD = var.dblVal;
+
+             m_PierPoints.clear();
+             var.vt = VT_INDEX;
+             hr = pStrLoad->get_Property(_T("PierPointCount"), &var);
+             PierPointIndexType nPierPoints = VARIANT2INDEX(var);
+             for (PierPointIndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++)
+             {
+                 CPierPointData pierPointData = GetPierPointData()[ppIdx];
+                 pierPointData.Load(pStrLoad, pProgress);
+                 m_PierPoints.push_back(pierPointData);
+             }
+
+         }
 
          var.vt = VT_R8;
          hr = pStrLoad->get_Property(_T("W"),&var);
@@ -1103,15 +1223,20 @@ void xbrPierData::MakeCopy(const xbrPierData& rOther)
 
    m_tDeck = rOther.m_tDeck;
 
-   m_H1 = rOther.m_H1;
-   m_H2 = rOther.m_H2;
-   m_H3 = rOther.m_H3;
-   m_H4 = rOther.m_H4;
-   m_X1 = rOther.m_X1;
-   m_X2 = rOther.m_X2;
-   m_X3 = rOther.m_X3;
-   m_X4 = rOther.m_X4;
+   m_PierLayoutType = rOther.m_PierLayoutType;
+
+   m_H1L = rOther.m_H1L;
+   m_H1R = rOther.m_H1R;
+   m_H2L = rOther.m_H2L;
+   m_H2R = rOther.m_H2R;
+   m_X1L = rOther.m_X1L;
+   m_X1R = rOther.m_X1R;
+   m_X2L = rOther.m_X2L;
+   m_X2R = rOther.m_X2R;
    m_XW = rOther.m_XW;
+   m_XR = rOther.m_XR;
+   m_XD = rOther.m_XD;
+   m_PierPoints = rOther.m_PierPoints;
 
    m_vColumnData = rOther.m_vColumnData;
    m_vColumnSpacing = rOther.m_vColumnSpacing;

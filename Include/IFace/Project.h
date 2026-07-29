@@ -182,8 +182,8 @@ public:
    virtual void SetConcrete(PierIDType pierID,const CConcreteMaterial& concrete) = 0;
    virtual const CConcreteMaterial& GetConcrete(PierIDType pierID) const = 0;
 
-   virtual void SetLowerXBeamDimensions(PierIDType pierID,Float64 h1,Float64 h2,Float64 h3,Float64 h4,Float64 x1,Float64 x2,Float64 x3,Float64 x4,Float64 w) = 0;
-   virtual void GetLowerXBeamDimensions(PierIDType pierID,Float64* ph1,Float64* ph2,Float64* ph3,Float64* ph4,Float64* px1,Float64* px2,Float64* px3,Float64* px4,Float64* pw) const = 0;
+   virtual void SetLowerXBeamDimensions(PierIDType pierID, Float64 h1l, Float64 h1r, Float64 h2l, Float64 h2r, Float64 x1l, Float64 x1r, Float64 x2l, Float64 x2r, Float64 w, Float64 r, Float64 d, std::vector<CPierPointData> pp) = 0;
+   virtual void GetLowerXBeamDimensions(PierIDType pierID, Float64* ph1, Float64* ph1r, Float64* ph2l, Float64* ph2r, Float64* px1l, Float64* px1r, Float64* px2l, Float64* px2r, Float64* pw, Float64* pr, Float64* d, std::vector<CPierPointData>* pp) const = 0;
 
    virtual Float64 GetXBeamLeftOverhang(PierIDType pierID) const = 0;
    virtual Float64 GetXBeamRightOverhang(PierIDType pierID) const = 0;
