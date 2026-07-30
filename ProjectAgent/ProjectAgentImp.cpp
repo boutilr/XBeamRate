@@ -3345,6 +3345,7 @@ void CProjectAgentImp::UpdatePierData(const CPierData2* pPier,xbrPierData& pierD
    pPier->GetXBeamDimensions(pgsTypes::stRight,&H1R,&H2R,&X2R,&X1R);
    W = pPier->GetXBeamWidth();
    D = pPier->GetXBeamDepth();
+   R = pPier->GetXBeamRadius();
    std::vector<CPierPointData> vPierPoints = pPier->GetPierPointData();
    pierData.SetLowerXBeamDimensions(H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, D, vPierPoints);
 

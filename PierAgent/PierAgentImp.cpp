@@ -1433,26 +1433,75 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 
    // Create Cross Beam
    CComPtr<IBasicCrossBeam> bxbeam;
+   CComPtr<IScallopedCrossBeam> sxbeam;
+   CComPtr<IPointDefinedCrossBeam> uxbeam;
 
-   HRESULT hr = bxbeam.CoCreateInstance(CLSID_BasicCrossBeam);
+   HRESULT hr;
+   if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
+   {
+	   hr = uxbeam.CoCreateInstance(CLSID_PointDefinedCrossBeam);
+   }
+   else if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
+   {
+	   hr = sxbeam.CoCreateInstance(CLSID_ScallopedCrossBeam);
+   }
+   else
+   {
+       hr = bxbeam.CoCreateInstance(CLSID_BasicCrossBeam);
+   }
 
    Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, D;
-   std::vector<CPierPointData> vPoints;
-   pierData.GetLowerXBeamDimensions(&H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
-   bxbeam->put_H1L(H1L);
-   bxbeam->put_H2L(H2L);
-   bxbeam->put_H1R(H1R);
-   bxbeam->put_H2R(H2R);
-   bxbeam->put_X2L(X2L);
-   bxbeam->put_X1L(X1L);
-   bxbeam->put_X2R(X2R);
-   bxbeam->put_X1R(X1R);
-   bxbeam->put_W1(W);
-
    Float64 HU, W2;
    pierData.GetDiaphragmDimensions(&HU, &W2);
-   bxbeam->put_HU(HU);
-   bxbeam->put_W2(W2);
+   std::vector<CPierPointData> vPoints;
+   pierData.GetLowerXBeamDimensions(&H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
+
+   if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
+   {
+	   uxbeam->put_H1L(H1L);
+	   uxbeam->put_H1R(H1R);
+	   uxbeam->put_X1L(X1L);
+	   uxbeam->put_X1R(X1R);
+	   uxbeam->put_W1(W);
+	   uxbeam->put_HU(HU);
+	   uxbeam->put_W2(W2);
+       CComPtr<IPoint2dCollection> points;
+	   for (const auto& pointData : vPoints)
+	   {
+		   CComPtr<IPoint2d> point;
+		   point.CoCreateInstance(CLSID_Point2d);
+		   point->Move(pointData.Get_X(), pointData.Get_Y());
+		   points->Add(point);
+	   }
+	   uxbeam->SetPoints(points);
+   }
+   else if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
+   {
+	   sxbeam->put_H1L(H1L);
+	   sxbeam->put_H1R(H1R);
+	   sxbeam->put_X1L(X1L);
+	   sxbeam->put_X1R(X1R);
+	   sxbeam->put_W1(W);
+	   sxbeam->put_HU(HU);
+	   sxbeam->put_W2(W2);
+	   sxbeam->put_D(D);
+	   sxbeam->put_R(R);
+   }
+   else
+   {
+       bxbeam->put_H1L(H1L);
+       bxbeam->put_H2L(H2L);
+       bxbeam->put_H1R(H1R);
+       bxbeam->put_H2R(H2R);
+       bxbeam->put_X2L(X2L);
+       bxbeam->put_X1L(X1L);
+       bxbeam->put_X2R(X2R);
+       bxbeam->put_X1R(X1R);
+       bxbeam->put_W1(W);
+
+       bxbeam->put_HU(HU);
+       bxbeam->put_W2(W2);
+   }
  
 
    // Create Column Layout
@@ -1544,7 +1593,15 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 
    // finish the pier model (need pier to be complete because we need its geometry to layout the rebar)
 
-   if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+   if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
+   {
+       pierModel->putref_CrossBeam(uxbeam);
+   }
+   else if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
+   {
+       pierModel->putref_CrossBeam(sxbeam);
+   }
+   else
    {
        pierModel->putref_CrossBeam(bxbeam);
    }
@@ -1555,7 +1612,15 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
    // XBeam Rebar Layout
    CComPtr<IRebarLayout> rebarLayout;
 
-   if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+   if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
+   {
+       uxbeam->get_RebarLayout(&rebarLayout);
+   }
+   else if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
+   {
+       sxbeam->get_RebarLayout(&rebarLayout);
+   }
+   else
    {
        bxbeam->get_RebarLayout(&rebarLayout);
    }
@@ -1594,7 +1659,15 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
       else if ( row.LayoutType == xbrTypes::blRightEnd )
       {
          CComPtr<IPoint2dCollection> points;
-         if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+         if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
+         {
+             uxbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
+         }
+         else if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
+         {
+             sxbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
+         }
+         else
          {
              bxbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
          }
@@ -1613,7 +1686,15 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
       {
          CComPtr<IPoint2dCollection> points;
 
-         if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+         if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
+         {
+             uxbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
+         }
+         else if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
+         {
+             sxbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
+         }
+         else
          {
              bxbeam->get_Surface((CrossBeamRebarDatum)row.Datum, row.Cover, &points);
          }
@@ -1651,7 +1732,15 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 
       CComPtr<ICrossBeamRebarPattern> rebarPattern;
       rebarPattern.CoCreateInstance(CLSID_CrossBeamRebarPattern);
-      if (pierData.GetPierLayoutType() == pgsTypes::pltCommon)
+      if (pierData.GetPierLayoutType() == pgsTypes::pltUserDefined)
+      {
+          rebarPattern->putref_CrossBeam(uxbeam);
+      }
+      else if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
+      {
+          rebarPattern->putref_CrossBeam(sxbeam);
+      }
+      else
       {
           rebarPattern->putref_CrossBeam(bxbeam);
       }
