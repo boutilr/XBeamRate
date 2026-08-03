@@ -205,6 +205,7 @@
     <ClCompile Include="PierDlg.cpp" />
     <ClCompile Include="PierExporter.cpp" />
     <ClCompile Include="PierLayoutPage.cpp" />
+    <ClCompile Include="PierPointGrid.cpp" />
     <ClCompile Include="ProjectAgent.cpp" />
     <ClCompile Include="ProjectAgentImp.cpp" />
     <ClCompile Include="ProjectPropertiesDlg.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="PierDlg.h" />
     <ClInclude Include="PierExporter.h" />
     <ClInclude Include="PierLayoutPage.h" />
+    <ClInclude Include="PierPointGrid.h" />
     <ClInclude Include="ProjectAgent.h" />
     <ClInclude Include="ProjectAgentCLSID.h" />
     <ClInclude Include="ProjectAgentImp.h" />

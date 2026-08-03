@@ -340,7 +340,7 @@ void xbrPierData::SetLowerXBeamDimensions(Float64 h1l,Float64 h1r,Float64 h2l,Fl
    m_XR = r;
    m_XW = d;
 
-   m_PierPoints = vpp;
+   m_vPierPoints = vpp;
 }
 
 void xbrPierData::GetLowerXBeamDimensions(Float64* ph1l, Float64* ph1r, Float64* ph2l, Float64* ph2r, Float64* px1l, Float64* px1r, Float64* px2l, Float64* px2r, Float64* pw, Float64* pr, Float64* pd, std::vector<CPierPointData>* pvpp) const
@@ -359,7 +359,7 @@ void xbrPierData::GetLowerXBeamDimensions(Float64* ph1l, Float64* ph1r, Float64*
    *pr  = m_XR;
    *pd  = m_XD;
 
-   *pvpp = m_PierPoints;
+   *pvpp = m_vPierPoints;
 }
 
 Float64& xbrPierData::GetH1L()
@@ -417,9 +417,28 @@ Float64& xbrPierData::GetD()
    return m_XD;
 }
 
-std::vector<CPierPointData>& xbrPierData::GetPierPointData()
+void xbrPierData::SetPierPointData(PierPointIndexType ppIdx, const CPierPointData& ppData)
 {
-   return m_PierPoints;
+    m_vPierPoints[ppIdx] = ppData;
+}
+
+const std::vector<CPierPointData>& xbrPierData::GetPierPointData() const
+{
+   return m_vPierPoints;
+}
+
+void xbrPierData::SetPierPointCount(PierPointIndexType nPiers)
+{
+    ATLASSERT(0 < nPiers && nPiers != INVALID_INDEX);
+    if (m_vPierPoints.size() != nPiers)
+    {
+        m_vPierPoints.resize(nPiers, m_vPierPoints.back());
+    }
+}
+
+PierPointIndexType xbrPierData::GetPierPointCount() const
+{
+    return m_vPierPoints.size();
 }
 
 void xbrPierData::SetRefColumnLocation(pgsTypes::OffsetMeasurementType refColumnDatum,IndexType refColumnIdx,Float64 refColumnOffset)
@@ -797,10 +816,10 @@ HRESULT xbrPierData::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress
       pStrSave->put_Property(_T("XR"), CComVariant(m_XR));
       pStrSave->put_Property(_T("XD"), CComVariant(m_XD));
 
-      pStrSave->put_Property(_T("PierPointCount"), CComVariant(m_PierPoints.size()));
-      std::vector<CPierPointData>::iterator ppIterBegin = m_PierPoints.begin();
+      pStrSave->put_Property(_T("PierPointCount"), CComVariant(m_vPierPoints.size()));
+      std::vector<CPierPointData>::iterator ppIterBegin = m_vPierPoints.begin();
       std::vector<CPierPointData>::iterator ppIter = ppIterBegin;
-      std::vector<CPierPointData>::iterator ppIterEnd = m_PierPoints.end();
+      std::vector<CPierPointData>::iterator ppIterEnd = m_vPierPoints.end();
       for (; ppIter != ppIterEnd; ppIter++)
       {
           CPierPointData& pierPointData = *ppIter;
@@ -1067,15 +1086,22 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
              hr = pStrLoad->get_Property(_T("XD"), &var);
              m_XD = var.dblVal;
 
-             m_PierPoints.clear();
+             m_vPierPoints.clear();
              var.vt = VT_INDEX;
              hr = pStrLoad->get_Property(_T("PierPointCount"), &var);
              PierPointIndexType nPierPoints = VARIANT2INDEX(var);
-             for (PierPointIndexType ppIdx = 0; ppIdx < nPierPoints; ppIdx++)
+
+             m_vPierPoints.clear();
+
+             m_vPierPoints.reserve(nPierPoints);
+
+             for (PierPointIndexType ppIdx = 0; ppIdx < nPierPoints; ++ppIdx)
              {
-                 CPierPointData pierPointData = GetPierPointData()[ppIdx];
-                 pierPointData.Load(pStrLoad, pProgress);
-                 m_PierPoints.push_back(pierPointData);
+                 CPierPointData pierPoint;
+
+                 hr = pierPoint.Load(pStrLoad, pProgress);
+
+                 m_vPierPoints.push_back(std::move(pierPoint));
              }
 
          }
@@ -1236,7 +1262,7 @@ void xbrPierData::MakeCopy(const xbrPierData& rOther)
    m_XW = rOther.m_XW;
    m_XR = rOther.m_XR;
    m_XD = rOther.m_XD;
-   m_PierPoints = rOther.m_PierPoints;
+   m_vPierPoints = rOther.m_vPierPoints;
 
    m_vColumnData = rOther.m_vColumnData;
    m_vColumnSpacing = rOther.m_vColumnSpacing;

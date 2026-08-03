@@ -1466,11 +1466,12 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 	   uxbeam->put_HU(HU);
 	   uxbeam->put_W2(W2);
        CComPtr<IPoint2dCollection> points;
+       points.CoCreateInstance(CLSID_Point2dCollection);
 	   for (const auto& pointData : vPoints)
 	   {
 		   CComPtr<IPoint2d> point;
 		   point.CoCreateInstance(CLSID_Point2d);
-		   point->Move(pointData.Get_X(), pointData.Get_Y());
+		   point->Move(pointData.Get_X(), -pointData.Get_Y());
 		   points->Add(point);
 	   }
 	   uxbeam->SetPoints(points);

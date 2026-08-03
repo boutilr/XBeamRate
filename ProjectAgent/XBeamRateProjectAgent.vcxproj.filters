@@ -79,6 +79,9 @@
     <ClCompile Include="PermitLiveLoadReactionsPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PierPointGrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AASHTOConcretePage.h">
@@ -173,6 +176,9 @@
     </ClInclude>
     <ClInclude Include="..\Include\IFace\RatingSpecification.h">
       <Filter>IFace</Filter>
+    </ClInclude>
+    <ClInclude Include="PierPointGrid.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

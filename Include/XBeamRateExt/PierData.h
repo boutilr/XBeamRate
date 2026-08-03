@@ -133,7 +133,11 @@ public:
    Float64& GetW();
    Float64& GetR();
    Float64& GetD();
-   std::vector<CPierPointData>& GetPierPointData();
+   void SetPierPointData(PierPointIndexType ppIdx, const CPierPointData& ppData);
+   const std::vector<CPierPointData>& GetPierPointData() const;
+
+   void SetPierPointCount(PierPointIndexType nColumns);
+   PierPointIndexType GetPierPointCount() const;
 
    // Establishes the location of the columns with respect to the alignment/bridgeline.
    void SetRefColumnLocation(pgsTypes::OffsetMeasurementType refColumnDatum,IndexType refColumnIdx,Float64 refColumnOffset);
@@ -242,7 +246,7 @@ protected:
    Float64 m_XW;
    Float64 m_XR;
    Float64 m_XD;
-   std::vector<CPierPointData> m_PierPoints;
+   std::vector<CPierPointData> m_vPierPoints;
 
    // Column Layout
    std::vector<CColumnData> m_vColumnData;
