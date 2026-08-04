@@ -207,3 +207,97 @@ void CPierLayoutPage::OnHelp()
 {
    EAFHelp(EAFGetDocument()->GetDocumentationSetName(), IDH_SUBSTRUCTURE);
 }
+
+bool CPierLayoutPage::CommitCommonPierLayout()
+{
+
+    if (!m_CommonPierLayoutDlg.UpdateData(TRUE))
+    {
+        return false;
+    }
+
+    m_pPier->SetRefColumnLocation(m_CommonPierLayoutDlg.m_TransverseOffsetMeasurement, m_CommonPierLayoutDlg.m_RefColumnIdx, m_CommonPierLayoutDlg.m_TransverseOffset);
+
+    std::vector<CPierPointData> pvpp;
+	m_pPier->SetLowerXBeamDimensions(m_CommonPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
+        m_CommonPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight], 
+        m_CommonPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamWidth, 0, 0, pvpp);
+
+    m_pPier->SetColumnFixity(m_CommonPierLayoutDlg.m_ColumnFixity);
+    m_CommonPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
+
+    ColumnIndexType nColumns = m_pPier->GetColumnCount();
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        CColumnData column = m_pPier->GetColumnData(colIdx);
+        column.SetColumnHeightMeasurementType(m_CommonPierLayoutDlg.m_ColumnHeightMeasurementType);
+        m_pPier->SetColumnData(colIdx, column);
+    }
+
+    return true;
+}
+
+BOOL CPierLayoutPage::OnKillActive()
+{
+    if (!UpdateData(TRUE))
+    {
+        return FALSE;
+    }
+
+    if (m_PierLayoutType == pgsTypes::pltCommon)
+    {
+        if (!CommitCommonPierLayout())
+        {
+            return FALSE;
+        }
+    }
+    else if (m_PierLayoutType == pgsTypes::pltScalloped)
+    {
+        //if (!CommitScallopedPierLayout())
+        {
+            return FALSE;
+        }
+    }
+    else if (m_PierLayoutType == pgsTypes::pltUserDefined)
+    {
+        //if (!CommitUserDefinedPierLayout())
+        {
+            return FALSE;
+        }
+    }
+
+    return CPropertyPage::OnKillActive();
+}
+
+BOOL CPierLayoutPage::OnApply()
+{
+    if (!UpdateData(TRUE))
+    {
+        return FALSE;
+    }
+
+    if (m_PierLayoutType == pgsTypes::pltCommon)
+    {
+        if (!CommitCommonPierLayout())
+        {
+            return FALSE;
+        }
+    }
+    else if (m_PierLayoutType == pgsTypes::pltScalloped)
+    {
+        //if (!CommitScallopedPierLayout())
+        {
+            return FALSE;
+        }
+    }
+    else if (m_PierLayoutType == pgsTypes::pltUserDefined)
+    {
+        //if (!CommitUserDefinedPierLayout())
+        {
+            return FALSE;
+        }
+    }
+
+    SetModified(FALSE);
+    return CPropertyPage::OnApply();
+}

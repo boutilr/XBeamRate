@@ -81,6 +81,15 @@ protected:
    //CUserDefinedPierLayoutDlg m_UserDefinedPierLayoutDlg;
 
    void SwapDialogs();
+
+
+   bool CommitCommonPierLayout();
+   //bool CommitScallopedPierLayout();
+   //bool CommitUserDefinedPierLayout();
+
+   BOOL OnKillActive();
+
+   BOOL OnApply();
 };
 
 //{{AFX_INSERT_LOCATION}}
