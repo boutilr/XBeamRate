@@ -182,8 +182,11 @@
 #define IDC_HAS_AGG_STRENGTH            513
 #define IDC_AGG_STRENGTH                514
 #define IDC_AGG_STRENGTH_T              515
+#define IDC_PIER_LAYOUT_GUIDE           1113
+#define IDD_PIER_LAYOUT_COMMON          1117
 #define IDC_CONDITION_FACTOR            1260
 #define IDC_CONDITION_FACTOR_TYPE       1407
+#define IDC_PIER_LAYOUT_TYPE            1408
 #define IDC_REFCOLUMN_MEASUREMENT       1423
 #define IDC_REFCOLUMN_OFFSET            1424
 #define IDC_REFCOLUMN_OFFSET_UNIT       1425
@@ -227,11 +230,17 @@
 #define IDC_X6_LABEL                    1849
 #define IDC_BRIDGE                      1850
 #define IDC_BRIDGEID                    1851
+#define IDC_PIER_LAYOUT_LABEL           1851
 #define IDC_JOBNUMBER                   1852
 #define IDC_ENGINEER                    1853
 #define IDC_COMPANY                     1854
 #define IDC_COMMENTS                    1855
 #define IDC_SHOW_DIALOG                 1856
+#define IDC_FIXITY_LABEL                1856
+#define IDC_FIXITY                      1857
+#define IDC_CAP_GROUP                   1884
+#define IDC_COLUMN_GROUP                1885
+#define IDC_STATIC_BOUNDS               2070
 #define ID_VIEW_PIER                    33030
 #define ID_EDIT_PROJECT_NAME            50000
 #define ID_EDIT_PIER                    50001
@@ -244,7 +253,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        211
+#define _APS_NEXT_RESOURCE_VALUE        212
 #define _APS_NEXT_COMMAND_VALUE         50009
 #define _APS_NEXT_CONTROL_VALUE         330
 #define _APS_NEXT_SYMED_VALUE           103

@@ -25,6 +25,8 @@
 
 
 
+
+
 xbrPierData::xbrPierData()
 {
    m_ID = INVALID_ID;
@@ -66,6 +68,8 @@ xbrPierData::xbrPierData()
    m_RefColumnIdx = 0;
    m_RefColumnOffset = 0;
    m_RefColumnDatum = pgsTypes::omtAlignment;
+
+   m_ColumnFixity = pgsTypes::cftFixed;
 
    m_X5 = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
    m_X6 = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
@@ -434,6 +438,16 @@ void xbrPierData::SetPierPointCount(PierPointIndexType nPiers)
     {
         m_vPierPoints.resize(nPiers, m_vPierPoints.back());
     }
+}
+
+void xbrPierData::SetColumnFixity(pgsTypes::ColumnLongitudinalBaseFixityType fixityType)
+{
+    m_ColumnFixity = fixityType;
+}
+
+pgsTypes::ColumnLongitudinalBaseFixityType xbrPierData::GetColumnFixity() const
+{
+    return m_ColumnFixity;
 }
 
 PierPointIndexType xbrPierData::GetPierPointCount() const

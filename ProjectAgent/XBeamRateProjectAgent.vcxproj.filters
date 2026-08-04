@@ -82,6 +82,9 @@
     <ClCompile Include="PierPointGrid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CommonPierLayoutDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AASHTOConcretePage.h">
@@ -178,6 +181,9 @@
       <Filter>IFace</Filter>
     </ClInclude>
     <ClInclude Include="PierPointGrid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonPierLayoutDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

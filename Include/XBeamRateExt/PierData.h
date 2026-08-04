@@ -146,6 +146,10 @@ public:
    IndexType& GetRefColumnIndex();
    Float64& GetRefColumnOffset();
 
+   // Set/Get the column fixity for the longitudinal bridge analysis
+   void SetColumnFixity(pgsTypes::ColumnLongitudinalBaseFixityType fixityType);
+   pgsTypes::ColumnLongitudinalBaseFixityType GetColumnFixity() const;
+
    void SetColumnCount(ColumnIndexType nColumns);
    ColumnIndexType GetColumnCount() const;
    void AddColumn(const CColumnData& columnData,Float64 spacing);
@@ -252,6 +256,8 @@ protected:
    std::vector<CColumnData> m_vColumnData;
    std::vector<Float64> m_vColumnSpacing;
 
+   pgsTypes::ColumnLongitudinalBaseFixityType m_ColumnFixity;
+
    IndexType m_RefColumnIdx;
    Float64 m_RefColumnOffset;
    pgsTypes::OffsetMeasurementType m_RefColumnDatum;
@@ -274,3 +280,4 @@ protected:
    // Bearings
    mutable std::vector<xbrBearingLineData> m_vBearingLines;
 };
+

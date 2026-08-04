@@ -194,6 +194,7 @@
     <ClCompile Include="BearingsPage.cpp" />
     <ClCompile Include="CapacityOptionsPage.cpp" />
     <ClCompile Include="ColumnLayoutGrid.cpp" />
+    <ClCompile Include="CommonPierLayoutDlg.cpp" />
     <ClCompile Include="ConcreteDetailsDlg.cpp" />
     <ClCompile Include="ConcreteGeneralPage.cpp" />
     <ClCompile Include="DesignLiveLoadReactionsPage.cpp" />
@@ -243,6 +244,7 @@
     <ClInclude Include="BearingsPage.h" />
     <ClInclude Include="CapacityOptionsPage.h" />
     <ClInclude Include="ColumnLayoutGrid.h" />
+    <ClInclude Include="CommonPierLayoutDlg.h" />
     <ClInclude Include="ConcreteDetailsDlg.h" />
     <ClInclude Include="ConcreteGeneralPage.h" />
     <ClInclude Include="CPProjectAgent.h" />

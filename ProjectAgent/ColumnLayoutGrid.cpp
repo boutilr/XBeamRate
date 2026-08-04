@@ -504,3 +504,42 @@ void CColumnLayoutGrid::OnModifyCell(ROWCOL nRow,ROWCOL nCol)
       __super::OnModifyCell(nRow, nCol);
    }
 }
+
+void CColumnLayoutGrid::DDX_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& grid, xbrPierData* pier)
+{
+    if (pDX->m_bSaveAndValidate)
+    {
+        grid.GetColumnData(*pier);
+    }
+    else
+    {
+        grid.SetColumnData(*pier);
+    }
+}
+
+void CColumnLayoutGrid::DDV_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& grid)
+{
+    if (pDX->m_bSaveAndValidate)
+    {
+        if (grid.GetRowCount() == 0)
+        {
+            AfxMessageBox(_T("The pier must have at least one column"), MB_OK | MB_ICONEXCLAMATION);
+            pDX->Fail();
+        }
+
+        if (grid.GetRowCount() == 1)
+        {
+            // single column piers must have a fixed connection
+            xbrPierData pier;
+            grid.GetColumnData(pier);
+            ATLASSERT(pier.GetColumnCount() == 1);
+            auto column = pier.GetColumnData(0);
+            pgsTypes::ColumnTransverseFixityType fixity = column.GetTransverseFixity();
+            if (fixity != pgsTypes::ctftTopFixedBottomFixed)
+            {
+                AfxMessageBox(_T("Single column piers must be fixed. Change the column fixity."), MB_OK | MB_ICONEXCLAMATION);
+                pDX->Fail();
+            }
+        }
+    }
+}

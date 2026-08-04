@@ -28,6 +28,9 @@
 #include "resource.h"
 #include <PsgLib\ColumnData.h>
 #include "ColumnLayoutGrid.h"
+#include "CommonPierLayoutDlg.h"
+//#include "ScallopedPierLayoutDlg.h"
+//#include "UserDefinedPierLayoutDlg.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CPierLayoutPage dialog
@@ -61,19 +64,23 @@ protected:
 	//{{AFX_MSG(CPierLayoutPage)
 	virtual BOOL OnInitDialog() override;
    afx_msg void OnHelp();
+   afx_msg void OnPierLayoutTypeChanged();
    afx_msg void OnConditionFactorTypeChanged();
-   afx_msg void OnHeightMeasureChanged();
-   afx_msg void OnAddColumn();
-   afx_msg void OnRemoveColumns();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
-   CMetaFileStatic m_LayoutPicture;
-   CColumnLayoutGrid m_ColumnLayoutGrid;
+	void FillPierLayoutTypeComboBox();
 
-   void FillRefColumnComboBox(ColumnIndexType nColumns = INVALID_INDEX);
-   void FillHeightMeasureComboBox();
-   void FillTransverseLocationComboBox();
+	xbrPierData* m_pPier;
+   
+   pgsTypes::PierLayoutType m_PierLayoutType;
+
+   // Embedded dialogs
+   CCommonPierLayoutDlg m_CommonPierLayoutDlg;
+   //CScallopedPierLayoutDlg m_ScallopedPierLayoutDlg;
+   //CUserDefinedPierLayoutDlg m_UserDefinedPierLayoutDlg;
+
+   void SwapDialogs();
 };
 
 //{{AFX_INSERT_LOCATION}}

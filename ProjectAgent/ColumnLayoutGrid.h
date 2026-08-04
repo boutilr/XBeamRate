@@ -61,6 +61,9 @@ public:
 public:
    void CustomInit();
 
+   static void DDX_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& grid, xbrPierData* pier);
+   static void DDV_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& grid);
+
 	// Generated message map functions
 protected:
 	//{{AFX_MSG(CColumnLayoutGrid)
