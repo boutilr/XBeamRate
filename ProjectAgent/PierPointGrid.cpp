@@ -31,6 +31,30 @@
 
 GRID_IMPLEMENT_REGISTER(CPierPointGrid, CS_DBLCLKS, 0, 0, 0);
 
+void CPierPointGrid::DDX_PierPointGrid(CDataExchange* pDX, CPierPointGrid& grid, xbrPierData* pPier)
+{
+    if (pDX->m_bSaveAndValidate)
+    {
+        grid.GetPierPointData(*pPier);
+    }
+    else
+    {
+        grid.SetPierPointData(*pPier);
+    }
+}
+
+void CPierPointGrid::DDV_PierPointGrid(CDataExchange* pDX, CPierPointGrid& grid)
+{
+    if (pDX->m_bSaveAndValidate)
+    {
+        if (grid.GetRowCount() == 0)
+        {
+            AfxMessageBox(_T("The pier must have at least one pier point"), MB_OK | MB_ICONEXCLAMATION);
+            pDX->Fail();
+        }
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CPierPointGrid
 

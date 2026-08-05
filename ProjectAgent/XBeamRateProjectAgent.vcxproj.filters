@@ -88,6 +88,9 @@
     <ClCompile Include="ScallopedPierLayoutDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UserDefinedPierLayoutDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AASHTOConcretePage.h">
@@ -190,6 +193,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ScallopedPierLayoutDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UserDefinedPierLayoutDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

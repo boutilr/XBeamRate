@@ -431,12 +431,24 @@ const std::vector<CPierPointData>& xbrPierData::GetPierPointData() const
    return m_vPierPoints;
 }
 
-void xbrPierData::SetPierPointCount(PierPointIndexType nPiers)
+void xbrPierData::SetPierPointCount(PierPointIndexType nPierPoints)
 {
-    ATLASSERT(0 < nPiers && nPiers != INVALID_INDEX);
-    if (m_vPierPoints.size() != nPiers)
+    if (nPierPoints < m_vPierPoints.size())
     {
-        m_vPierPoints.resize(nPiers, m_vPierPoints.back());
+        m_vPierPoints.erase(m_vPierPoints.begin() + nPierPoints, m_vPierPoints.end());
+    }
+    else if (m_vPierPoints.size() < nPierPoints)
+    {
+        // the number of pier points is being increased... add pier points on the right side of the pier
+        PierPointIndexType nPierPointsToAdd = nPierPoints - m_vPierPoints.size();
+        CPierPointData pp;
+        if (!m_vPierPoints.empty())
+        {
+            pp = m_vPierPoints.back(); // right-most pier point
+            Float64 spacing = WBFL::Units::ConvertToSysUnits(4.0, WBFL::Units::Measure::Feet);
+            pp.Set_X(pp.Get_X() + spacing); // set the new pier point to be 4 feet to the right of the last pier point
+        }
+        m_vPierPoints.insert(m_vPierPoints.end(), nPierPointsToAdd, pp);
     }
 }
 

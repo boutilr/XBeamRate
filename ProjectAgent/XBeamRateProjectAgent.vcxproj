@@ -220,6 +220,7 @@
     <ClCompile Include="txnEditOptions.cpp" />
     <ClCompile Include="txnEditPier.cpp" />
     <ClCompile Include="txnEditProject.cpp" />
+    <ClCompile Include="UserDefinedPierLayoutDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ProjectAgent.def" />
@@ -271,6 +272,7 @@
     <ClInclude Include="txnEditOptions.h" />
     <ClInclude Include="txnEditPier.h" />
     <ClInclude Include="txnEditProject.h" />
+    <ClInclude Include="UserDefinedPierLayoutDlg.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\EditOptions.bmp" />

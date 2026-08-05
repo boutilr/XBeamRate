@@ -27,7 +27,6 @@
 
 // PierPointGrid.h : header file
 
-
 /////////////////////////////////////////////////////////////////////////////
 // CPierPointGrid window
 
@@ -49,6 +48,9 @@ public:
 
    void GetPierPointData(xbrPierData& pier);
    void SetPierPointData(const xbrPierData& pier);
+
+   static void DDX_PierPointGrid(CDataExchange* pDX, CPierPointGrid& grid, xbrPierData* pPier);
+   static void DDV_PierPointGrid(CDataExchange* pDX, CPierPointGrid& grid);
 
 
 // Overrides

@@ -30,7 +30,7 @@
 #include "ColumnLayoutGrid.h"
 #include "CommonPierLayoutDlg.h"
 #include "ScallopedPierLayoutDlg.h"
-//#include "UserDefinedPierLayoutDlg.h"
+#include "UserDefinedPierLayoutDlg.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CPierLayoutPage dialog
@@ -78,14 +78,14 @@ protected:
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
    CScallopedPierLayoutDlg m_ScallopedPierLayoutDlg;
-   //CUserDefinedPierLayoutDlg m_UserDefinedPierLayoutDlg;
+   CUserDefinedPierLayoutDlg m_UserDefinedPierLayoutDlg;
 
    void SwapDialogs();
 
 
    bool CommitCommonPierLayout();
    bool CommitScallopedPierLayout();
-   //bool CommitUserDefinedPierLayout();
+   bool CommitUserDefinedPierLayout();
 
    BOOL OnKillActive();
 

@@ -120,6 +120,10 @@ BOOL CPierLayoutPage::OnInitDialog()
     VERIFY(m_ScallopedPierLayoutDlg.Create(IDD_PIER_LAYOUT_SCALLOPED, this));
     VERIFY(m_ScallopedPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
+    m_UserDefinedPierLayoutDlg.SetPierData(*m_pPier);
+    VERIFY(m_UserDefinedPierLayoutDlg.Create(IDD_PIER_LAYOUT_USERDEFINED, this));
+    VERIFY(m_UserDefinedPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
+
    CComboBox* pcbConditionFactor = (CComboBox*)GetDlgItem(IDC_CONDITION_FACTOR_TYPE);
    pcbConditionFactor->AddString(_T("Good or Satisfactory (Structure condition rating 6 or higher)"));
    pcbConditionFactor->AddString(_T("Fair (Structure condition rating of 5)"));
@@ -179,25 +183,25 @@ void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
         m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
-        //m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
     else if (m_PierLayoutType == pgsTypes::pltScalloped)
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
         m_ScallopedPierLayoutDlg.ShowWindow(SW_SHOW);
-        //m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
     else if (m_PierLayoutType == pgsTypes::pltUserDefined)
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
         m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
-        //m_UserDefinedPierLayoutDlg.ShowWindow(SW_SHOW);
+        m_UserDefinedPierLayoutDlg.ShowWindow(SW_SHOW);
     }
     else
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
         m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
-        //m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
 
 }
@@ -281,6 +285,33 @@ bool CPierLayoutPage::CommitScallopedPierLayout()
     return true;
 }
 
+bool CPierLayoutPage::CommitUserDefinedPierLayout()
+{
+
+    if (!m_UserDefinedPierLayoutDlg.UpdateData(TRUE))
+    {
+        return false;
+    }
+
+    const auto& vPoints = m_pPier->GetPierPointData();
+    m_pPier->SetLowerXBeamDimensions(m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
+        m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight],
+        m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamWidth, 0, 0, vPoints);
+
+    m_pPier->SetColumnFixity(m_UserDefinedPierLayoutDlg.m_ColumnFixity);
+    m_UserDefinedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
+
+    ColumnIndexType nColumns = m_pPier->GetColumnCount();
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        CColumnData column = m_pPier->GetColumnData(colIdx);
+        column.SetColumnHeightMeasurementType(m_UserDefinedPierLayoutDlg.m_ColumnHeightMeasurementType);
+        m_pPier->SetColumnData(colIdx, column);
+    }
+
+    return true;
+}
+
 BOOL CPierLayoutPage::OnKillActive()
 {
     if (!UpdateData(TRUE))
@@ -304,7 +335,7 @@ BOOL CPierLayoutPage::OnKillActive()
     }
     else if (m_PierLayoutType == pgsTypes::pltUserDefined)
     {
-        //if (!CommitUserDefinedPierLayout())
+        if (!CommitUserDefinedPierLayout())
         {
             return FALSE;
         }
@@ -336,7 +367,7 @@ BOOL CPierLayoutPage::OnApply()
     }
     else if (m_PierLayoutType == pgsTypes::pltUserDefined)
     {
-        //if (!CommitUserDefinedPierLayout())
+        if (!CommitUserDefinedPierLayout())
         {
             return FALSE;
         }

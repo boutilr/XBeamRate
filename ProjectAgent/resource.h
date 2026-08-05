@@ -91,8 +91,11 @@
 #define IDC_LEGAL_EMERGENCY_ADD         282
 #define IDC_LEGAL_EMERGENCY_REMOVE      283
 #define IDD_CONCRETE_DETAILS            290
+#define IDC_PIER_POINT_GRID             290
 #define IDC_CONCRETE_TYPE               291
+#define IDC_ADD_PIERPOINT               291
 #define IDC_FC_LABEL                    292
+#define IDC_REMOVE_PIERPOINT            292
 #define IDC_FC                          293
 #define IDC_FC_UNIT                     294
 #define IDC_DS_TITLE                    295
@@ -185,6 +188,7 @@
 #define IDC_PIER_LAYOUT_GUIDE           1113
 #define IDD_PIER_LAYOUT_COMMON          1117
 #define IDD_PIER_LAYOUT_SCALLOPED       1119
+#define IDD_PIER_LAYOUT_USERDEFINED     1120
 #define IDC_CONDITION_FACTOR            1260
 #define IDC_CONDITION_FACTOR_TYPE       1407
 #define IDC_PIER_LAYOUT_TYPE            1408
@@ -247,6 +251,7 @@
 #define IDC_FIXITY                      1857
 #define IDC_CAP_GROUP                   1884
 #define IDC_COLUMN_GROUP                1885
+#define IDC_MIRROR                      1925
 #define IDC_STATIC_BOUNDS               2070
 #define ID_VIEW_PIER                    33030
 #define ID_EDIT_PROJECT_NAME            50000
