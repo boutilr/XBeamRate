@@ -22,28 +22,29 @@
 
 #pragma once
 #include "resource.h"
+#include <PsgLib\PierData2.h>
 #include "ColumnLayoutGrid.h"
 #include <PgsExt\ColumnFixityComboBox.h>
 #include "StdAfx.h"
 //#include "DrawPierLayoutControl.h"
 
 
-// CommonPierLayoutDlg.h : header file
+// ScallopedPierLayoutDlg.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
-// CommonPierLayoutDlg dialog
+// ScallopedPierLayoutDlg dialog
 
 class CPierLayoutPage;
 
-class CCommonPierLayoutDlg : public CDialog, public IPierLayoutDataSource
+class CScallopedPierLayoutDlg : public CDialog, public IPierLayoutDataSource
 {
 
 	friend class CPierLayoutPage;
 
 // Construction
 public:
-	CCommonPierLayoutDlg(CWnd* pParent = nullptr);
+	CScallopedPierLayoutDlg(CWnd* pParent = nullptr);
 
 	void SetPierModelType(const pgsTypes::PierModelType& pierModelType);
 	void SetPierData(const xbrPierData& pierData) override;
@@ -86,10 +87,12 @@ protected:
 	void FillTransverseLocationComboBox();
 	void RefreshDisplay();
 
-	ColumnIndexType m_RefColumnIdx{(ColumnIndexType)0};
-	Float64 m_TransverseOffset{0.0};
-	pgsTypes::OffsetMeasurementType m_TransverseOffsetMeasurement{pgsTypes::omtAlignment};
+	ColumnIndexType m_RefColumnIdx;
+	Float64 m_TransverseOffset;
+	pgsTypes::OffsetMeasurementType m_TransverseOffsetMeasurement;
 	Float64 m_XBeamWidth;
+	Float64 m_XBeamRadius;
+	Float64 m_XBeamDepth;
 	Float64 m_XBeamHeight[2];
 	Float64 m_XBeamTaperHeight[2];
 	Float64 m_XBeamTaperLength[2];

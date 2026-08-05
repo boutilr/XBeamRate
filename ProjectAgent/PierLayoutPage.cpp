@@ -70,6 +70,15 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
    DDX_CBEnum(pDX, IDC_CONDITION_FACTOR_TYPE, pParent->m_PierData.m_PierData.GetConditionFactorType());
    DDX_Text(pDX,   IDC_CONDITION_FACTOR,      pParent->m_PierData.m_PierData.GetConditionFactor());
 
+   if (pDX->m_bSaveAndValidate)
+   {
+       // Only validate and save data owned by this page here.
+       // Embedded child dialogs are validated and committed from OnApply/OnKillActive
+       // so we do not recurse into UpdateData(TRUE) from inside DoDataExchange.
+
+       m_pPier->SetPierLayoutType(m_PierLayoutType);
+   }
+
 }
 
 BEGIN_MESSAGE_MAP(CPierLayoutPage, CPropertyPage)
@@ -107,6 +116,10 @@ BOOL CPierLayoutPage::OnInitDialog()
     VERIFY(m_CommonPierLayoutDlg.Create(IDD_PIER_LAYOUT_COMMON, this));
     VERIFY(m_CommonPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
 
+    m_ScallopedPierLayoutDlg.SetPierData(*m_pPier);
+    VERIFY(m_ScallopedPierLayoutDlg.Create(IDD_PIER_LAYOUT_SCALLOPED, this));
+    VERIFY(m_ScallopedPierLayoutDlg.SetWindowPos(GetDlgItem(IDC_STATIC_BOUNDS), boxRect.left, boxRect.top, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE));//|SWP_NOMOVE));
+
    CComboBox* pcbConditionFactor = (CComboBox*)GetDlgItem(IDC_CONDITION_FACTOR_TYPE);
    pcbConditionFactor->AddString(_T("Good or Satisfactory (Structure condition rating 6 or higher)"));
    pcbConditionFactor->AddString(_T("Fair (Structure condition rating of 5)"));
@@ -117,6 +130,8 @@ BOOL CPierLayoutPage::OnInitDialog()
    CPropertyPage::OnInitDialog();
 
    OnConditionFactorTypeChanged();
+
+   SwapDialogs();
 
    return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -163,25 +178,25 @@ void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?
     if (m_PierLayoutType == pgsTypes::pltCommon)
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_SHOW);
-        //m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
         //m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
     else if (m_PierLayoutType == pgsTypes::pltScalloped)
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-        //m_ScallopedPierLayoutDlg.ShowWindow(SW_SHOW);
+        m_ScallopedPierLayoutDlg.ShowWindow(SW_SHOW);
         //m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
     else if (m_PierLayoutType == pgsTypes::pltUserDefined)
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-        //m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
         //m_UserDefinedPierLayoutDlg.ShowWindow(SW_SHOW);
     }
     else
     {
         m_CommonPierLayoutDlg.ShowWindow(SW_HIDE);
-        //m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
+        m_ScallopedPierLayoutDlg.ShowWindow(SW_HIDE);
         //m_UserDefinedPierLayoutDlg.ShowWindow(SW_HIDE);
     }
 
@@ -237,6 +252,35 @@ bool CPierLayoutPage::CommitCommonPierLayout()
     return true;
 }
 
+bool CPierLayoutPage::CommitScallopedPierLayout()
+{
+
+    if (!m_ScallopedPierLayoutDlg.UpdateData(TRUE))
+    {
+        return false;
+    }
+
+    std::vector<CPierPointData> pvpp;
+    m_pPier->SetLowerXBeamDimensions(m_ScallopedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
+        m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight],
+        m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamWidth,
+        m_ScallopedPierLayoutDlg.m_XBeamRadius, m_ScallopedPierLayoutDlg.m_XBeamDepth, pvpp);
+
+
+    m_pPier->SetColumnFixity(m_ScallopedPierLayoutDlg.m_ColumnFixity);
+    m_ScallopedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
+
+    ColumnIndexType nColumns = m_pPier->GetColumnCount();
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        CColumnData column = m_pPier->GetColumnData(colIdx);
+        column.SetColumnHeightMeasurementType(m_ScallopedPierLayoutDlg.m_ColumnHeightMeasurementType);
+        m_pPier->SetColumnData(colIdx, column);
+    }
+
+    return true;
+}
+
 BOOL CPierLayoutPage::OnKillActive()
 {
     if (!UpdateData(TRUE))
@@ -253,7 +297,7 @@ BOOL CPierLayoutPage::OnKillActive()
     }
     else if (m_PierLayoutType == pgsTypes::pltScalloped)
     {
-        //if (!CommitScallopedPierLayout())
+        if (!CommitScallopedPierLayout())
         {
             return FALSE;
         }
@@ -285,7 +329,7 @@ BOOL CPierLayoutPage::OnApply()
     }
     else if (m_PierLayoutType == pgsTypes::pltScalloped)
     {
-        //if (!CommitScallopedPierLayout())
+        if (!CommitScallopedPierLayout())
         {
             return FALSE;
         }

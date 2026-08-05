@@ -281,3 +281,9 @@ protected:
    mutable std::vector<xbrBearingLineData> m_vBearingLines;
 };
 
+interface IPierLayoutDataSource
+{
+public:
+   virtual const xbrPierData * GetPierData() const = 0;
+   virtual void SetPierData(const xbrPierData& pierData) = 0;
+};

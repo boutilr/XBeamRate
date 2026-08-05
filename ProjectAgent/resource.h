@@ -184,6 +184,7 @@
 #define IDC_AGG_STRENGTH_T              515
 #define IDC_PIER_LAYOUT_GUIDE           1113
 #define IDD_PIER_LAYOUT_COMMON          1117
+#define IDD_PIER_LAYOUT_SCALLOPED       1119
 #define IDC_CONDITION_FACTOR            1260
 #define IDC_CONDITION_FACTOR_TYPE       1407
 #define IDC_PIER_LAYOUT_TYPE            1408
@@ -198,7 +199,9 @@
 #define IDC_H1                          1747
 #define IDC_H2                          1748
 #define IDC_H3                          1749
+#define IDC_R                           1749
 #define IDC_H4                          1750
+#define IDC_D                           1750
 #define IDC_X1                          1751
 #define IDC_X2                          1752
 #define IDC_W                           1753
@@ -209,14 +212,18 @@
 #define IDC_H2_LABEL                    1814
 #define IDC_H2_UNIT                     1815
 #define IDC_H3_LABEL                    1816
+#define IDC_R_LABEL                     1816
 #define IDC_H3_UNIT                     1817
+#define IDC_R_UNIT                      1817
 #define IDC_H4_LABEL                    1818
+#define IDC_D_LABEL                     1818
 #define IDC_H4_UNIT                     1819
+#define IDC_D_UNIT                      1819
 #define IDC_X1_LABEL                    1820
 #define IDC_X1_UNIT                     1821
 #define IDC_X2_LABEL                    1822
 #define IDC_X2_UNIT                     1823
-#define IDC_W_UNIT                      1824
+#define IDC_W_UNIT                      1826
 #define IDC_X5_UNIT                     1828
 #define IDC_W_LABEL                     1829
 #define IDC_X3                          1830

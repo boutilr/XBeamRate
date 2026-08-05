@@ -29,7 +29,7 @@
 #include <PsgLib\ColumnData.h>
 #include "ColumnLayoutGrid.h"
 #include "CommonPierLayoutDlg.h"
-//#include "ScallopedPierLayoutDlg.h"
+#include "ScallopedPierLayoutDlg.h"
 //#include "UserDefinedPierLayoutDlg.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -77,14 +77,14 @@ protected:
 
    // Embedded dialogs
    CCommonPierLayoutDlg m_CommonPierLayoutDlg;
-   //CScallopedPierLayoutDlg m_ScallopedPierLayoutDlg;
+   CScallopedPierLayoutDlg m_ScallopedPierLayoutDlg;
    //CUserDefinedPierLayoutDlg m_UserDefinedPierLayoutDlg;
 
    void SwapDialogs();
 
 
    bool CommitCommonPierLayout();
-   //bool CommitScallopedPierLayout();
+   bool CommitScallopedPierLayout();
    //bool CommitUserDefinedPierLayout();
 
    BOOL OnKillActive();
