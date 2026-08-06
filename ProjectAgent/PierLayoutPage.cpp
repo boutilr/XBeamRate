@@ -293,7 +293,7 @@ bool CPierLayoutPage::CommitUserDefinedPierLayout()
         return false;
     }
 
-    const auto& vPoints = m_pPier->GetPierPointData();
+	std::vector<CPierPointData> vPoints;
     m_pPier->SetLowerXBeamDimensions(m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
         m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight],
         m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamWidth, 0, 0, vPoints);
@@ -307,6 +307,14 @@ bool CPierLayoutPage::CommitUserDefinedPierLayout()
         CColumnData column = m_pPier->GetColumnData(colIdx);
         column.SetColumnHeightMeasurementType(m_UserDefinedPierLayoutDlg.m_ColumnHeightMeasurementType);
         m_pPier->SetColumnData(colIdx, column);
+    }
+
+    m_UserDefinedPierLayoutDlg.m_PierPointGrid.GetPierPointData(*m_pPier);
+
+	PierPointIndexType ppIdx = 0;
+	for (const auto& pierPoint : m_pPier->GetPierPointData())
+    {
+        m_pPier->SetPierPointData(ppIdx++, pierPoint);
     }
 
     return true;
