@@ -76,7 +76,6 @@ protected:
 	xbrPierData m_Pier;
 
 	CMetaFileStatic m_LayoutPicture;
-	//CDrawPierLayoutControl m_ctrlDrawXBeam;
 
 	CColumnLayoutGrid m_ColumnLayoutGrid;
 	CColumnFixityComboBox m_cbColumnFixity;

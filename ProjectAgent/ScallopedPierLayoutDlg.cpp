@@ -146,25 +146,11 @@ void CScallopedPierLayoutDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 BOOL CScallopedPierLayoutDlg::OnInitDialog()
 {
-    //m_ctrlDrawXBeam.SubclassDlgItem(IDC_PIER_LAYOUT, this);
-    //m_ctrlDrawXBeam.CustomInit(this);
 
     m_ColumnLayoutGrid.SubclassDlgItem(IDC_COLUMN_GRID, this);
     m_ColumnLayoutGrid.CustomInit();
 
     m_Pier.GetRefColumnLocation(&m_TransverseOffsetMeasurement, &m_RefColumnIdx, &m_TransverseOffset);
-
- //   m_Pier.GetTransverseOffset(&m_RefColumnIdx, &m_TransverseOffset, &m_TransverseOffsetMeasurement);
- //   m_XBeamWidth = m_Pier.GetXBeamWidth();
-	//m_XBeamRadius = m_Pier.GetXBeamRadius();
-	//m_XBeamDepth = m_Pier.GetXBeamDepth();
-
- //   for (int i = 0; i < 2; i++)
- //   {
- //       pgsTypes::SideType side = (pgsTypes::SideType)i;
- //       m_Pier.GetXBeamDimensions(side, &m_XBeamHeight[side], &m_XBeamTaperHeight[side], &m_XBeamTaperLength[side], &m_XBeamEndSlopeOffset[side]);
- //       m_XBeamOverhang[side] = m_Pier.GetXBeamOverhang(side);
- //   }
 
     std::vector<CPierPointData> pvpp;
     m_Pier.GetLowerXBeamDimensions(&m_XBeamHeight[pgsTypes::stLeft], &m_XBeamHeight[pgsTypes::stRight], &m_XBeamTaperHeight[pgsTypes::stLeft],

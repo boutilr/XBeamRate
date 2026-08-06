@@ -342,7 +342,7 @@ void xbrPierData::SetLowerXBeamDimensions(Float64 h1l,Float64 h1r,Float64 h2l,Fl
 
    m_XW = w;
    m_XR = r;
-   m_XW = d;
+   m_XD = d;
 
    m_vPierPoints = vpp;
 }
@@ -852,7 +852,7 @@ HRESULT xbrPierData::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress
           pierPointData.Save(pStrSave, pProgress);
       }
 
-      pStrSave->put_Property(_T("W"), CComVariant(m_XW));
+      pStrSave->put_Property(_T("XW"), CComVariant(m_XW));
 
    pStrSave->EndUnit(); // LowerCrossBeam
 
@@ -1133,7 +1133,7 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
          }
 
          var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("W"),&var);
+         hr = pStrLoad->get_Property(_T("XW"),&var);
          m_XW = var.dblVal;
 
          hr = pStrLoad->EndUnit(); // LowerCrossBeam
