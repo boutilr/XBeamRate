@@ -251,7 +251,6 @@
 #define IDC_FIXITY                      1857
 #define IDC_CAP_GROUP                   1884
 #define IDC_COLUMN_GROUP                1885
-#define IDC_MIRROR                      1925
 #define IDC_STATIC_BOUNDS               2070
 #define ID_VIEW_PIER                    33030
 #define ID_EDIT_PROJECT_NAME            50000
