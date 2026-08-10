@@ -188,15 +188,6 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     }
 }
 
-void CUserDefinedPierLayoutDlg::RefreshDisplay()
-{
-
-    if (GetParent())
-        GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
-    
-}
-
-
 void CUserDefinedPierLayoutDlg::FillTransverseLocationComboBox()
 {
     CComboBox* pcbMeasure = (CComboBox*)GetDlgItem(IDC_REFCOLUMN_MEASUREMENT);
@@ -257,8 +248,6 @@ LRESULT CUserDefinedPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
-    RefreshDisplay();
-
     return 0;
 }
 
@@ -266,8 +255,6 @@ LRESULT CUserDefinedPierLayoutDlg::OnPierPointGridCellChanged(WPARAM wParam, LPA
 {
     // Update pier data with current pier point data
     m_PierPointGrid.GetPierPointData(m_Pier);
-
-    RefreshDisplay();
 
     return 0;
 }
@@ -279,8 +266,6 @@ void CUserDefinedPierLayoutDlg::OnAddColumn()
 
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
-
-    RefreshDisplay();
 
 }
 
@@ -296,8 +281,6 @@ void CUserDefinedPierLayoutDlg::OnRemoveColumns()
     {
         m_ColumnLayoutGrid.GetColumnData(m_Pier);
     }
-
-    RefreshDisplay();
 }
 
 void CUserDefinedPierLayoutDlg::OnAddPierPoint()
@@ -306,9 +289,6 @@ void CUserDefinedPierLayoutDlg::OnAddPierPoint()
 
     // Update pier data with current pier point data
     m_PierPointGrid.GetPierPointData(m_Pier);
-
-    RefreshDisplay();
-
 }
 
 void CUserDefinedPierLayoutDlg::OnRemovePierPoints()
@@ -317,8 +297,6 @@ void CUserDefinedPierLayoutDlg::OnRemovePierPoints()
 
     // Update pier data with current column data
     m_PierPointGrid.GetPierPointData(m_Pier);
-    
-    RefreshDisplay();
 }
 
 void CUserDefinedPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
@@ -379,8 +357,6 @@ void CUserDefinedPierLayoutDlg::OnPierLayoutChanged()
     // X1..X4 must be >= 0
     DDV_UnitValueZeroOrMore(&dx, IDC_X1, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
     DDV_UnitValueZeroOrMore(&dx, IDC_X2, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-
-    RefreshDisplay();
 }
 
 void CUserDefinedPierLayoutDlg::OnRefColumnChanged()
@@ -396,6 +372,4 @@ void CUserDefinedPierLayoutDlg::OnRefColumnChanged()
     DDX_CBItemData(&dx, IDC_REFCOLUMN_MEASUREMENT, m_TransverseOffsetMeasurement);
 
     m_Pier.SetRefColumnLocation(m_TransverseOffsetMeasurement, m_RefColumnIdx, m_TransverseOffset);
-
-    RefreshDisplay();
 }

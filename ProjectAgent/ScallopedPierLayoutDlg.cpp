@@ -274,18 +274,6 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
     }
 }
 
-void CScallopedPierLayoutDlg::RefreshDisplay()
-{
-    // Invalidate and update the drawing control to reflect the changes
-    //m_ctrlDrawXBeam.UpdateDisplayObjects();
-    //m_ctrlDrawXBeam.Invalidate();
-    //m_ctrlDrawXBeam.UpdateWindow();
-
-    if (GetParent())
-        GetParent()->SendMessage(WM_PIER_LAYOUT_CHANGED);
-}
-
-
 void CScallopedPierLayoutDlg::FillTransverseLocationComboBox()
 {
     CComboBox* pcbMeasure = (CComboBox*)GetDlgItem(IDC_REFCOLUMN_MEASUREMENT);
@@ -346,8 +334,6 @@ LRESULT CScallopedPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM l
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
-    RefreshDisplay();
-
     return 0;
 }
 
@@ -358,8 +344,6 @@ void CScallopedPierLayoutDlg::OnAddColumn()
 
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
-
-    RefreshDisplay();
 
 }
 
@@ -375,8 +359,6 @@ void CScallopedPierLayoutDlg::OnRemoveColumns()
     {
         m_ColumnLayoutGrid.GetColumnData(m_Pier);
     }
-
-    RefreshDisplay();
 }
 
 void CScallopedPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
@@ -494,8 +476,6 @@ void CScallopedPierLayoutDlg::OnPierLayoutChanged()
             spacingSum += m_Pier.GetColumnSpacing(spaIdx);
         }
     }
-
-    RefreshDisplay();
 }
 
 void CScallopedPierLayoutDlg::OnRefColumnChanged()
@@ -510,7 +490,4 @@ void CScallopedPierLayoutDlg::OnRefColumnChanged()
     DDX_OffsetAndTag(&dx, IDC_REFCOLUMN_OFFSET, IDC_REFCOLUMN_OFFSET_UNIT, m_TransverseOffset, pDisplayUnits->GetSpanLengthUnit());
     DDX_CBItemData(&dx, IDC_REFCOLUMN_MEASUREMENT, m_TransverseOffsetMeasurement);
 
-	//m_Pier.SetTransverseOffset(m_RefColumnIdx, m_TransverseOffset, m_TransverseOffsetMeasurement);
-
-    RefreshDisplay();
 }

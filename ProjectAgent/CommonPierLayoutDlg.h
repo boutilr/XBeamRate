@@ -84,7 +84,6 @@ protected:
 	void FillRefColumnComboBox(ColumnIndexType nColumns=INVALID_INDEX);
 	void FillHeightMeasureComboBox();
 	void FillTransverseLocationComboBox();
-	void RefreshDisplay();
 
 	ColumnIndexType m_RefColumnIdx{(ColumnIndexType)0};
 	Float64 m_TransverseOffset{0.0};
