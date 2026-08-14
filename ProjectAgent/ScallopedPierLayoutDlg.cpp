@@ -304,7 +304,6 @@ void CScallopedPierLayoutDlg::FillRefColumnComboBox(ColumnIndexType nColumns)
     if (pcbRefColumn->SetCurSel(curSel) == CB_ERR)
     {
         pcbRefColumn->SetCurSel(m_RefColumnIdx);
-        OnRefColumnChanged();
     }
 }
 
