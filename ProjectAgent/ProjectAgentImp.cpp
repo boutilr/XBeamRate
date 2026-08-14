@@ -690,6 +690,95 @@ bool CProjectAgentImp::Save(WBFL::System::IStructuredSave* pNativeStrSave)
          IndexType ctrnpt = pAlignment->GetAlignmentPointIndex(pierStation);
          pierData.SetCrownPointOffset(pAlignment->GetAlignmentOffset(ctrnpt,pierStation));
 
+         CComPtr<IAngle> skewAngle;
+         pBridge->GetPierSkew(pierIdx, &skewAngle);
+         CComPtr<IPoint2dCollection> pierPoints;
+         pAlignment->GetRoadwaySurface(pierStation, skewAngle, &pierPoints);
+
+         Float64 leftSumX = 0.0;
+         Float64 leftSumY = 0.0;
+         Float64 leftSumXY = 0.0;
+         Float64 leftSumXX = 0.0;
+         IndexType leftCount = 0;
+
+         Float64 rightSumX = 0.0;
+         Float64 rightSumY = 0.0;
+         Float64 rightSumXY = 0.0;
+         Float64 rightSumXX = 0.0;
+         IndexType rightCount = 0;
+
+         IndexType npp;
+         pierPoints->get_Count(&npp);
+
+         for (IndexType i = 0; i < npp; i++)
+         {
+                CComPtr<IPoint2d> pPoint;
+                pierPoints->get_Item(i, &pPoint);
+
+                Float64 xp, yp;
+                pPoint->get_X(&xp);
+                pPoint->get_Y(&yp);
+
+                if (i <= ctrnpt)
+                {
+                    // Calculate the left slope using line of best fit
+                    // from the points to the left of the crown point.
+                    leftSumX += xp;
+                    leftSumY += yp;
+                    leftSumXY += xp * yp;
+                    leftSumXX += xp * xp;
+                    leftCount++;
+                }
+                if (i >= ctrnpt)
+                {
+                    // Calculate the right slope using line of best fit
+                    // from the points to the right of the crown point.
+                    rightSumX += xp;
+                    rightSumY += yp;
+                    rightSumXY += xp * yp;
+                    rightSumXX += xp * xp;
+                    rightCount++;
+                }
+         }
+
+         Float64 mLeft = 0.0;
+         Float64 mRight = 0.0;
+
+         if (leftCount >= 2)
+         {
+             Float64 denominator =
+                 leftCount * leftSumXX - leftSumX * leftSumX;
+
+             if (fabs(denominator) > DBL_EPSILON)
+             {
+                 mLeft =
+                     (leftCount * leftSumXY - leftSumX * leftSumY) /
+                     denominator;
+             }
+         }
+
+         if (rightCount >= 2)
+         {
+             Float64 denominator =
+                 rightCount * rightSumXX - rightSumX * rightSumX;
+
+             if (fabs(denominator) > DBL_EPSILON)
+             {
+                 mRight =
+                     (rightCount * rightSumXY - rightSumX * rightSumY) /
+                     denominator;
+             }
+         }
+
+         pierData.SetCrownSlope(-mLeft, mRight);
+
+
+         ColumnIndexType refColIdx;
+         Float64 refColOffset;
+         pgsTypes::OffsetMeasurementType refColMeasure;
+         pPier->GetTransverseOffset(&refColIdx, &refColOffset, &refColMeasure);
+         pierData.SetRefColumnLocation(refColMeasure, refColIdx, refColOffset);
+
          // ok, save it
          pierData.Save(pStrSave, nullptr);
       }
@@ -3279,7 +3368,7 @@ void CProjectAgentImp::UpdatePiers()
    }
 }
 
-void CProjectAgentImp::UpdatePierData(const CPierData2* pPier,xbrPierData& pierData)
+void CProjectAgentImp::UpdatePierData(const CPierData2* pPier,xbrPierData& pierData) // when does this get called?
 {
    // Updates our internal pier data with the pier data from the bridge model
    USES_CONVERSION;
