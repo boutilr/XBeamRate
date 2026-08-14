@@ -735,6 +735,7 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
    }
 
    IndexType nColumns = pPier->GetColumnCount(pierID);
+
    for (IndexType colIdx = 0; colIdx < nColumns; colIdx++ )
    {
       Float64 XxbCol = pPier->GetColumnLocation(pierID,colIdx);
@@ -764,19 +765,32 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
 
       // Create the shape of the column
       auto columnShape = std::make_shared<WBFL::Geometry::Polygon>();
-      Float64 X1,X2,X3;
+      Float64 X1, X2, X3;
+
+	  xbrPierData pierData = pProject->GetPierData(pierID);
+
       X2 = pntTop.X();
-      X1 = X2-d1/2;
-      X3 = X2+d1/2;
+      X1 = X2 - d1 / 2;
+      X3 = X2 + d1 / 2;
+      pgsTypes::OffsetMeasurementType refColMeasure;
+      ColumnIndexType refColIdx;
+      Float64 refColOffset;
+
+	  pierData.GetRefColumnLocation(&refColMeasure, &refColIdx, &refColOffset);
+
+      if (colIdx == refColIdx)
+      {
+          X2 -= refColOffset + pierData.GetX1L();
+      }
       Float64 Y1 = fn.Evaluate(X1);
       Float64 Y2 = fn.Evaluate(X2);
       Float64 Y3 = fn.Evaluate(X3);
 
-      columnShape->AddPoint(X1,Y1);
-      columnShape->AddPoint(X2,Y2);
-      columnShape->AddPoint(X3,Y3);
-      columnShape->AddPoint(X3,Ybot);
-      columnShape->AddPoint(X1,Ybot);
+      columnShape->AddPoint(X1, Y1);
+      columnShape->AddPoint(X2, Y2);
+      columnShape->AddPoint(X3, Y3);
+      columnShape->AddPoint(X3, Ybot);
+      columnShape->AddPoint(X1, Ybot);
 
       auto doColumn = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
       doColumn->SetPosition(pntTop,false,false);
