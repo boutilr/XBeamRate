@@ -71,8 +71,8 @@ xbrPierData::xbrPierData()
 
    m_ColumnFixity = pgsTypes::cftFixed;
 
-   m_X5 = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
-   m_X6 = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
+   m_OHL = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
+   m_OHR = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
 
    // Load Rating Condition
    m_ConditionFactorType = pgsTypes::cfGood;
@@ -571,26 +571,26 @@ Float64& xbrPierData::GetColumnSpacing(SpacingIndexType spaceIdx)
    return m_vColumnSpacing[spaceIdx];
 }
 
-void xbrPierData::SetXBeamOverhangs(Float64 X5,Float64 X6)
+void xbrPierData::SetXBeamOverhangs(Float64 OHL,Float64 OHR)
 {
-   m_X5 = X5;
-   m_X6 = X6;
+   m_OHL = OHL;
+   m_OHR = OHR;
 }
 
-void xbrPierData::GetXBeamOverhangs(Float64* pX5,Float64* pX6) const
+void xbrPierData::GetXBeamOverhangs(Float64* pOHL,Float64* pOHR) const
 {
-   *pX5 = m_X5;
-   *pX6 = m_X6;
+   *pOHL = m_OHL;
+   *pOHR = m_OHR;
 }
 
-Float64& xbrPierData::GetX5()
+Float64& xbrPierData::GetOHL()
 {
-   return m_X5;
+   return m_OHL;
 }
 
-Float64& xbrPierData::GetX6()
+Float64& xbrPierData::GetOHR()
 {
-   return m_X6;
+   return m_OHR;
 }
 
 pgsTypes::ConditionFactorType xbrPierData::GetConditionFactorType() const
@@ -777,7 +777,7 @@ Float64 xbrPierData::GetXBeamLength() const
    {
       L += s;
    }
-   L += (m_X5-m_X1L) + (m_X6-m_X1R);
+   L += (m_OHL-m_X1L) + (m_OHR-m_X1R);
    return L;
 }
 
@@ -852,7 +852,7 @@ HRESULT xbrPierData::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress
           pierPointData.Save(pStrSave, pProgress);
       }
 
-      pStrSave->put_Property(_T("XW"), CComVariant(m_XW));
+      pStrSave->put_Property(_T("W"), CComVariant(m_XW));
 
    pStrSave->EndUnit(); // LowerCrossBeam
 
@@ -860,8 +860,8 @@ HRESULT xbrPierData::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress
       pStrSave->put_Property(_T("RefColumn"),CComVariant(m_RefColumnIdx));
       pStrSave->put_Property(_T("RefColumnOffset"),CComVariant(m_RefColumnOffset));
       pStrSave->put_Property(_T("RefColumnDatum"),CComVariant(m_RefColumnDatum));
-      pStrSave->put_Property(_T("X5"),CComVariant(m_X5));
-      pStrSave->put_Property(_T("X6"),CComVariant(m_X6));
+      pStrSave->put_Property(_T("OHL"),CComVariant(m_OHL));
+      pStrSave->put_Property(_T("OHR"),CComVariant(m_OHR));
 
       std::vector<Float64>::iterator spacingIter = m_vColumnSpacing.begin();
       std::vector<CColumnData>::iterator columnIterBegin = m_vColumnData.begin();
@@ -1133,7 +1133,7 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
          }
 
          var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("XW"),&var);
+         hr = pStrLoad->get_Property(_T("W"),&var);
          m_XW = var.dblVal;
 
          hr = pStrLoad->EndUnit(); // LowerCrossBeam
@@ -1151,13 +1151,28 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
          hr = pStrLoad->get_Property(_T("RefColumnDatum"),&var);
          m_RefColumnDatum = (pgsTypes::OffsetMeasurementType)var.lVal;
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("X5"),&var);
-         m_X5 = var.dblVal;
+         Float64 version;
+         pStrLoad->get_Version(&version);
+		 if (version < 2.0)
+         {
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X5"), &var);
+             m_OHL = var.dblVal;
 
-         var.vt = VT_R8;
-         hr = pStrLoad->get_Property(_T("X6"),&var);
-         m_X6 = var.dblVal;
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("X6"), &var);
+             m_OHR = var.dblVal;
+         }
+         else
+         {
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("OHL"), &var);
+             m_OHL = var.dblVal;
+
+             var.vt = VT_R8;
+             hr = pStrLoad->get_Property(_T("OHR"), &var);
+             m_OHR = var.dblVal;
+         }
 
          m_vColumnData.clear();
          m_vColumnSpacing.clear();
@@ -1297,8 +1312,8 @@ void xbrPierData::MakeCopy(const xbrPierData& rOther)
    m_RefColumnIdx    = rOther.m_RefColumnIdx;
    m_RefColumnOffset = rOther.m_RefColumnOffset;
 
-   m_X5              = rOther.m_X5;
-   m_X6              = rOther.m_X6;
+   m_OHL              = rOther.m_OHL;
+   m_OHR              = rOther.m_OHR;
 
    m_RebarGrade = rOther.m_RebarGrade;
    m_RebarType = rOther.m_RebarType;

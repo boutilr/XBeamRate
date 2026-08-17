@@ -2232,12 +2232,12 @@ void CProjectAgentImp::GetLowerXBeamDimensions(PierIDType pierID, Float64* ph1l,
 
 Float64 CProjectAgentImp::GetXBeamLeftOverhang(PierIDType pierID) const
 {
-   return GetPrivatePierData(pierID).GetX5();
+   return GetPrivatePierData(pierID).GetOHL();
 }
 
 Float64 CProjectAgentImp::GetXBeamRightOverhang(PierIDType pierID) const
 {
-   return GetPrivatePierData(pierID).GetX6();
+   return GetPrivatePierData(pierID).GetOHR();
 }
 
 Float64 CProjectAgentImp::GetXBeamWidth(PierIDType pierID) const

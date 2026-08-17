@@ -224,6 +224,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ProjectAgent.def" />
+    <None Include="res\CommonPierLayout.emf" />
     <None Include="res\Dimensions_Alignment.emf" />
     <None Include="res\Dimensions_Alignment_Continuous.emf" />
     <None Include="res\Dimensions_Alignment_Expansion.emf" />
@@ -233,6 +234,8 @@
     <None Include="res\Dimensions_BridgeLine_Expansion.emf" />
     <None Include="res\Dimensions_BridgeLine_Integral.emf" />
     <None Include="res\PierLayout.emf" />
+    <None Include="res\ScallopedPierLayout.emf" />
+    <None Include="res\UserDefinedPierLayout.emf" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ProjectAgent.rc" />

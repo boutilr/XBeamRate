@@ -162,10 +162,10 @@ public:
    Float64& GetColumnSpacing(SpacingIndexType spaceIdx);
 
    // Cross beam overhangs
-   void SetXBeamOverhangs(Float64 X5,Float64 X6);
-   void GetXBeamOverhangs(Float64* pX5,Float64* pX6) const;
-   Float64& GetX5();
-   Float64& GetX6();
+   void SetXBeamOverhangs(Float64 OHL,Float64 OHR);
+   void GetXBeamOverhangs(Float64* pOHL,Float64* pOHR) const;
+   Float64& GetOHL();
+   Float64& GetOHR();
 
    // Cross beam condition information
    pgsTypes::ConditionFactorType GetConditionFactorType() const;
@@ -261,7 +261,7 @@ protected:
    IndexType m_RefColumnIdx;
    Float64 m_RefColumnOffset;
    pgsTypes::OffsetMeasurementType m_RefColumnDatum;
-   Float64 m_X5, m_X6;
+   Float64 m_OHL, m_OHR;
 
    // Load Rating Condition
    pgsTypes::ConditionFactorType m_ConditionFactorType;
