@@ -245,6 +245,8 @@ bool CPierLayoutPage::CommitCommonPierLayout()
     m_pPier->SetColumnFixity(m_CommonPierLayoutDlg.m_ColumnFixity);
     m_CommonPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
 
+    m_pPier->SetXBeamOverhangs(m_CommonPierLayoutDlg.m_XBeamOverhang[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamOverhang[pgsTypes::stRight]);
+
     ColumnIndexType nColumns = m_pPier->GetColumnCount();
     for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
     {
@@ -274,6 +276,8 @@ bool CPierLayoutPage::CommitScallopedPierLayout()
     m_pPier->SetColumnFixity(m_ScallopedPierLayoutDlg.m_ColumnFixity);
     m_ScallopedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
 
+    m_pPier->SetXBeamOverhangs(m_ScallopedPierLayoutDlg.m_XBeamOverhang[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamOverhang[pgsTypes::stRight]);
+
     ColumnIndexType nColumns = m_pPier->GetColumnCount();
     for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
     {
@@ -300,6 +304,8 @@ bool CPierLayoutPage::CommitUserDefinedPierLayout()
 
     m_pPier->SetColumnFixity(m_UserDefinedPierLayoutDlg.m_ColumnFixity);
     m_UserDefinedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
+
+	m_pPier->SetXBeamOverhangs(m_UserDefinedPierLayoutDlg.m_XBeamOverhang[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamOverhang[pgsTypes::stRight]);
 
     ColumnIndexType nColumns = m_pPier->GetColumnCount();
     for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
