@@ -856,7 +856,7 @@ HRESULT xbrPierData::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress
 
    pStrSave->EndUnit(); // LowerCrossBeam
 
-   pStrSave->BeginUnit(_T("Columns"),1.0);
+   pStrSave->BeginUnit(_T("Columns"),2.0);
       pStrSave->put_Property(_T("RefColumn"),CComVariant(m_RefColumnIdx));
       pStrSave->put_Property(_T("RefColumnOffset"),CComVariant(m_RefColumnOffset));
       pStrSave->put_Property(_T("RefColumnDatum"),CComVariant(m_RefColumnDatum));
