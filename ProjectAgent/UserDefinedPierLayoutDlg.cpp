@@ -122,8 +122,8 @@ BOOL CUserDefinedPierLayoutDlg::OnInitDialog()
     Float64 D, R;
     std::vector<CPierPointData> pvpp;
     m_Pier.GetLowerXBeamDimensions(&m_XBeamHeight[pgsTypes::stLeft], &m_XBeamHeight[pgsTypes::stRight], &m_XBeamTaperHeight[pgsTypes::stLeft],
-        &m_XBeamTaperHeight[pgsTypes::stRight], &m_XBeamTaperLength[pgsTypes::stLeft], &m_XBeamTaperLength[pgsTypes::stRight], &m_XBeamEndSlopeOffset[pgsTypes::stLeft],
-        &m_XBeamEndSlopeOffset[pgsTypes::stRight], &m_XBeamWidth, &R, &D, &pvpp);
+        &m_XBeamTaperHeight[pgsTypes::stRight], &m_XBeamEndSlopeOffset[pgsTypes::stLeft], &m_XBeamEndSlopeOffset[pgsTypes::stRight],
+        &m_XBeamTaperLength[pgsTypes::stLeft], &m_XBeamTaperLength[pgsTypes::stRight], &m_XBeamWidth, &R, &D, &pvpp);
 
     FillTransverseLocationComboBox();
     FillRefColumnComboBox(m_Pier.GetColumnCount());

@@ -238,9 +238,9 @@ bool CPierLayoutPage::CommitCommonPierLayout()
     m_pPier->SetRefColumnLocation(m_CommonPierLayoutDlg.m_TransverseOffsetMeasurement, m_CommonPierLayoutDlg.m_RefColumnIdx, m_CommonPierLayoutDlg.m_TransverseOffset);
 
     std::vector<CPierPointData> pvpp;
-	m_pPier->SetLowerXBeamDimensions(m_CommonPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
-        m_CommonPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight], 
-        m_CommonPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamWidth, 0, 0, pvpp);
+	m_pPier->SetLowerXBeamDimensions(m_CommonPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], 
+    m_CommonPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight],
+    m_CommonPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft], m_CommonPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_CommonPierLayoutDlg.m_XBeamWidth, 0, 0, pvpp);
 
     m_pPier->SetColumnFixity(m_CommonPierLayoutDlg.m_ColumnFixity);
     m_CommonPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
@@ -267,10 +267,10 @@ bool CPierLayoutPage::CommitScallopedPierLayout()
     }
 
     std::vector<CPierPointData> pvpp;
-    m_pPier->SetLowerXBeamDimensions(m_ScallopedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
-        m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight],
-        m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamWidth,
-        m_ScallopedPierLayoutDlg.m_XBeamRadius, m_ScallopedPierLayoutDlg.m_XBeamDepth, pvpp);
+    m_pPier->SetLowerXBeamDimensions(m_ScallopedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft],
+        m_ScallopedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight],
+        m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamWidth, m_ScallopedPierLayoutDlg.m_XBeamRadius, 
+        m_ScallopedPierLayoutDlg.m_XBeamDepth, pvpp);
 
 
     m_pPier->SetColumnFixity(m_ScallopedPierLayoutDlg.m_ColumnFixity);
@@ -297,10 +297,11 @@ bool CPierLayoutPage::CommitUserDefinedPierLayout()
         return false;
     }
 
-	std::vector<CPierPointData> vPoints;
-    m_pPier->SetLowerXBeamDimensions(m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
-        m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight],
-        m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamWidth, 0, 0, vPoints);
+    std::vector<CPierPointData> pvpp;
+    m_pPier->SetLowerXBeamDimensions(m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stLeft],
+        m_UserDefinedPierLayoutDlg.m_XBeamTaperLength[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight],
+        m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamWidth, 0, 0, pvpp);
+
 
     m_pPier->SetColumnFixity(m_UserDefinedPierLayoutDlg.m_ColumnFixity);
     m_UserDefinedPierLayoutDlg.m_ColumnLayoutGrid.GetColumnData(*m_pPier);
