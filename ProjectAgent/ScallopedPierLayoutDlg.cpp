@@ -228,6 +228,29 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
         DDV_UnitValueZeroOrMore(pDX, IDC_OHL, m_XBeamOverhang[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
         DDV_UnitValueZeroOrMore(pDX, IDC_OHR, m_XBeamOverhang[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
 
+        for (SpacingIndexType spaIdx = 0;
+            spaIdx < m_Pier.GetColumnCount() - 1;
+            ++spaIdx)
+        {
+            const Float64 spacing = m_Pier.GetColumnSpacing(spaIdx);
+
+            if (spacing > 2.0 * m_XBeamRadius)
+            {
+                ATLASSERT(spacing <= 2.0 * m_XBeamRadius);
+
+                pDX->PrepareCtrl(IDC_R);
+
+                CString msg;
+                msg.Format(
+                    _T("R is too small for the spacing between columns %d and %d. ")
+                    _T("R must be at least one-half of the column spacing."),
+                    spaIdx + 1,
+                    spaIdx + 2);
+
+                AfxMessageBox(msg);
+                pDX->Fail();
+            }
+        }
 
         // Overhangs must satisfy the first/last column radius limits.
         Float64 D1 = 0.0, D2 = 0.0;
