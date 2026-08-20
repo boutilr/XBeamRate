@@ -234,6 +234,7 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
         {
             const Float64 spacing = m_Pier.GetColumnSpacing(spaIdx);
 
+            // Chord length must be less than the diameter.
             if (spacing >= 2.0 * m_XBeamRadius)
             {
                 ATLASSERT(spacing < 2.0 * m_XBeamRadius);
@@ -250,7 +251,136 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
                 AfxMessageBox(msg);
                 pDX->Fail();
             }
+
+            // Arc height (sagitta) must not exceed D.
+            const Float64 halfChord = spacing / 2.0;
+            const Float64 arcHeight =
+                m_XBeamRadius -
+                sqrt(m_XBeamRadius * m_XBeamRadius -
+                    halfChord * halfChord);
+
+            if (arcHeight > m_XBeamDepth)
+            {
+
+                pDX->PrepareCtrl(IDC_D);
+
+                CString msg;
+                msg.Format(
+                    _T("D is too small for the arc between columns %d and %d. ")
+                    _T("D must be at least the height of the arc."),
+                    spaIdx + 1,
+                    spaIdx + 2);
+
+                AfxMessageBox(msg);
+                pDX->Fail();
+            }
         }
+
+        // Left overhang arc 
+        {
+            const Float64 run = m_XBeamOverhang[pgsTypes::stLeft];
+            const Float64 dy =
+                m_XBeamDepth - m_XBeamHeight[pgsTypes::stLeft];
+
+            const Float64 chord =
+                sqrt(run * run + dy * dy);
+
+            // First make sure the radius can actually span the tilted chord.
+            if (chord >= 2.0 * m_XBeamRadius)
+            {
+
+                pDX->PrepareCtrl(IDC_R);
+
+                CString msg;
+                msg.Format(
+                    _T("R is too small for the left overhang arc. ")
+                    _T("R must be more than one-half of the distance ")
+                    _T("between the arc endpoints."));
+
+                AfxMessageBox(msg);
+                pDX->Fail();
+            }
+
+            const Float64 centerOffset =
+                sqrt(m_XBeamRadius * m_XBeamRadius -
+                    0.25 * chord * chord);
+
+            // Vertical rise of the arc above the column-top endpoint.
+            const Float64 arcHeight =
+                0.5 * dy +
+                m_XBeamRadius -
+                centerOffset * run / chord;
+
+            if (arcHeight > m_XBeamDepth)
+            {
+
+                pDX->PrepareCtrl(IDC_D);
+
+                CString msg;
+                msg.Format(
+                    _T("D is too small for the left overhang arc. ")
+                    _T("The top of the arc cannot extend above the top ")
+                    _T("of the cross beam."));
+
+                AfxMessageBox(msg);
+                pDX->Fail();
+            }
+        }
+
+
+        // Right overhang arc
+        {
+            const Float64 run = m_XBeamOverhang[pgsTypes::stRight];
+            const Float64 dy =
+                m_XBeamDepth - m_XBeamHeight[pgsTypes::stRight];
+
+            const Float64 chord =
+                sqrt(run * run + dy * dy);
+
+            // First make sure the radius can actually span the tilted chord.
+            if (chord >= 2.0 * m_XBeamRadius)
+            {
+                ATLASSERT(chord < 2.0 * m_XBeamRadius);
+
+                pDX->PrepareCtrl(IDC_R);
+
+                CString msg;
+                msg.Format(
+                    _T("R is too small for the right overhang arc. ")
+                    _T("R must be more than one-half of the distance ")
+                    _T("between the arc endpoints."));
+
+                AfxMessageBox(msg);
+                pDX->Fail();
+            }
+
+            const Float64 centerOffset =
+                sqrt(m_XBeamRadius * m_XBeamRadius -
+                    0.25 * chord * chord);
+
+            const Float64 arcHeight =
+                0.5 * dy +
+                m_XBeamRadius -
+                centerOffset * run / chord;
+
+            if (arcHeight > m_XBeamDepth)
+            {
+                ATLASSERT(arcHeight <= m_XBeamDepth);
+
+                pDX->PrepareCtrl(IDC_D);
+
+                CString msg;
+                msg.Format(
+                    _T("D is too small for the right overhang arc. ")
+                    _T("The top of the arc cannot extend above the top ")
+                    _T("of the cross beam."));
+
+                AfxMessageBox(msg);
+                pDX->Fail();
+            }
+        }
+
+
 
         // Overhangs must satisfy the first/last column radius limits.
         Float64 D1 = 0.0, D2 = 0.0;
