@@ -234,16 +234,16 @@ void CScallopedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
         {
             const Float64 spacing = m_Pier.GetColumnSpacing(spaIdx);
 
-            if (spacing > 2.0 * m_XBeamRadius)
+            if (spacing >= 2.0 * m_XBeamRadius)
             {
-                ATLASSERT(spacing <= 2.0 * m_XBeamRadius);
+                ATLASSERT(spacing < 2.0 * m_XBeamRadius);
 
                 pDX->PrepareCtrl(IDC_R);
 
                 CString msg;
                 msg.Format(
                     _T("R is too small for the spacing between columns %d and %d. ")
-                    _T("R must be at least one-half of the column spacing."),
+                    _T("R must be more than one-half of the column spacing."),
                     spaIdx + 1,
                     spaIdx + 2);
 
