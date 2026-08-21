@@ -846,6 +846,7 @@ void CXBeamRateView::UpdateRebarDisplayObjects()
    PierIDType pierID = GetPierID();
 
    GET_IFACE2(pBroker,IXBRRebar,pRebar);
+   GET_IFACE2(pBroker,IXBRProject,pProject);
 
    // Elevation View
    IndexType nRebarRows = pRebar->GetRebarRowCount(pierID);
@@ -869,22 +870,44 @@ void CXBeamRateView::UpdateRebarDisplayObjects()
    Float64 XxbCut = pPier->ConvertPierToCrossBeamCoordinate(pierID,m_pFrame->GetCurrentCutLocation());
 
    CComPtr<IRebarSection> rebarSection;
-   pRebar->GetRebarSection(pierID,pgsTypes::Stage2,xbrPointOfInterest(INVALID_ID,XxbCut),&rebarSection);
+   pRebar->GetRebarSection(pierID, pgsTypes::Stage2, xbrPointOfInterest(INVALID_ID, XxbCut), &rebarSection);
 
    CComPtr<IEnumRebarSectionItem> enumSectionItems;
    rebarSection->get__EnumRebarSectionItem(&enumSectionItems);
    CComPtr<IRebarSectionItem> sectionItem;
+
+   CComPtr<IPoint2dCollection> points;
+   pPier->GetTopSurface(pierID, pgsTypes::Stage1, &points);
+
+   WBFL::Math::PiecewiseFunction fn;
+   CComPtr<IEnumPoint2d> enumPoints;
+   points->get__Enum(&enumPoints);
+   CComPtr<IPoint2d> pnt;
+   while (enumPoints->Next(1, &pnt, nullptr) != S_FALSE)
+   {
+       Float64 x, y;
+       pnt->Location(&x, &y);
+       fn.AddPoint(x, y);
+       pnt.Release();
+   }
+
    while ( enumSectionItems->Next(1,&sectionItem,nullptr) != S_FALSE )
    {
       CComPtr<IPoint2d> pntBar;
       sectionItem->get_Location(&pntBar);
+      Float64 Xbar, YBar;
+      pntBar->get_X(&Xbar);
+      pntBar->get_Y(&YBar);
 
-      pntBar->Offset(EndOffset+Lxb,0);
+	  if (!(pProject->GetPierType(pierID) == pgsTypes::pctExpansion && YBar > fn.Evaluate(Xbar))) // ignore rebar in upper crossbeam for expansion piers
+      {
+          pntBar->Offset(EndOffset + Lxb, 0);
 
-      auto doBar = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
-      doBar->SetPosition(geomUtil::GetPoint(pntBar),false,false);
+          auto doBar = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
+          doBar->SetPosition(geomUtil::GetPoint(pntBar), false, false);
 
-      displayList->AddDisplayObject(doBar);
+          displayList->AddDisplayObject(doBar);
+      }
 
       sectionItem.Release();
    }
