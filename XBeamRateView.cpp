@@ -846,7 +846,6 @@ void CXBeamRateView::UpdateRebarDisplayObjects()
    PierIDType pierID = GetPierID();
 
    GET_IFACE2(pBroker,IXBRRebar,pRebar);
-   GET_IFACE2(pBroker,IXBRProject,pProject);
 
    // Elevation View
    IndexType nRebarRows = pRebar->GetRebarRowCount(pierID);
@@ -898,6 +897,8 @@ void CXBeamRateView::UpdateRebarDisplayObjects()
       Float64 Xbar, YBar;
       pntBar->get_X(&Xbar);
       pntBar->get_Y(&YBar);
+
+      GET_IFACE2(pBroker, IXBRProject, pProject);
 
 	  if (!(pProject->GetPierType(pierID) == pgsTypes::pctExpansion && YBar > fn.Evaluate(Xbar))) // ignore rebar in upper crossbeam for expansion piers
       {
