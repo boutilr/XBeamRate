@@ -1471,7 +1471,7 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 	   {
 		   CComPtr<IPoint2d> point;
 		   point.CoCreateInstance(CLSID_Point2d);
-		   point->Move(pointData.Get_X(), -pointData.Get_Y());
+		   point->Move(pointData.Get_X(), -pointData.Get_Y() - pierData.GetDeckThickness() - HU);
 		   points->Add(point);
 	   }
 	   uxbeam->SetPoints(points);
