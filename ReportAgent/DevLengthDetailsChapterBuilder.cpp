@@ -84,7 +84,7 @@ void WriteRowToDevelopmentTable(rptRcTable* pTable, RowIndexType row, CComBSTR b
     (*pTable)(row, col++) << length.SetValue(devDetails.ld);
 }
 
-rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    USES_CONVERSION;
 
@@ -274,8 +274,8 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
 
                     // Height of pier at start and end of bar
                     GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
-                    Float64 fullDepthStart = pSectProp->GetDepth(pierID, xbrTypes::Stage2, xbrPointOfInterest(startLoc));
-                    Float64 fullDepthEnd = pSectProp->GetDepth(pierID, xbrTypes::Stage2, xbrPointOfInterest(endLoc));
+                    Float64 fullDepthStart = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(startLoc));
+                    Float64 fullDepthEnd = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(endLoc));
 
 
 
@@ -283,7 +283,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                     CComPtr<IRebarSectionItem> rebarSectionItem;
 
                     CComPtr<IRebarSection> rebarSectionStart;
-                    const auto& stage = xbrTypes::Stage::Stage2;
+                    const auto& stage = pgsTypes::Stage::Stage2;
                     pRebar->GetRebarSection(pierID, stage, xbrPointOfInterest(startLoc), &rebarSectionStart);
 
                     CComPtr<IEnumRebarSectionItem> enumRebarStart;
@@ -294,7 +294,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                         CComPtr<IPoint2d> pntRebar;
                         rebarSectionItem->get_Location(&pntRebar);
 
-                        Float64 barStartY = pRebar->GetRebarDepth(pierID, startLoc, xbrTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
+                        Float64 barStartY = pRebar->GetRebarDepth(pierID, startLoc, pgsTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
 
                         if (barStartY < 0)
                         {
@@ -315,7 +315,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                     }
 
                     CComPtr<IRebarSection> rebarSectionEnd;
-                    pRebar->GetRebarSection(pierID, xbrTypes::Stage2, xbrPointOfInterest(endLoc), &rebarSectionEnd);
+                    pRebar->GetRebarSection(pierID, pgsTypes::Stage2, xbrPointOfInterest(endLoc), &rebarSectionEnd);
 
                     CComPtr<IEnumRebarSectionItem> enumRebarEnd;
                     rebarSectionEnd->get__EnumRebarSectionItem(&enumRebarEnd);
@@ -325,7 +325,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                         CComPtr<IPoint2d> pntRebar;
                         rebarSectionItem->get_Location(&pntRebar);
 
-                        Float64 barEndY = pRebar->GetRebarDepth(pierID, xbrPointOfInterest(endLoc), xbrTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
+                        Float64 barEndY = pRebar->GetRebarDepth(pierID, xbrPointOfInterest(endLoc), pgsTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
 
                         if (barEndY < 0)
                         {
@@ -388,13 +388,13 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                     
                         // Height of pier at start and end of bar
                         GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
-                        Float64 fullDepth = pSectProp->GetDepth(pierID, xbrTypes::Stage2, poi);
+                        Float64 fullDepth = pSectProp->GetDepth(pierID, pgsTypes::Stage2, poi);
 
                         // get bar depth
                         CComPtr<IRebarSectionItem> rebarSectionItem;
 
                         CComPtr<IRebarSection> rebarSection;
-                        pRebar->GetRebarSection(pierID, xbrTypes::Stage2, xbrPointOfInterest(poi), &rebarSection);
+                        pRebar->GetRebarSection(pierID, pgsTypes::Stage2, xbrPointOfInterest(poi), &rebarSection);
 
                         CComPtr<IEnumRebarSectionItem> enumRebar;
                         rebarSection->get__EnumRebarSectionItem(&enumRebar);
@@ -404,7 +404,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                             CComPtr<IPoint2d> pntRebar;
                             rebarSectionItem->get_Location(&pntRebar);
 
-                            Float64 barY = pRebar->GetRebarDepth(pierID, poi, xbrTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
+                            Float64 barY = pRebar->GetRebarDepth(pierID, poi, pgsTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
 
                             if (barY < 0)
                             {
@@ -489,8 +489,8 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                     Float64 endLoc = startLoc + barLength;
              
                     GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
-					Float64 depthStart = pSectProp->GetDepth(pierID, xbrTypes::Stage2, xbrPointOfInterest(startLoc));
-					Float64 depthEnd = pSectProp->GetDepth(pierID, xbrTypes::Stage2, xbrPointOfInterest(endLoc));
+					Float64 depthStart = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(startLoc));
+					Float64 depthEnd = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(endLoc));
 
                     // elevation of bar at ends
                     CComPtr<IPoint2d> barStart, barEnd;

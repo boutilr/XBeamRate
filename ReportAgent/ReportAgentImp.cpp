@@ -109,7 +109,7 @@ void CReportAgentImp::InitReportBuilders()
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CLoadRatingDetailsChapterBuilder()));
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CPierDescriptionDetailsChapterBuilder()));
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CLoadingDetailsChapterBuilder()));
-   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CDevLengthDetailsChapterBuilder()));
+   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CDevLengthDetailsChapterBuilder()));
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CMomentCapacityDetailsChapterBuilder()));
    pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CShearCapacityDetailsChapterBuilder()));
    pRptMgr->AddReportBuilder(pReportBuilder);
