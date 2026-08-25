@@ -1060,11 +1060,11 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
 
              var.vt = VT_R8;
              hr = pStrLoad->get_Property(_T("X3"), &var);
-             m_X1R = var.dblVal;
+             m_X2R = var.dblVal;
 
              var.vt = VT_R8;
              hr = pStrLoad->get_Property(_T("X4"), &var);
-             m_X2R = var.dblVal;
+             m_X1R = var.dblVal;
          }
          else
          {

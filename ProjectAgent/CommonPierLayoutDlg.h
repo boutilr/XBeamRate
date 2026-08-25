@@ -62,7 +62,6 @@ protected:
 	afx_msg void OnHeightMeasureChanged();
 	afx_msg void OnAddColumn();
 	afx_msg void OnRemoveColumns();
-	afx_msg void OnPierLayoutChanged();
 	afx_msg void OnRefColumnChanged();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
