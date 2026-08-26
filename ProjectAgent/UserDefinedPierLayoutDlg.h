@@ -66,8 +66,6 @@ protected:
 	afx_msg void OnRemoveColumns();
 	afx_msg void OnAddPierPoint();
 	afx_msg void OnRemovePierPoints();
-	afx_msg void OnPierLayoutChanged();
-	afx_msg void OnRefColumnChanged();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);

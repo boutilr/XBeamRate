@@ -61,18 +61,6 @@ BEGIN_MESSAGE_MAP(CUserDefinedPierLayoutDlg, CDialog)
     ON_BN_CLICKED(IDC_ADD_PIERPOINT, &CUserDefinedPierLayoutDlg::OnAddPierPoint)
     ON_BN_CLICKED(IDC_REMOVE_PIERPOINT, &CUserDefinedPierLayoutDlg::OnRemovePierPoints)
 
-    ON_EN_CHANGE(IDC_W, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_H1L, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_H1R, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X1L, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_X1R, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_OHL, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
-    ON_EN_CHANGE(IDC_OHR, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
-
-    ON_CBN_SELCHANGE(IDC_REFCOLUMN, &CUserDefinedPierLayoutDlg::OnRefColumnChanged)
-    ON_EN_CHANGE(IDC_REFCOLUMN_OFFSET, &CUserDefinedPierLayoutDlg::OnRefColumnChanged)
-    ON_CBN_SELCHANGE(IDC_REFCOLUMN_MEASUREMENT, &CUserDefinedPierLayoutDlg::OnRefColumnChanged)
-
     ON_WM_LBUTTONDOWN()
     ON_WM_LBUTTONUP()
     ON_WM_MOUSEMOVE()
@@ -385,66 +373,4 @@ void CUserDefinedPierLayoutDlg::SetPierData(const xbrPierData& pierData)
 const xbrPierData* CUserDefinedPierLayoutDlg::GetPierData() const
 {
     return &m_Pier;
-}
-
-void CUserDefinedPierLayoutDlg::OnPierLayoutChanged()
-{
-    // Get the current values from the edit controls into member variables
-    CDataExchange dx(this, TRUE);
-
-    auto pBroker = EAFGetBroker();
-    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
-
-    CPierLayoutPage* pPage =
-        DYNAMIC_DOWNCAST(CPierLayoutPage, GetParent());
-
-    // Exchange XBeam dimensions
-    DDX_UnitValueAndTag(&dx, IDC_H1L, IDC_H1L_UNIT, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_X1L, IDC_X1L_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-
-    DDX_UnitValueAndTag(&dx, IDC_H1R, IDC_H1R_UNIT, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_X1R, IDC_X1R_UNIT, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-
-    DDX_UnitValueAndTag(&dx, IDC_OHL, IDC_OHL_UNIT, m_XBeamOverhang[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDX_UnitValueAndTag(&dx, IDC_OHR, IDC_OHR_UNIT, m_XBeamOverhang[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-
-    DDX_UnitValueAndTag(&dx, IDC_W, IDC_W_UNIT, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
-
-    //// Update the pier data with the current values
-    //m_Pier.SetXBeamDimensions(pgsTypes::stLeft, m_XBeamHeight[pgsTypes::stLeft], m_XBeamTaperHeight[pgsTypes::stLeft],
-    //    m_XBeamTaperLength[pgsTypes::stLeft], m_XBeamEndSlopeOffset[pgsTypes::stLeft]);
-
-    //m_Pier.SetXBeamDimensions(pgsTypes::stRight, m_XBeamHeight[pgsTypes::stRight], m_XBeamTaperHeight[pgsTypes::stRight],
-    //    m_XBeamTaperLength[pgsTypes::stRight], m_XBeamEndSlopeOffset[pgsTypes::stRight]);
-
-    //m_Pier.SetXBeamWidth(m_XBeamWidth);
-
-    //m_Pier.SetXBeamOverhang(pgsTypes::stLeft, m_XBeamOverhang[pgsTypes::stLeft]);
-    //m_Pier.SetXBeamOverhang(pgsTypes::stRight, m_XBeamOverhang[pgsTypes::stRight]);
-
-    // XBeam width, W, must be greater than zero
-    DDV_UnitValueGreaterThanZero(&dx, IDC_W, m_XBeamWidth, pDisplayUnits->GetSpanLengthUnit());
-
-    // H1 and H3 must be > 0
-    DDV_UnitValueGreaterThanZero(&dx, IDC_H1L, m_XBeamHeight[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDV_UnitValueGreaterThanZero(&dx, IDC_H1R, m_XBeamHeight[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-
-    // X1..X4 must be >= 0
-    DDV_UnitValueZeroOrMore(&dx, IDC_X1L, m_XBeamEndSlopeOffset[pgsTypes::stLeft], pDisplayUnits->GetSpanLengthUnit());
-    DDV_UnitValueZeroOrMore(&dx, IDC_X1R, m_XBeamEndSlopeOffset[pgsTypes::stRight], pDisplayUnits->GetSpanLengthUnit());
-}
-
-void CUserDefinedPierLayoutDlg::OnRefColumnChanged()
-{
-    // Get the current values from the edit controls into member variables
-    CDataExchange dx(this, TRUE);
-
-    auto pBroker = EAFGetBroker();
-    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
-
-    DDX_CBIndex(&dx, IDC_REFCOLUMN, m_RefColumnIdx);
-    DDX_OffsetAndTag(&dx, IDC_REFCOLUMN_OFFSET, IDC_REFCOLUMN_OFFSET_UNIT, m_TransverseOffset, pDisplayUnits->GetSpanLengthUnit());
-    DDX_CBItemData(&dx, IDC_REFCOLUMN_MEASUREMENT, m_TransverseOffsetMeasurement);
-
-    m_Pier.SetRefColumnLocation(m_TransverseOffsetMeasurement, m_RefColumnIdx, m_TransverseOffset);
 }
