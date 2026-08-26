@@ -267,6 +267,8 @@ bool CPierLayoutPage::CommitScallopedPierLayout()
         return false;
     }
 
+    m_pPier->SetRefColumnLocation(m_ScallopedPierLayoutDlg.m_TransverseOffsetMeasurement, m_ScallopedPierLayoutDlg.m_RefColumnIdx, m_ScallopedPierLayoutDlg.m_TransverseOffset);
+
     std::vector<CPierPointData> pvpp;
     m_pPier->SetLowerXBeamDimensions(m_ScallopedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
         m_ScallopedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stRight], m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stLeft], m_ScallopedPierLayoutDlg.m_XBeamEndSlopeOffset[pgsTypes::stRight],
@@ -296,6 +298,8 @@ bool CPierLayoutPage::CommitUserDefinedPierLayout()
     {
         return false;
     }
+
+    m_pPier->SetRefColumnLocation(m_UserDefinedPierLayoutDlg.m_TransverseOffsetMeasurement, m_UserDefinedPierLayoutDlg.m_RefColumnIdx, m_UserDefinedPierLayoutDlg.m_TransverseOffset);
 
     std::vector<CPierPointData> pvpp;
     m_pPier->SetLowerXBeamDimensions(m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stLeft], m_UserDefinedPierLayoutDlg.m_XBeamHeight[pgsTypes::stRight], m_UserDefinedPierLayoutDlg.m_XBeamTaperHeight[pgsTypes::stLeft],
