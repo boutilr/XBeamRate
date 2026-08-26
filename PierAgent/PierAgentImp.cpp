@@ -384,7 +384,7 @@ void CPierAgentImp::GetUpperXBeamProfile(PierIDType pierID,IShape** ppShape) con
    CComPtr<ICrossBeam> xbeam;
    pier->get_CrossBeam(&xbeam);
 
-   xbeam->get_Profile(1,ppShape); // stage 1 is upper x-beam
+   xbeam->get_Profile(1,ppShape);
 }
 
 void CPierAgentImp::GetLowerXBeamProfile(PierIDType pierID,IShape** ppShape) const
@@ -1478,11 +1478,13 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 	   uxbeam->put_W2(W2);
        CComPtr<IPoint2dCollection> points;
        points.CoCreateInstance(CLSID_Point2dCollection);
+
 	   for (const auto& pointData : vPoints)
 	   {
 		   CComPtr<IPoint2d> point;
 		   point.CoCreateInstance(CLSID_Point2d);
-		   point->Move(pointData.Get_X(), -pointData.Get_Y() - pierData.GetDeckThickness() - HU);
+           Float64 Ydeck = GetElevation(pierID, pointData.Get_X());
+		   point->Move(pointData.Get_X(), Ydeck - pointData.Get_Y() - pierData.GetDeckThickness() - HU);
 		   points->Add(point);
 	   }
 	   uxbeam->SetPoints(points);
