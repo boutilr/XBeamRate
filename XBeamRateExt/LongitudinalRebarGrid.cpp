@@ -52,6 +52,7 @@ CLongitudinalRebarGrid::~CLongitudinalRebarGrid()
 BEGIN_MESSAGE_MAP(CLongitudinalRebarGrid, CGXGridWnd)
 	//{{AFX_MSG_MAP(CLongitudinalRebarGrid)
 		// NOTE - the ClassWizard will add and remove mapping macros here.
+        ON_CBN_SELCHANGE(GX_IDS_CTRL_CBS_DROPDOWNLIST, OnSelectionChange)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -71,7 +72,7 @@ void CLongitudinalRebarGrid::CustomInit()
    SetMergeCellsMode(gxnMergeDelayEval);
 
    const int num_rows = 0;
-   const int num_cols = 10;
+   const int num_cols = 11;
 
 	SetRowCount(num_rows);
 	SetColCount(num_cols);
@@ -145,6 +146,14 @@ void CLongitudinalRebarGrid::CustomInit()
          .SetVerticalAlignment(DT_VCENTER)
 			.SetValue(cv)
 		);
+
+    SetStyleRange(CGXRange(0, col++), CGXStyle()
+        .SetWrapText(TRUE)
+        .SetValue(_T("Rebar\nMaterial"))
+        .SetHorizontalAlignment(DT_CENTER)
+        .SetVerticalAlignment(DT_VCENTER)
+        .SetEnabled(FALSE)          // disables usage as current cell
+    );
 
 	SetStyleRange(CGXRange(0,col++), CGXStyle()
          .SetWrapText(TRUE)
@@ -347,6 +356,55 @@ xbrTypes::LongitudinalRebarLayoutType CLongitudinalRebarGrid::GetRebarLayoutType
    return xbrTypes::blFullLength;
 }
 
+void CLongitudinalRebarGrid::OnSelectionChange()
+{
+    ROWCOL nRow;
+    ROWCOL nCol;
+
+    WBFL::Materials::Rebar::Type type;
+    WBFL::Materials::Rebar::Grade grade;
+
+    GetCurrentCell(&nRow, &nCol);
+
+    CComboBox* pCB = (CComboBox*)GetDlgItem(GX_IDS_CTRL_CBS_DROPDOWNLIST);
+    int curSel = pCB->GetCurSel();
+
+    switch (curSel)
+    {
+    case 0:  type = WBFL::Materials::Rebar::Type::A615;  grade = WBFL::Materials::Rebar::Grade::Grade40;  break;
+    case 1:  type = WBFL::Materials::Rebar::Type::A615;  grade = WBFL::Materials::Rebar::Grade::Grade60;  break;
+    case 2:  type = WBFL::Materials::Rebar::Type::A615;  grade = WBFL::Materials::Rebar::Grade::Grade75;  break;
+    case 3:  type = WBFL::Materials::Rebar::Type::A615;  grade = WBFL::Materials::Rebar::Grade::Grade80;  break;
+    case 4:  type = WBFL::Materials::Rebar::Type::A706;  grade = WBFL::Materials::Rebar::Grade::Grade60;  break;
+    case 5:  type = WBFL::Materials::Rebar::Type::A706;  grade = WBFL::Materials::Rebar::Grade::Grade80;  break;
+    case 6:  type = WBFL::Materials::Rebar::Type::A1035; grade = WBFL::Materials::Rebar::Grade::Grade100; break;
+    default:
+        CHECK(false); // should never get here
+    }
+
+    CString strBarSizeChoiceList;
+    WBFL::LRFD::RebarIter rebarIter(type, grade);
+    for (rebarIter.Begin(); rebarIter; rebarIter.Next())
+    {
+        const auto* pRebar = rebarIter.GetCurrentRebar();
+        strBarSizeChoiceList += pRebar->GetName().c_str();
+        strBarSizeChoiceList += _T("\n");
+    }
+
+    xbrLongitudinalRebarData::RebarRow rebarData;
+    GetRebarData(nRow, rebarData);
+
+    SetStyleRange(CGXRange(nRow, nCol + 1), CGXStyle()
+        .SetEnabled(TRUE)
+        .SetReadOnly(FALSE)
+        .SetControl(GX_IDS_CTRL_CBS_DROPDOWNLIST)
+        .SetChoiceList(strBarSizeChoiceList)
+        .SetHorizontalAlignment(DT_RIGHT)
+        .SetValue(WBFL::LRFD::RebarPool::GetBarSize(rebarData.BarSize).c_str())
+    );
+
+}
+
 bool CLongitudinalRebarGrid::SetRebarData(ROWCOL row,const xbrLongitudinalRebarData::RebarRow& rebarData)
 {
    ROWCOL col = 1;
@@ -424,16 +482,57 @@ bool CLongitudinalRebarGrid::SetRebarData(ROWCOL row,const xbrLongitudinalRebarD
       .SetValue(value)
       );
 
-   // Bar Size
-   WBFL::Materials::Rebar::Type type = pParent->GetRebarType();
-   WBFL::Materials::Rebar::Grade grade = pParent->GetRebarGrade();
-   CString strBarSizeChoiceList;
-   WBFL::LRFD::RebarIter rebarIter(type,grade);
-   for ( rebarIter.Begin(); rebarIter; rebarIter.Next() )
+   CString strRebarGrade;
+   bool bFilterBySpec = true;
+
+   strRebarGrade.Append(WBFL::LRFD::RebarPool::GetMaterialName(WBFL::Materials::Rebar::Type::A615, WBFL::Materials::Rebar::Grade::Grade40).c_str());
+   strRebarGrade.Append(_T("\n"));
+   strRebarGrade.Append(WBFL::LRFD::RebarPool::GetMaterialName(WBFL::Materials::Rebar::Type::A615, WBFL::Materials::Rebar::Grade::Grade60).c_str());
+   strRebarGrade.Append(_T("\n"));
+
+   if (bFilterBySpec && WBFL::LRFD::BDSManager::Edition::ThirdEditionWith2005Interims <= WBFL::LRFD::BDSManager::GetEdition())
    {
-      const auto* pRebar = rebarIter.GetCurrentRebar();
-      strBarSizeChoiceList += pRebar->GetName().c_str();
-      strBarSizeChoiceList += _T("\n");
+       strRebarGrade.Append(WBFL::LRFD::RebarPool::GetMaterialName(WBFL::Materials::Rebar::Type::A615, WBFL::Materials::Rebar::Grade::Grade75).c_str());
+       strRebarGrade.Append(_T("\n"));
+       strRebarGrade.Append(WBFL::LRFD::RebarPool::GetMaterialName(WBFL::Materials::Rebar::Type::A615, WBFL::Materials::Rebar::Grade::Grade80).c_str());
+       strRebarGrade.Append(_T("\n"));
+   }
+
+   strRebarGrade.Append(WBFL::LRFD::RebarPool::GetMaterialName(WBFL::Materials::Rebar::Type::A706, WBFL::Materials::Rebar::Grade::Grade60).c_str());
+   strRebarGrade.Append(_T("\n"));
+
+   if (bFilterBySpec && WBFL::LRFD::BDSManager::Edition::ThirdEditionWith2005Interims <= WBFL::LRFD::BDSManager::GetEdition())
+   {
+       strRebarGrade.Append(WBFL::LRFD::RebarPool::GetMaterialName(WBFL::Materials::Rebar::Type::A706, WBFL::Materials::Rebar::Grade::Grade80).c_str());
+       strRebarGrade.Append(_T("\n"));
+   }
+
+   if (bFilterBySpec && WBFL::LRFD::BDSManager::Edition::SixthEditionWith2013Interims <= WBFL::LRFD::BDSManager::GetEdition())
+   {
+       strRebarGrade.Append(WBFL::LRFD::RebarPool::GetMaterialName(WBFL::Materials::Rebar::Type::A1035, WBFL::Materials::Rebar::Grade::Grade100).c_str());
+       strRebarGrade.Append(_T("\n"));
+   }
+
+   SetStyleRange(CGXRange(row, col++), CGXStyle()
+       .SetControl(GX_IDS_CTRL_CBS_DROPDOWNLIST)
+       .SetChoiceList(strRebarGrade)
+       .SetValue(WBFL::LRFD::RebarPool::GetMaterialName(rebarData.BarType, rebarData.BarGrade).c_str())
+       .SetHorizontalAlignment(DT_RIGHT)
+   );
+
+   // Bar Size
+   WBFL::Materials::Rebar::Type type;
+   WBFL::Materials::Rebar::Grade grade;
+
+   GetBarMaterial(&type, &grade);
+
+   CString strBarSizeChoiceList;
+   WBFL::LRFD::RebarIter rebarIter(type, grade);
+   for (rebarIter.Begin(); rebarIter; rebarIter.Next())
+   {
+       const auto* pRebar = rebarIter.GetCurrentRebar();
+       strBarSizeChoiceList += pRebar->GetName().c_str();
+       strBarSizeChoiceList += _T("\n");
    }
 
    SetStyleRange(CGXRange(row,col++), CGXStyle()
@@ -518,6 +617,10 @@ void CLongitudinalRebarGrid::GetRebarData(ROWCOL row,xbrLongitudinalRebarData::R
    Float64 cover = _tstof(GetCellValue(row,col++));
    rebarData.Cover = WBFL::Units::ConvertToSysUnits(cover,pDisplayUnits->GetComponentDimUnit().UnitOfMeasure);
 
+   // Bar Type and grade
+   GetBarMaterial(&rebarData.BarType, &rebarData.BarGrade);
+   col++; // skip over the Bar Material column
+
    // Bar Size
    rebarData.BarSize = GetBarSize(row,col++);
 
@@ -576,13 +679,36 @@ xbrTypes::LongitudinalRebarDatumType CLongitudinalRebarGrid::GetDatum(ROWCOL row
    }
 }
 
+void CLongitudinalRebarGrid::GetBarMaterial(WBFL::Materials::Rebar::Type* pType, WBFL::Materials::Rebar::Grade* pGrade)
+{
+    CComboBox* pCB = (CComboBox*)GetDlgItem(GX_IDS_CTRL_CBS_DROPDOWNLIST);
+    int curSel = pCB->GetCurSel();
+    if (curSel == CB_ERR)
+    {
+        curSel = 1;
+    }
+
+    switch (curSel)
+    {
+    case 0:  *pType = WBFL::Materials::Rebar::Type::A615;  *pGrade = WBFL::Materials::Rebar::Grade::Grade40;  break;
+    case 1:  *pType = WBFL::Materials::Rebar::Type::A615;  *pGrade = WBFL::Materials::Rebar::Grade::Grade60;  break;
+    case 2:  *pType = WBFL::Materials::Rebar::Type::A615;  *pGrade = WBFL::Materials::Rebar::Grade::Grade75;  break;
+    case 3:  *pType = WBFL::Materials::Rebar::Type::A615;  *pGrade = WBFL::Materials::Rebar::Grade::Grade80;  break;
+    case 4:  *pType = WBFL::Materials::Rebar::Type::A706;  *pGrade = WBFL::Materials::Rebar::Grade::Grade60;  break;
+    case 5:  *pType = WBFL::Materials::Rebar::Type::A706;  *pGrade = WBFL::Materials::Rebar::Grade::Grade80;  break;
+    case 6:  *pType = WBFL::Materials::Rebar::Type::A1035;  *pGrade = WBFL::Materials::Rebar::Grade::Grade100; break;
+    default:
+        CHECK(false); // should never get here
+   }
+}
+
 WBFL::Materials::Rebar::Size CLongitudinalRebarGrid::GetBarSize(ROWCOL row,ROWCOL col)
 {
    std::_tstring strBarSize = (LPCTSTR)GetCellValue(row,col);
    CReinforcementPage* pParent = (CReinforcementPage*)GetParent();
    WBFL::Materials::Rebar::Type type;
    WBFL::Materials::Rebar::Grade grade;
-   pParent->GetRebarMaterial(&type,&grade);
+   GetBarMaterial(&type,&grade);
    WBFL::LRFD::RebarIter rebarIter(type,grade);
    for ( rebarIter.Begin(); rebarIter; rebarIter.Next() )
    {

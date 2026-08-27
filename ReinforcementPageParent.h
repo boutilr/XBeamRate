@@ -38,8 +38,8 @@ public:
    virtual xbrPierData* GetXBRPierData() override;
    virtual CConcreteMaterial& GetConcrete() override;
    virtual pgsTypes::PierType GetPierType() override;
-   virtual WBFL::Materials::Rebar::Type& GetRebarType() override;
-   virtual WBFL::Materials::Rebar::Grade& GetRebarGrade() override;
+   virtual WBFL::Materials::Rebar::Type& GetStirrupRebarType() override;
+   virtual WBFL::Materials::Rebar::Grade& GetStirrupRebarGrade() override;
    virtual CConcreteMaterial& GetConcreteMaterial() override;
    virtual xbrLongitudinalRebarData& GetLongitudinalRebar() override;
    virtual xbrStirrupData& GetLowerXBeamStirrups() override;

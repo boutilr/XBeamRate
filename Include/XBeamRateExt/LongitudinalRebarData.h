@@ -42,13 +42,18 @@ LOG
 class XBREXTCLASS xbrLongitudinalRebarData
 {
 public:
+
    class XBREXTCLASS RebarRow 
    {
+   friend class xbrPierData;
+
    public:
       xbrTypes::LongitudinalRebarDatumType Datum;
       xbrTypes::LongitudinalRebarLayoutType LayoutType;
       Float64 Start;
       Float64 Length;
+      WBFL::Materials::Rebar::Type BarType;
+      WBFL::Materials::Rebar::Grade BarGrade;
       WBFL::Materials::Rebar::Size BarSize;
       IndexType NumberOfBars;
       Float64     Cover;
@@ -58,6 +63,10 @@ public:
 
       RebarRow();
       bool operator==(const RebarRow&) const;
+
+   private:
+	   void SetBarMaterial(WBFL::Materials::Rebar::Type type, WBFL::Materials::Rebar::Grade grade); //needed just for backwards compatibility with older files that don't have the bar type and grade saved in the rebar row data
+
    };
 
    std::vector<RebarRow> RebarRows;

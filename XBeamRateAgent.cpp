@@ -439,7 +439,7 @@ std::unique_ptr<WBFL::EAF::Transaction> CXBeamRateAgent::OnOK(CPropertyPage* pPa
    xbrEditReinforcementData oldReinforcement;
    GET_IFACE(IXBRProject,pProject);
    const xbrPierData& pierData = pProject->GetPierData(pEditPierData->GetPierData()->GetID());
-   pierData.GetRebarMaterial(&oldReinforcement.Type,&oldReinforcement.Grade);
+   pierData.GetStirrupMaterial(&oldReinforcement.StirrupRebarType,&oldReinforcement.StirrupRebarGrade);
    oldReinforcement.LongitudinalRebar  = pierData.GetLongitudinalRebar();
    oldReinforcement.LowerXBeamStirrups = pierData.GetLowerXBeamStirrups();
    oldReinforcement.FullDepthStirrups  = pierData.GetFullDepthStirrups();
@@ -450,8 +450,8 @@ std::unique_ptr<WBFL::EAF::Transaction> CXBeamRateAgent::OnOK(CPropertyPage* pPa
    xbrEditReinforcementData newReinforcement;
 
    IReinforcementPageParent* pParent  = pReinforcementPage->GetPageParent();
-   newReinforcement.Type               = pParent->GetRebarType();
-   newReinforcement.Grade              = pParent->GetRebarGrade();
+   newReinforcement.StirrupRebarType               = pParent->GetStirrupRebarType();
+   newReinforcement.StirrupRebarGrade              = pParent->GetStirrupRebarGrade();
    newReinforcement.LongitudinalRebar  = pParent->GetLongitudinalRebar();
    newReinforcement.LowerXBeamStirrups = pParent->GetLowerXBeamStirrups();
    newReinforcement.FullDepthStirrups  = pParent->GetFullDepthStirrups();

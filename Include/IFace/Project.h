@@ -176,8 +176,8 @@ public:
    virtual Float64 GetVehicleWeight(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx) const = 0;
 
    // Material properties
-   virtual void SetRebarMaterial(PierIDType pierID,WBFL::Materials::Rebar::Type type,WBFL::Materials::Rebar::Grade grade) = 0;
-   virtual void GetRebarMaterial(PierIDType pierID,WBFL::Materials::Rebar::Type* pType,WBFL::Materials::Rebar::Grade* pGrade) const = 0;
+   virtual void SetStirrupMaterial(PierIDType pierID, WBFL::Materials::Rebar::Type type, WBFL::Materials::Rebar::Grade grade) = 0;
+   virtual void GetStirrupMaterial(PierIDType pierID, WBFL::Materials::Rebar::Type* pType, WBFL::Materials::Rebar::Grade* pGrade) const = 0;
 
    virtual void SetConcrete(PierIDType pierID,const CConcreteMaterial& concrete) = 0;
    virtual const CConcreteMaterial& GetConcrete(PierIDType pierID) const = 0;

@@ -65,11 +65,16 @@ public:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
+	afx_msg void OnSelectionChange();
+
 public:
    // custom stuff for grid
    void CustomInit();
 
 private:
+
+   
+
    virtual void OnModifyCell(ROWCOL nRow,ROWCOL nCol) override;
 
    CString GetDatumOptions();
@@ -79,6 +84,7 @@ private:
    void GetRebarData(ROWCOL row,xbrLongitudinalRebarData::RebarRow& rebarData);
    CString GetCellValue(ROWCOL nRow, ROWCOL nCol);
    xbrTypes::LongitudinalRebarDatumType GetDatum(ROWCOL row,ROWCOL col);
+   void GetBarMaterial(WBFL::Materials::Rebar::Type* pType, WBFL::Materials::Rebar::Grade* pGrade);
    WBFL::Materials::Rebar::Size GetBarSize(ROWCOL row,ROWCOL col);
    LPCTSTR GetRebarLayoutType(xbrTypes::LongitudinalRebarLayoutType layoutType);
    xbrTypes::LongitudinalRebarLayoutType GetRebarLayoutType(LPCTSTR lpszLayoutType);

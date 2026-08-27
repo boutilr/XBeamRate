@@ -425,7 +425,7 @@ void write_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::sh
    GET_IFACE2(pBroker,IXBRProject,pProject);
    WBFL::Materials::Rebar::Type type;
    WBFL::Materials::Rebar::Grade grade;
-   pProject->GetRebarMaterial(pierID,&type,&grade);
+   pProject->GetStirrupMaterial(pierID,&type,&grade);
 
    std::_tstring strName = WBFL::LRFD::RebarPool::GetMaterialName(type,grade);
 
@@ -439,7 +439,7 @@ void write_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::sh
    rptParagraph* pPara = new rptParagraph;
    *pChapter << pPara;
 
-   rptRcTable* pTable = rptStyleManager::CreateDefaultTable(3,_T("Reinforcement Properties"));
+   rptRcTable* pTable = rptStyleManager::CreateDefaultTable(3,_T("Stirrup Properties"));
    *pPara << pTable << rptNewLine;
 
    (*pTable)(0,0) << _T("Name");

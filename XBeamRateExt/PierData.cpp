@@ -79,8 +79,8 @@ xbrPierData::xbrPierData()
    m_ConditionFactor = 1.0;
 
    // Materials
-   m_RebarType = WBFL::Materials::Rebar::Type::A615;
-   m_RebarGrade = WBFL::Materials::Rebar::Grade::Grade60;
+   m_StirrupRebarType = WBFL::Materials::Rebar::Type::A615;
+   m_StirrupRebarGrade = WBFL::Materials::Rebar::Grade::Grade60;
 
    //// Rebar
    //xbrLongitudinalRebarData::RebarRow row;
@@ -623,26 +623,26 @@ void xbrPierData::SetConditionFactor(Float64 conditionFactor)
    m_ConditionFactor = conditionFactor;
 }
 
-void xbrPierData::SetRebarMaterial(WBFL::Materials::Rebar::Type type,WBFL::Materials::Rebar::Grade grade)
+void xbrPierData::SetStirrupMaterial(WBFL::Materials::Rebar::Type type, WBFL::Materials::Rebar::Grade grade)
 {
-   m_RebarType = type;
-   m_RebarGrade = grade;
+    m_StirrupRebarType = type;
+    m_StirrupRebarGrade = grade;
 }
 
-void xbrPierData::GetRebarMaterial(WBFL::Materials::Rebar::Type* pType,WBFL::Materials::Rebar::Grade* pGrade) const
+void xbrPierData::GetStirrupMaterial(WBFL::Materials::Rebar::Type* pType, WBFL::Materials::Rebar::Grade* pGrade) const
 {
-   *pType = m_RebarType;
-   *pGrade = m_RebarGrade;
+    *pType = m_StirrupRebarType;
+    *pGrade = m_StirrupRebarGrade;
 }
 
-WBFL::Materials::Rebar::Type& xbrPierData::GetRebarType()
+WBFL::Materials::Rebar::Type& xbrPierData::GetStirrupRebarType()
 {
-   return m_RebarType;
+    return m_StirrupRebarType;
 }
 
-WBFL::Materials::Rebar::Grade& xbrPierData::GetRebarGrade()
+WBFL::Materials::Rebar::Grade& xbrPierData::GetStirrupRebarGrade()
 {
-   return m_RebarGrade;
+    return m_StirrupRebarGrade;
 }
 
 void xbrPierData::SetConcreteMaterial(const CConcreteMaterial& concrete)
@@ -882,9 +882,9 @@ HRESULT xbrPierData::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress
 
    m_Concrete.Save(pStrSave,nullptr);
 
-   pStrSave->BeginUnit(_T("Reinforcement"),1.0);
-      pStrSave->put_Property(_T("RebarType"),CComVariant(+m_RebarType));
-      pStrSave->put_Property(_T("RebarGrade"),CComVariant(+m_RebarGrade));
+   pStrSave->BeginUnit(_T("Reinforcement"),2.0);
+      pStrSave->put_Property(_T("StirrupRebarType"),CComVariant(+m_StirrupRebarType)); //modified to stirrup rebar type in version 2.0
+      pStrSave->put_Property(_T("StirrupRebarGrade"),CComVariant(+m_StirrupRebarGrade)); //modified to stirrup rebar grade in version 2.0
       m_LongitudinalRebar.Save(pStrSave,nullptr);
       m_LowerXBeamStirrups.Save(pStrSave);
       m_FullDepthStirrups.Save(pStrSave);
@@ -1213,13 +1213,25 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
 
       {
          hr = pStrLoad->BeginUnit(_T("Reinforcement"));
+         Float64 version;
+         pStrLoad->get_Version(&version);
 
-         var.vt = VT_I4;
-         hr = pStrLoad->get_Property(_T("RebarType"),&var);
-         m_RebarType = (WBFL::Materials::Rebar::Type)(var.lVal);
+		 if (version < 2.0)
+         {
+             var.vt = VT_I4;
+             hr = pStrLoad->get_Property(_T("RebarType"), &var);
+             WBFL::Materials::Rebar::Type type = (WBFL::Materials::Rebar::Type)(var.lVal);
+             m_StirrupRebarType = (WBFL::Materials::Rebar::Type)(var.lVal);
+             hr = pStrLoad->get_Property(_T("RebarGrade"), &var);
+             WBFL::Materials::Rebar::Grade grade = (WBFL::Materials::Rebar::Grade)(var.lVal);
+             m_StirrupRebarGrade = (WBFL::Materials::Rebar::Grade)(var.lVal);
 
-         hr = pStrLoad->get_Property(_T("RebarGrade"),&var);
-         m_RebarGrade = (WBFL::Materials::Rebar::Grade)(var.lVal);
+             for (auto& row : m_LongitudinalRebar.RebarRows)
+             {
+				 row.SetBarMaterial(type, grade);
+             }
+
+         }
 
          hr = m_LongitudinalRebar.Load(pStrLoad,nullptr);
          hr = m_LowerXBeamStirrups.Load(pStrLoad);
@@ -1315,8 +1327,8 @@ void xbrPierData::MakeCopy(const xbrPierData& rOther)
    m_OHL              = rOther.m_OHL;
    m_OHR              = rOther.m_OHR;
 
-   m_RebarGrade = rOther.m_RebarGrade;
-   m_RebarType = rOther.m_RebarType;
+   m_StirrupRebarGrade = rOther.m_StirrupRebarGrade;
+   m_StirrupRebarType = rOther.m_StirrupRebarType;
 
    m_Concrete = rOther.m_Concrete;
 

@@ -168,8 +168,8 @@ public:
    Float64 GetLiveLoadReaction(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx) const override;
    Float64 GetVehicleWeight(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx) const override;
 
-   void SetRebarMaterial(PierIDType pierID,WBFL::Materials::Rebar::Type type,WBFL::Materials::Rebar::Grade grade) override;
-   void GetRebarMaterial(PierIDType pierID,WBFL::Materials::Rebar::Type* pType,WBFL::Materials::Rebar::Grade* pGrade) const override;
+   void SetStirrupMaterial(PierIDType pierID, WBFL::Materials::Rebar::Type type, WBFL::Materials::Rebar::Grade grade) override;
+   void GetStirrupMaterial(PierIDType pierID, WBFL::Materials::Rebar::Type* pType, WBFL::Materials::Rebar::Grade* pGrade) const override;
 
    void SetConcrete(PierIDType pierID,const CConcreteMaterial& concrete) override;
    const CConcreteMaterial& GetConcrete(PierIDType pierID) const override;

@@ -157,11 +157,11 @@ IReinforcementPageParent* CReinforcementPage::GetPageParent()
    return m_pParent;
 }
 
-void CReinforcementPage::GetRebarMaterial(WBFL::Materials::Rebar::Type* pType,WBFL::Materials::Rebar::Grade* pGrade)
+void CReinforcementPage::GetStirrupMaterial(WBFL::Materials::Rebar::Type* pType, WBFL::Materials::Rebar::Grade* pGrade)
 {
-   // The grids use this method to get the rebar material
-   *pType = m_pParent->GetRebarType();
-   *pGrade = m_pParent->GetRebarGrade();
+    // The grids use this method to get the stirrup material
+    *pType = m_pParent->GetStirrupRebarType();
+    *pGrade = m_pParent->GetStirrupRebarGrade();
 }
 
 void CReinforcementPage::OnEnableDelete(UINT nIDC,bool bEnableDelete)
@@ -180,7 +180,7 @@ void CReinforcementPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 
-   DDX_Control(pDX,IDC_REBAR_MATERIAL,m_cbRebar);
+    DDX_Control(pDX,IDC_REBAR_MATERIAL,m_cbRebar);
 	DDX_Control(pDX, IDC_EC,           m_ctrlEc);
 	DDX_Control(pDX, IDC_EC_LABEL,     m_ctrlEcCheck);
 	DDX_Control(pDX, IDC_FC,           m_ctrlFc);
@@ -193,7 +193,7 @@ void CReinforcementPage::DoDataExchange(CDataExchange* pDX)
    DDX_UnitValueAndTag(pDX,IDC_EC,IDC_EC_UNIT,m_pParent->GetConcrete().Ec,pDisplayUnits->GetModEUnit());
    DDX_Check_Bool(pDX,IDC_EC_LABEL,m_pParent->GetConcrete().bUserEc);
    
-   DDX_RebarMaterial(pDX,IDC_REBAR_MATERIAL,m_pParent->GetRebarType(),m_pParent->GetRebarGrade());
+   DDX_RebarMaterial(pDX,IDC_REBAR_MATERIAL,m_pParent->GetStirrupRebarType(),m_pParent->GetStirrupRebarGrade());
    DDX_RebarGrid(pDX,IDC_REBAR_GRID,*m_pRebarGrid,m_pParent);
    DDX_StirrupGrid(pDX,*m_pLowerXBeamGrid,m_pParent->GetLowerXBeamStirrups());
    DDX_StirrupGrid(pDX,*m_pFullDepthGrid,m_pParent->GetFullDepthStirrups());

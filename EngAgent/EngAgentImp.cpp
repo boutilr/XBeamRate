@@ -427,7 +427,7 @@ MomentCapacityDetails CEngAgentImp::ComputeMomentCapacity(PierIDType pierID,pgsT
 
       WBFL::Materials::Rebar::Type rebarType;
       WBFL::Materials::Rebar::Grade rebarGrade;
-      pProject->GetRebarMaterial(pierID,&rebarType,&rebarGrade);
+      pProject->GetStirrupMaterial(pierID,&rebarType,&rebarGrade);
 
       Float64 et  = (dt - c)*0.003/c;
       Float64 ecl = WBFL::LRFD::Rebar::GetCompressionControlledStrainLimit(rebarGrade);
@@ -796,7 +796,7 @@ ShearCapacityDetails CEngAgentImp::ComputeShearCapacity(PierIDType pierID,pgsTyp
 
    WBFL::Materials::Rebar::Type type;
    WBFL::Materials::Rebar::Grade grade;
-   pProject->GetRebarMaterial(pierID,&type,&grade);
+   pProject->GetStirrupMaterial(pierID,&type,&grade);
    Float64 fy = WBFL::Materials::Rebar::GetYieldStrength(type,grade);
 
    if (WBFL::LRFD::BDSManager::GetEdition() < WBFL::LRFD::BDSManager::Edition::ThirdEditionWith2005Interims)

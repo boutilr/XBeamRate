@@ -836,7 +836,7 @@ void CPierAgentImp::GetRebarProperties(PierIDType pierID,Float64* pE,Float64* pF
    WBFL::Materials::Rebar::Type rebarType;
    WBFL::Materials::Rebar::Grade rebarGrade;
    GET_IFACE(IXBRProject,pProject);
-   pProject->GetRebarMaterial(pierID,&rebarType,&rebarGrade);
+   pProject->GetStirrupMaterial(pierID,&rebarType,&rebarGrade);
 
    *pE  = WBFL::Materials::Rebar::GetE(rebarType,rebarGrade);
    *pFy = WBFL::Materials::Rebar::GetYieldStrength(rebarType,rebarGrade);
@@ -1651,12 +1651,12 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
    CComPtr<IUnitConvert> unit_convert;
    unitServer->get_UnitConvert(&unit_convert);
 
-   WBFL::Materials::Rebar::Type rebarType;
-   WBFL::Materials::Rebar::Grade rebarGrade;
-   pProject->GetRebarMaterial(pierID,&rebarType,&rebarGrade);
+   WBFL::Materials::Rebar::Type type;
+   WBFL::Materials::Rebar::Grade grade;
+   pProject->GetStirrupMaterial(pierID,&type,&grade);
 
-   RebarGrade matGrade = GetRebarGrade(rebarGrade);
-   MaterialSpec matSpec = GetRebarSpecification(rebarType);
+   RebarGrade stirrupGrade = GetRebarGrade(grade);
+   MaterialSpec stirrupSpec = GetRebarSpecification(type);
 
    const xbrLongitudinalRebarData& rebarData = pProject->GetLongitudinalRebar(pierID);
    for (const auto& row : rebarData.RebarRows)
@@ -1738,7 +1738,7 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
       BarSize matSize = GetBarSize(row.BarSize);
 
       CComPtr<IRebar> rebar;
-      rebar_factory->CreateRebar(matSpec,matGrade,matSize,unit_convert,0,&rebar);
+      rebar_factory->CreateRebar(stirrupSpec,stirrupGrade,matSize,unit_convert,0,&rebar);
 
       Float64 db;
       rebar->get_NominalDiameter(&db);
@@ -1848,7 +1848,7 @@ void CPierAgentImp::ValidateStirrupZones(PierIDType pierID,const xbrStirrupData&
    GET_IFACE(IXBRProject,pProject);
    WBFL::Materials::Rebar::Type type;
    WBFL::Materials::Rebar::Grade grade;
-   pProject->GetRebarMaterial(pierID,&type,&grade);
+   pProject->GetStirrupMaterial(pierID,&type,&grade);
    const auto* pRebarPool = WBFL::LRFD::RebarPool::GetInstance();
 
    if ( stirrupData.Symmetric )

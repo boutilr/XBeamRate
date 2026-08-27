@@ -61,7 +61,7 @@ void txnEditReinforcement::Execute(int i)
    pEvents->HoldEvents(); // don't fire any changed events until all changes are done
 
    GET_IFACE2(pBroker,IXBRProject,pProject);
-   pProject->SetRebarMaterial(m_PierID,m_Reinforcement[i].Type,m_Reinforcement[i].Grade);
+   pProject->SetStirrupMaterial(m_PierID,m_Reinforcement[i].StirrupRebarType,m_Reinforcement[i].StirrupRebarGrade);
    pProject->SetLongitudinalRebar(m_PierID,m_Reinforcement[i].LongitudinalRebar);
    pProject->SetLowerXBeamStirrups(m_PierID,m_Reinforcement[i].LowerXBeamStirrups);
    pProject->SetFullDepthStirrups(m_PierID,m_Reinforcement[i].FullDepthStirrups);

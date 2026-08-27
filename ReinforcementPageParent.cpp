@@ -64,14 +64,14 @@ pgsTypes::PierType CReinforcementPageParent::GetPierType()
    }
 }
 
-WBFL::Materials::Rebar::Type& CReinforcementPageParent::GetRebarType()
+WBFL::Materials::Rebar::Type& CReinforcementPageParent::GetStirrupRebarType()
 {
-   return m_PierData.GetRebarType();
+    return m_PierData.GetStirrupRebarType();
 }
 
-WBFL::Materials::Rebar::Grade& CReinforcementPageParent::GetRebarGrade()
+WBFL::Materials::Rebar::Grade& CReinforcementPageParent::GetStirrupRebarGrade()
 {
-   return m_PierData.GetRebarGrade();
+    return m_PierData.GetStirrupRebarGrade();
 }
 
 CConcreteMaterial& CReinforcementPageParent::GetConcreteMaterial()

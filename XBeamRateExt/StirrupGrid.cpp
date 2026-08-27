@@ -152,7 +152,7 @@ void CStirrupGrid::CustomInit(LPCTSTR lpszGridName)
    CReinforcementPage* pParent = (CReinforcementPage*)GetParent();
    WBFL::Materials::Rebar::Type type;
    WBFL::Materials::Rebar::Grade grade;
-   pParent->GetRebarMaterial(&type,&grade);
+   pParent->GetStirrupMaterial(&type,&grade);
    WBFL::LRFD::RebarIter rebarIter(type,grade,true/*stirrup only*/);
    for ( rebarIter.Begin(); rebarIter; rebarIter.Next() )
    {
@@ -417,7 +417,7 @@ WBFL::Materials::Rebar::Size CStirrupGrid::GetBarSize(ROWCOL row,ROWCOL col)
    CReinforcementPage* pParent = (CReinforcementPage*)GetParent();
    WBFL::Materials::Rebar::Type type;
    WBFL::Materials::Rebar::Grade grade;
-   pParent->GetRebarMaterial(&type,&grade);
+   pParent->GetStirrupMaterial(&type,&grade);
    WBFL::LRFD::RebarIter rebarIter(type,grade,true/*stirrups only*/);
    for ( rebarIter.Begin(); rebarIter; rebarIter.Next() )
    {
