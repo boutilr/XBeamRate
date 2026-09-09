@@ -456,8 +456,8 @@ MomentCapacityDetails CEngAgentImp::ComputeMomentCapacity(PierIDType pierID,pgsT
       rcBeam->get_RebarLayerCount(&nRebarLayers);
       for (IndexType idx = 0; idx < nRebarLayers; idx++)
       {
-         Float64 ds, As, devFactor;
-         rcBeam->GetRebarLayer(idx, &ds, &As, &devFactor);
+         Float64 ds, As, Es, Fy, devFactor;
+         rcBeam->GetRebarLayer(idx, &ds, &As, &Es, &Fy, &devFactor);
          Float64 f;
          vfs->get_Item(idx, &f);
          if (0 < f)
@@ -876,18 +876,18 @@ ShearCapacityDetails CEngAgentImp::ComputeShearCapacity(PierIDType pierID,pgsTyp
    return details;
 }
 
-void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,IRCBeam2** ppModel,Float64* pdt) const
+void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage stage, const xbrPointOfInterest& poi, bool bPositiveMoment, IRCBeam2** ppModel, Float64* pdt) const
 {
    CComPtr<IRCBeam2> rcBeam;
    HRESULT hr = rcBeam.CoCreateInstance(CLSID_RCBeam2);
    ATLASSERT(SUCCEEDED(hr));
 
-   GET_IFACE(IXBRSectionProperties,pSectProps);
-   GET_IFACE(IXBRProject,pProject);
+   GET_IFACE(IXBRSectionProperties, pSectProps);
+   GET_IFACE(IXBRProject, pProject);
 
    // only using the cross beam height for capacity
    // the top of the cross beam is at the bottom of the slab
-   Float64 h = pSectProps->GetDepth(pierID,stage,poi);
+   Float64 h = pSectProps->GetDepth(pierID, stage, poi);
    rcBeam->put_h(h);
    rcBeam->put_hf(0);
 
@@ -897,59 +897,86 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage st
 
    pgsTypes::PierType connectionType = pProject->GetPierType(pierID);
    Float64 d;
-   pProject->GetDiaphragmDimensions(pierID,&d,&w); // dimensions of upper diaphragm/xbeam
+   pProject->GetDiaphragmDimensions(pierID, &d, &w); // dimensions of upper diaphragm/xbeam
 
-   GET_IFACE(IXBRMaterial,pMaterial);
+   GET_IFACE(IXBRMaterial, pMaterial);
    Float64 fc = pMaterial->GetXBeamFc(pierID);
    rcBeam->put_FcBeam(fc);
    rcBeam->put_FcSlab(fc);
 
-   Float64 Es, fy, fu;
-   pMaterial->GetRebarProperties(pierID,&Es,&fy,&fu);
-   rcBeam->put_fy(fy);
-   rcBeam->put_Es(Es);
+   //Float64 Es, fy, fu;
+   //pMaterial->GetRebarProperties(pierID,&Es,&fy,&fu);
+   //rcBeam->put_fy(fy);
+   //rcBeam->put_Es(Es);
 
-   GET_IFACE(IXBRRebar,pRebar);
+   GET_IFACE(IXBRRebar, pRebar);
    CComPtr<IRebarSection> rebarSection;
-   pRebar->GetRebarSection(pierID,stage,poi,&rebarSection);
+   pRebar->GetRebarSection(pierID, stage, poi, &rebarSection);
 
    CComPtr<IEnumRebarSectionItem> enumRebar;
    rebarSection->get__EnumRebarSectionItem(&enumRebar);
 
-   // the capacity analysis goes faster if we lump all the rebar
-   // at a single elevation into one bar.
-   // this map keeps track of Ybar and As*devFactor
-   std::map<Float64,Float64,Float64_less> rebarMap;
+   // The capacity analysis goes faster if bars with the same location and
+   // material properties are lumped into one reinforcement layer.
+   struct RebarLumpKey
+   {
+       Float64 Ybar;
+       Float64 Es;
+       Float64 Fy;
+   };
+
+   struct RebarLumpKey_less
+   {
+       bool operator()(const RebarLumpKey& lhs, const RebarLumpKey& rhs) const
+       {
+           Float64_less less;
+
+           if (less(lhs.Ybar, rhs.Ybar))
+               return true;
+           if (less(rhs.Ybar, lhs.Ybar))
+               return false;
+
+           if (less(lhs.Fy, rhs.Fy))
+               return true;
+           if (less(rhs.Fy, lhs.Fy))
+               return false;
+
+           return less(lhs.Es, rhs.Es);
+       }
+   };
+
+   // key: Ybar, Fy, Es; value: accumulated As*devFactor
+   std::map<RebarLumpKey, Float64, RebarLumpKey_less> rebarMap;
 
    // This loop accumulates As for each unique Ybar... it doesn't
    // put the bar in the capacity model
    CComPtr<IRebarSectionItem> rebarSectionItem;
-   while ( enumRebar->Next(1,&rebarSectionItem,nullptr) != S_FALSE )
+   while (enumRebar->Next(1, &rebarSectionItem, nullptr) != S_FALSE)
    {
-      CComPtr<IPoint2d> pntRebar;
-      rebarSectionItem->get_Location(&pntRebar);
+       CComPtr<IPoint2d> pntRebar;
+       rebarSectionItem->get_Location(&pntRebar);
 
-      Float64 Ybar = pRebar->GetRebarDepth(pierID,poi,stage,pntRebar); // depth from top of cross beam to rebar
+       Float64 Ybar = pRebar->GetRebarDepth(pierID, poi, stage, pntRebar); // depth from top of cross beam to rebar
 
-      if ( Ybar < 0 )
+      if (Ybar < 0)
       {
-         // rebar is not in the cross section (not applicable in this stage)
-         rebarSectionItem.Release();
-         continue;
+          // rebar is not in the cross section (not applicable in this stage)
+          rebarSectionItem.Release();
+          continue;
       }
 
       // if continous or expansion pier, the upper cross beam doesn't contribute
       // to capacity. but the rebar are measured from the top down of the entire
       // section. deduct the height of the upper cross beam to get the depth of
       // the rebar relative to the top of the lower cross beam
-      if ( connectionType != pgsTypes::pctIntegral && stage == pgsTypes::Stage2 )
+      if (connectionType != pgsTypes::pctIntegral && stage == pgsTypes::Stage2)
       {
-         Ybar -= d;
+          Ybar -= d;
       }
 
       ATLASSERT(0 < Ybar && Ybar < h); // if this fires, the rebar is not in the cross section
 
-      if ( !bPositiveMoment )
+      if (!bPositiveMoment)
       {
          // for negative moment we have to build the section "upside down"
          // since the solver only solves for bending in one direction (compression top - tension bottom)
@@ -958,28 +985,37 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage st
          Ybar = h - Ybar; // Ybar is measured from the bottom up for negative moment
       }
 
-      CComPtr<IRebar> rebar;
-      rebarSectionItem->get_Rebar(&rebar);
+       CComPtr<IRebar> rebar;
+       rebarSectionItem->get_Rebar(&rebar);
 
-      Float64 As;
-      rebar->get_NominalArea(&As);
+       Float64 As;
+       rebar->get_NominalArea(&As);
 
-      Float64 devFactor = pRebar->GetDevLengthFactor(pierID,poi,rebarSectionItem);
-      ATLASSERT(::InRange(0.0,devFactor,1.0));
+       Float64 Fy;
+       rebar->get_YieldStrength(&Fy);
+
+       Float64 Es;
+       rebar->get_Es(&Es);
+
+      Float64 devFactor = pRebar->GetDevLengthFactor(pierID, poi, rebarSectionItem);
+      ATLASSERT(::InRange(0.0, devFactor, 1.0));
 
       As *= devFactor;
 
-      // do we already have bars at this elevation ?
-      std::map<Float64,Float64,Float64_less>::iterator found = rebarMap.find(Ybar);
-      if ( found == rebarMap.end() )
+      RebarLumpKey key;
+      key.Ybar = Ybar;
+      key.Fy = Fy;
+      key.Es = Es;
+
+      // Combine only bars having the same elevation and material properties.
+      std::map<RebarLumpKey, Float64, RebarLumpKey_less>::iterator found = rebarMap.find(key);
+      if (found == rebarMap.end())
       {
-         // no... add a new record
-         rebarMap.insert(std::make_pair(Ybar,As));
+          rebarMap.insert(std::make_pair(key, As));
       }
       else
       {
-         // yes... increment the area of bar
-         found->second += As;
+          found->second += As;
       }
 
       rebarSectionItem.Release();
@@ -987,16 +1023,18 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage st
 
    // add the "lumped" bars to the capacity problem model
    Float64 dt = 0; // location of the extreme tension steel, measured from the top of the deck
-   std::map<Float64,Float64,Float64_less>::iterator iter(rebarMap.begin());
-   std::map<Float64,Float64,Float64_less>::iterator end(rebarMap.end());
-   for ( ; iter != end; iter++ )
+   std::map<RebarLumpKey, Float64, RebarLumpKey_less>::iterator iter(rebarMap.begin());
+   std::map<RebarLumpKey, Float64, RebarLumpKey_less>::iterator end(rebarMap.end());
+   for (; iter != end; iter++)
    {
-      Float64 Ybar = iter->first;
-      Float64 As   = iter->second;
+       Float64 Ybar = iter->first.Ybar;
+       Float64 Fy = iter->first.Fy;
+       Float64 Es = iter->first.Es;
+       Float64 As = iter->second;
 
-      rcBeam->AddRebarLayer(Ybar,As,1.0);
+       rcBeam->AddRebarLayer(Ybar, As, Es, Fy, 1.0);
 
-      dt = Max(dt,Ybar);
+       dt = Max(dt, Ybar);
    }
 
    rcBeam.CopyTo(ppModel);

@@ -1664,6 +1664,9 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
       CComPtr<IFixedLengthRebarLayoutItem> rebarLayoutItem;
       rebarLayoutItem.CoCreateInstance(CLSID_FixedLengthRebarLayoutItem);
 
+      RebarGrade rebarGrade = GetRebarGrade(row.BarGrade);
+      MaterialSpec rebarSpec = GetRebarSpecification(row.BarType);
+
       Float64 Xstart, Xend;
       if ( row.LayoutType == xbrTypes::blLeftEnd )
       {
@@ -1737,8 +1740,10 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 
       BarSize matSize = GetBarSize(row.BarSize);
 
+
+
       CComPtr<IRebar> rebar;
-      rebar_factory->CreateRebar(stirrupSpec,stirrupGrade,matSize,unit_convert,0,&rebar);
+      rebar_factory->CreateRebar(rebarSpec,rebarGrade,matSize,unit_convert,0,&rebar);
 
       Float64 db;
       rebar->get_NominalDiameter(&db);

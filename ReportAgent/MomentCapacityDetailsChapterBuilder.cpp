@@ -57,6 +57,7 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
    INIT_UV_PROTOTYPE( rptMomentUnitValue, moment, pDisplayUnits->GetMomentUnit(), false );
    INIT_UV_PROTOTYPE( rptAreaUnitValue, area, pDisplayUnits->GetAreaUnit(), false);
    INIT_UV_PROTOTYPE( rptStressUnitValue, stress, pDisplayUnits->GetStressUnit(), false);
+   INIT_UV_PROTOTYPE( rptStressUnitValue, modE, pDisplayUnits->GetModEUnit(), false);
 
    rptParagraph* pPara = new rptParagraph;
    *pChapter << pPara;
@@ -139,7 +140,7 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
          (*pTable)(row,col++) << dim.SetValue(beta1*c);
          (*pTable)(row,col++) << dim.SetValue(bw);
 
-         rptRcTable* pReinfTable = rptStyleManager::CreateDefaultTable(4);
+         rptRcTable* pReinfTable = rptStyleManager::CreateDefaultTable(6);
          (*pTable)(row,col++) << pReinfTable;
 
          (*pTable)(row,col++) << dim.SetValue(mcd.de);
@@ -151,7 +152,9 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
          (*pReinfTable)(0,0) << _T("Layer");
          (*pReinfTable)(0,1) << COLHDR(Sub2(_T("d"),_T("s")),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
          (*pReinfTable)(0,2) << COLHDR(Sub2(_T("A"),_T("s")),rptAreaUnitTag,pDisplayUnits->GetAreaUnit());
-         (*pReinfTable)(0,3) << COLHDR(Sub2(_T("f"),_T("s")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
+         (*pReinfTable)(0,3) << COLHDR(Sub2(_T("E"),_T("s")),rptStressUnitTag,pDisplayUnits->GetModEUnit());
+         (*pReinfTable)(0,4) << COLHDR(Sub2(_T("f"),_T("y")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
+         (*pReinfTable)(0,5) << COLHDR(Sub2(_T("f"),_T("s")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
 
          IndexType nRebarLayers;
          mcd.rcBeam->get_RebarLayerCount(&nRebarLayers);
@@ -167,8 +170,8 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 
          for ( IndexType rebarLayerIdx = 0; rebarLayerIdx < nRebarLayers; rebarLayerIdx++, reinfTableRow++ )
          {
-            Float64 As, ds, devFactor;
-            mcd.rcBeam->GetRebarLayer(rebarLayerIdx,&ds,&As,&devFactor);
+            Float64 As, ds, Es, Fy, devFactor;
+            mcd.rcBeam->GetRebarLayer(rebarLayerIdx,&ds,&As,&Es,&Fy,&devFactor);
 
             Float64 fs;
             vfs->get_Item(rebarLayerIdx,&fs);
@@ -176,7 +179,9 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
             (*pReinfTable)(reinfTableRow,0) << LABEL_INDEX(rebarLayerIdx);
             (*pReinfTable)(reinfTableRow,1) << dim.SetValue(ds);
             (*pReinfTable)(reinfTableRow,2) << area.SetValue(devFactor*As);
-            (*pReinfTable)(reinfTableRow,3) << stress.SetValue(fs);
+            (*pReinfTable)(reinfTableRow,3) << modE.SetValue(Es);
+            (*pReinfTable)(reinfTableRow,4) << stress.SetValue(Fy);
+            (*pReinfTable)(reinfTableRow,5) << stress.SetValue(fs);
          }
 
 
