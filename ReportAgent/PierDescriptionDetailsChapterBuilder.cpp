@@ -566,9 +566,6 @@ void write_longitudinal_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pB
 
    GET_IFACE2(pBroker,IXBRProject,pProject);
    const xbrLongitudinalRebarData& rebarData = pProject->GetLongitudinalRebar(pierID);
-   GET_IFACE2(pBroker, IXBRMaterial, pMaterial);
-   Float64 E, fy, fu;
-   pMaterial->GetRebarProperties(pierID, &E, &fy, &fu); // fix this
 
    CString strFace[] = { _T("Top"), _T("Top Lower XBeam"), _T("Bottom") };
    CString strDatum[] = { _T("Left End"), _T("Right End"), _T("Full Length") };
@@ -596,8 +593,12 @@ void write_longitudinal_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pB
 
       (*pTable)(row,col++) << dim.SetValue(rebarRow.Cover);
       (*pTable)(row,col++) << WBFL::LRFD::RebarPool::GetMaterialName(rebarRow.BarType, rebarRow.BarGrade);
-      (*pTable)(row,col++) << modE.SetValue(E);
-      (*pTable)(row,col++) << stress.SetValue(fy);
+
+      const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(rebarRow.BarType, rebarRow.BarGrade, rebarRow.BarSize);
+
+      (*pTable)(row,col++) << modE.SetValue(pRebar->GetE());
+      (*pTable)(row,col++) << stress.SetValue(pRebar->GetYieldStrength());
+
       (*pTable)(row,col++) << WBFL::LRFD::RebarPool::GetBarSize(rebarRow.BarSize);
       (*pTable)(row,col++) << rebarRow.NumberOfBars;
       (*pTable)(row,col++) << dim.SetValue(rebarRow.BarSpacing);
