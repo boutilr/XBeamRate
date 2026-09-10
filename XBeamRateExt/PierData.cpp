@@ -60,7 +60,7 @@ xbrPierData::xbrPierData()
    m_X2R = WBFL::Units::ConvertToSysUnits(0,WBFL::Units::Measure::Feet);
    m_XW = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
    m_XR = WBFL::Units::ConvertToSysUnits(10,WBFL::Units::Measure::Feet);
-   m_XD = WBFL::Units::ConvertToSysUnits(2,WBFL::Units::Measure::Feet);
+   m_XD = WBFL::Units::ConvertToSysUnits(5,WBFL::Units::Measure::Feet);
 
    CColumnData column;
    m_vColumnData.push_back(column);
