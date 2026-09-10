@@ -748,8 +748,10 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
       Float64 H;
       pProject->GetColumnProperties(pierID,colIdx,&colShapeType,&d1,&d2,&columnHeightType,&H);
 
-      WBFL::Geometry::Point2d pntTop(XpCol,Ytop);
-      WBFL::Geometry::Point2d pntBot(XpCol,Ybot);
+	  xbrPierData pierData = pProject->GetPierData(pierID);
+
+      WBFL::Geometry::Point2d pntTop(XpCol - pierData.GetX1L(), Ytop);
+      WBFL::Geometry::Point2d pntBot(XpCol - pierData.GetX1L(), Ybot);
    
       auto doTop = WBFL::DManip::PointDisplayObject::Create();
       doTop->Visible(false);
@@ -767,7 +769,6 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
       auto columnShape = std::make_shared<WBFL::Geometry::Polygon>();
       Float64 X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11;
 
-	  xbrPierData pierData = pProject->GetPierData(pierID);
 
       X6 = pntTop.X();
       X1 = X6 - d1 * 0.5;
@@ -789,7 +790,7 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
 
       if (colIdx == refColIdx)
       {
-          X6 -= refColOffset + pierData.GetX1L();
+          X6 -= refColOffset;
       }
       Float64 Y1 = fn.Evaluate(X1);
       Float64 Y2 = fn.Evaluate(X2);
