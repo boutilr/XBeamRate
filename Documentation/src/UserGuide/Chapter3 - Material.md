@@ -22,8 +22,9 @@ Datum | Defines the datum for locating reinforcement<br>Full Length - reinforcem
 Start | Location of the start of the reinforcement (only used with Left End and Right End Datum)
 End | Location of the end of the reinforcement (only used with Left End and Right End Datum)
 Cover | Clear cover from the specified XBeam Face to the reinforcement
+Rebar Material | Type and Grade used for longitudinal reinforcement
 Bar Size | The size of the reinforcing bar
-# of Bars | Number of reinforcing bars in the layer
+No.  of Bars | Number of reinforcing bars in the layer
 Spacing | Center-to-center distance between reinforcing bars in the layer. Reinforcing bars are placed symmetrically about the center of the cross beam.
 Left Hook | Indicates if the left end of the reinforcement is hooked. If hooked, it is considered to be fully developed at its left end
 Right Hook | Indicates if the right end of the reinforcement is hooked. If hooked, it is considered to be fully developed at its right end
@@ -41,7 +42,7 @@ Parameter | Description
 Zone Length | Length of the stirrup zone
 Bar Size | The size of the reinforcement bar
 Spacing | Spacing of the bars within the zone
-# of Legs | Number of stirrup legs at each bar location
+No. of Legs | Number of stirrup legs at each bar location
 
 
 The exact arrangement of reinforcement isn't that important. XBRate computes Av/S for each zone as (Abar)*(# Legs)/S and uses this value over the entire zone length.
