@@ -43,26 +43,21 @@
 #include <PsgLib\GirderLabel.h>
 
 CDevLengthDetailsChapterBuilder::CDevLengthDetailsChapterBuilder()
-{
-}
+{}
 
 LPCTSTR CDevLengthDetailsChapterBuilder::GetName() const
 {
-   return TEXT("Development Length Details");
+    return TEXT("Development Length Details");
 }
 
 void WriteRowToDevelopmentTable(rptRcTable* pTable, RowIndexType row, CComBSTR barname, const WBFL::LRFD::REBARDEVLENGTHDETAILS& devDetails,
-    rptAreaUnitValue& area, rptLengthUnitValue& length, rptStressUnitValue& stress, rptRcScalar& scalar, 
-    bool is_LocationFactor, rptXBRPointOfInterest* location = nullptr, const xbrPointOfInterest* poi = nullptr)
+    rptAreaUnitValue& area, rptLengthUnitValue& length, rptStressUnitValue& stress, rptRcScalar& scalar,
+    bool is_LocationFactor)
 {
     bool is_2015 = WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2015Interims == WBFL::LRFD::BDSManager::GetEdition();
     bool is_2016 = WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2016Interims <= WBFL::LRFD::BDSManager::GetEdition();
 
     ColumnIndexType col = 0;
-    if (is_LocationFactor)
-    {
-        (*pTable)(row, col++) << location->SetValue(*poi);
-    }
     (*pTable)(row, col++) << barname;
     (*pTable)(row, col++) << area.SetValue(devDetails.Ab);
     (*pTable)(row, col++) << length.SetValue(devDetails.db);
@@ -84,123 +79,138 @@ void WriteRowToDevelopmentTable(rptRcTable* pTable, RowIndexType row, CComBSTR b
     (*pTable)(row, col++) << length.SetValue(devDetails.ld);
 }
 
-rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec,Uint16 level) const
+rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec, Uint16 level) const
 {
-   USES_CONVERSION;
+    USES_CONVERSION;
 
-   auto pXBRRptSpec = std::dynamic_pointer_cast<const CXBeamRateReportSpecification>(pRptSpec);
+    auto pXBRRptSpec = std::dynamic_pointer_cast<const CXBeamRateReportSpecification>(pRptSpec);
 
-   auto pBroker = pXBRRptSpec->GetBroker();
+    auto pBroker = pXBRRptSpec->GetBroker();
 
-   rptChapter* pChapter = CXBeamRateChapterBuilder::Build(pRptSpec, level);
+    rptChapter* pChapter = CXBeamRateChapterBuilder::Build(pRptSpec, level);
 
-   rptParagraph* pParagraph = new rptParagraph(rptStyleManager::GetHeadingStyle());
-   *pChapter << pParagraph;
+    rptParagraph* pParagraph = new rptParagraph(rptStyleManager::GetHeadingStyle());
+    *pChapter << pParagraph;
 
-   (*pParagraph) << _T("Development length of longitudinal reinforcement") << rptNewLine;
+    (*pParagraph) << _T("Development length of longitudinal reinforcement") << rptNewLine;
 
-   pParagraph = new rptParagraph;
-   *pChapter << pParagraph;
+    pParagraph = new rptParagraph;
+    *pChapter << pParagraph;
 
-   (*pParagraph) << _T("AASHTO LRFD BDS ") << WBFL::LRFD::LrfdCw8th(_T("5.11.2.1"), _T("5.10.8.2.1"));
+    (*pParagraph) << _T("AASHTO LRFD BDS ") << WBFL::LRFD::LrfdCw8th(_T("5.11.2.1"), _T("5.10.8.2.1"));
 
-   (*pParagraph) << rptNewLine;
+    (*pParagraph) << rptNewLine;
 
-   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
-   GET_IFACE2(pBroker, IXBRRebar, pRebar);
+    GET_IFACE2(pBroker, IXBRRebar, pRebar);
 
-   PierIndexType pierID = -1;
+    PierIndexType pierID = -1;
 
-   CComPtr<IRebarLayout> rebarLayout;
-   pRebar->GetRebarLayout(&rebarLayout);
-   IndexType nRebarRows;
-   rebarLayout->get_Count(&nRebarRows);
+    CComPtr<IRebarLayout> rebarLayout;
+    pRebar->GetRebarLayout(&rebarLayout);
+    IndexType nRebarRows;
+    rebarLayout->get_Count(&nRebarRows);
 
-   if (nRebarRows == 0)
-   {
-       (*pParagraph) << _T("No longitudinal reinforcement defined") << rptNewLine;
-   }
-   else
-   {
+    if (nRebarRows == 0)
+    {
+        (*pParagraph) << _T("No longitudinal reinforcement defined") << rptNewLine;
+    }
+    else
+    {
 
-           if (WBFL::LRFD::BDSManager::Edition::TenthEdition2024 <= WBFL::LRFD::BDSManager::GetEdition())
-           {
-               (*pParagraph) << rptNewLine << rptRcEquation(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_2024.png"), _T("l_d = l_{db} \\times \\lambda_{rl} \\times \\lambda_{cf} \\times \\lambda_{rc} \\\\ \\textit{in which:} \\hspace{5 mm}  l_{db} = 0.17 d_b \\left[ \\dfrac{{\\lambda_{er} f_y - \\frac{F_h} {A_b}}} {1.97 \\lambda {f'_c}^{0.25} }\\right]^2 \\\\ \\textit{where:} \\hspace{5 mm} \\lambda_{cf}=\\lambda_{rc}=\\lambda_{er} = 1.0, \\text{ and } F_h = 0.0")) << rptNewLine;
-           }
-           else if (WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2016Interims <= WBFL::LRFD::BDSManager::GetEdition())
-           {
-               (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_2016.png")) << rptNewLine;
-           }
-           else if (WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2015Interims == WBFL::LRFD::BDSManager::GetEdition())
-           {
-               (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_2015.png")) << rptNewLine;
-           }
-           else
-           {
-               if (IS_US_UNITS(pDisplayUnits))
-               {
-                   (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_US.png")) << rptNewLine;
-               }
-               else
-               {
-                   (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_SI.png")) << rptNewLine;
-               }
-           }
-   }
+        if (WBFL::LRFD::BDSManager::Edition::TenthEdition2024 <= WBFL::LRFD::BDSManager::GetEdition())
+        {
+            (*pParagraph) << rptNewLine << rptRcEquation(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_2024.png"), _T("l_d = l_{db} \\times \\lambda_{rl} \\times \\lambda_{cf} \\times \\lambda_{rc} \\\\ \\textit{in which:} \\hspace{5 mm}  l_{db} = 0.17 d_b \\left[ \\dfrac{{\\lambda_{er} f_y - \\frac{F_h} {A_b}}} {1.97 \\lambda {f'_c}^{0.25} }\\right]^2 \\\\ \\textit{where:} \\hspace{5 mm} \\lambda_{cf}=\\lambda_{rc}=\\lambda_{er} = 1.0, \\text{ and } F_h = 0.0")) << rptNewLine;
+        }
+        else if (WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2016Interims <= WBFL::LRFD::BDSManager::GetEdition())
+        {
+            (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_2016.png")) << rptNewLine;
+        }
+        else if (WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2015Interims == WBFL::LRFD::BDSManager::GetEdition())
+        {
+            (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_2015.png")) << rptNewLine;
+        }
+        else
+        {
+            if (IS_US_UNITS(pDisplayUnits))
+            {
+                (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_US.png")) << rptNewLine;
+            }
+            else
+            {
+                (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("LongitudinalRebarDevelopment_SI.png")) << rptNewLine;
+            }
+        }
+    }
 
-   (*pParagraph) << rptNewLine;
+    (*pParagraph) << rptNewLine;
 
-   bool is_2015 = WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2015Interims == WBFL::LRFD::BDSManager::GetEdition();
-   bool is_2016 = WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2016Interims <= WBFL::LRFD::BDSManager::GetEdition();
+    bool is_2015 = WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2015Interims == WBFL::LRFD::BDSManager::GetEdition();
+    bool is_2016 = WBFL::LRFD::BDSManager::Edition::SeventhEditionWith2016Interims <= WBFL::LRFD::BDSManager::GetEdition();
 
-   ColumnIndexType nColumns = 8;
+    ColumnIndexType nColumns = 8;
 
-   // Versions before this did not consider the factor in pgsuper
-   bool is_LocationFactor = WBFL::LRFD::BDSManager::Edition::EighthEdition2017 <= WBFL::LRFD::BDSManager::GetEdition();
+    //if (WBFL::LRFD::BDSManager::Edition::TenthEdition2024 <= WBFL::LRFD::BDSManager::GetEdition())
+    //{
+    //    nColumns++; //add Kdb column
+    //}
 
-   if (is_LocationFactor)
-   {
-       nColumns += 4; // location, dist to bottom, lamda rl, lamda lw
-   }
-   else if (is_2015 || is_2016)
-   {
-       nColumns += 2; // lamda rl and lamda lw
-   }
+    // Versions before this did not consider the factor in pgsuper
+    bool is_LocationFactor = WBFL::LRFD::BDSManager::Edition::EighthEdition2017 <= WBFL::LRFD::BDSManager::GetEdition();
 
-   rptRcTable* pTable = rptStyleManager::CreateDefaultTable(nColumns, _T(""));
+    if (is_LocationFactor)
+    {
+        nColumns += 3; // dist to bottom, lamda rl, lamda lw
+    }
+    else if (is_2015 || is_2016)
+    {
+        nColumns += 2; // lamda rl and lamda lw
+    }
 
-   ColumnIndexType col = 0;
-   if (is_LocationFactor)
-   {
-       (*pTable)(0, col++) << COLHDR(_T("Location"), rptLengthUnitTag, pDisplayUnits->GetSpanLengthUnit());
-   }
-   (*pTable)(0, col++) << _T("Bar Size");
-   (*pTable)(0, col++) << COLHDR(Sub2(_T("A"), _T("b")), rptAreaUnitTag, pDisplayUnits->GetAreaUnit());
-   (*pTable)(0, col++) << COLHDR(Sub2(_T("d"), _T("b")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
-   (*pTable)(0, col++) << COLHDR(RPT_FY, rptStressUnitTag, pDisplayUnits->GetStressUnit());
-   (*pTable)(0, col++) << COLHDR(RPT_FC, rptStressUnitTag, pDisplayUnits->GetStressUnit());
-   if (is_LocationFactor)
-   {
-       (*pTable)(0, col++) << COLHDR(_T("Distance from") << rptNewLine << _T("Bottom"), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
-       (*pTable)(0, col++) << symbol(lambda) << Sub(_T("rl"));
-       (*pTable)(0, col++) << symbol(lambda);
-   }
-   else if (is_2016)
-   {
-       (*pTable)(0, col++) << symbol(lambda) << Sub(_T("rl"));
-       (*pTable)(0, col++) << symbol(lambda);
-   }
-   else if (is_2015)
-   {
-       (*pTable)(0, col++) << symbol(lambda) << Sub(_T("rl"));
-       (*pTable)(0, col++) << symbol(lambda) << Sub(_T("lw"));
-   }
-   (*pTable)(0, col++) << _T("Modification") << rptNewLine << _T("Factor");
-   (*pTable)(0, col++) << COLHDR(Sub2(_T("l"), _T("db")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
-   (*pTable)(0, col++) << COLHDR(Sub2(_T("l"), _T("d")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
+    rptRcTable* pTable1 = rptStyleManager::CreateDefaultTable(nColumns, _T(""));
 
-    (*pParagraph) << pTable << rptNewLine;
+    ColumnIndexType col = 0;
+    (*pTable1)(0, col++) << _T("Bar Size");
+    //if (WBFL::LRFD::BDSManager::Edition::TenthEdition2024 <= WBFL::LRFD::BDSManager::GetEdition())
+    //{
+    //    (*pTable1)(0, col++) << Sub2(_T("K"), _T("db"));
+    //}
+    (*pTable1)(0, col++) << COLHDR(Sub2(_T("A"), _T("b")), rptAreaUnitTag, pDisplayUnits->GetAreaUnit());
+    (*pTable1)(0, col++) << COLHDR(Sub2(_T("d"), _T("b")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
+    (*pTable1)(0, col++) << COLHDR(RPT_FY, rptStressUnitTag, pDisplayUnits->GetStressUnit());
+    (*pTable1)(0, col++) << COLHDR(RPT_FC, rptStressUnitTag, pDisplayUnits->GetStressUnit());
+    if (is_LocationFactor)
+    {
+        (*pTable1)(0, col++) << COLHDR(_T("Distance from") << rptNewLine << _T("Bottom"), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
+        (*pTable1)(0, col++) << symbol(lambda) << Sub(_T("rl"));
+        (*pTable1)(0, col++) << symbol(lambda);
+    }
+    else if (is_2016)
+    {
+        (*pTable1)(0, col++) << symbol(lambda) << Sub(_T("rl"));
+        (*pTable1)(0, col++) << symbol(lambda);
+    }
+    else if (is_2015)
+    {
+        (*pTable1)(0, col++) << symbol(lambda) << Sub(_T("rl"));
+        (*pTable1)(0, col++) << symbol(lambda) << Sub(_T("lw"));
+    }
+    (*pTable1)(0, col++) << _T("Modification") << rptNewLine << _T("Factor");
+    (*pTable1)(0, col++) << COLHDR(Sub2(_T("l"), _T("db")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
+    (*pTable1)(0, col++) << COLHDR(Sub2(_T("l"), _T("d")), rptLengthUnitTag, pDisplayUnits->GetComponentDimUnit());
+
+    (*pParagraph) << pTable1 << rptNewLine;
+
+    pParagraph = new rptParagraph(rptStyleManager::GetHeadingStyle());
+    *pChapter << pParagraph;
+
+    (*pParagraph) << _T("Area reduction factor for lack of full bar development") << rptNewLine;
+
+    pParagraph = new rptParagraph;
+    *pChapter << pParagraph;
+
+    (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("DevelopmentLengthFactor.png")) << rptNewLine;
 
     GET_IFACE2(pBroker, IXBRProject, pProject);
 
@@ -216,16 +226,16 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
     scalar.SetPrecision(3);
     scalar.SetTolerance(1.0e-6);
 
-	RowIndexType row = pTable->GetNumberOfHeaderRows();
+    RowIndexType row = pTable1->GetNumberOfHeaderRows();
 
-	Float64 rebarDistToBottom = 0.0;
+    Float64 rebarDistToBottom = 0.0;
 
     if (WBFL::LRFD::BDSManager::Edition::TenthEdition2024 <= WBFL::LRFD::BDSManager::GetEdition())
     {
         Float64 barRowPatternStartY = 0;
-		std::set<Float64> seenBarStartYs;
+        std::set<Float64> seenBarStartYs;
         Float64 barRowPatternY = 0;
-		std::set<Float64> seenBarYs;
+        std::set<Float64> seenBarYs;
         Float64 barRowPatternEndY = 0;
         std::set<Float64> seenBarEndYs;
 
@@ -238,204 +248,57 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
             layoutItem->get_Count(&nPatterns);
             for (IndexType patternIdx = 0; patternIdx < nPatterns; patternIdx++)
             {
-                if (2 + 2 == 5)
-                {
-                    CComPtr<IRebarPattern> rebarPattern;
-                    layoutItem->get_Item(patternIdx, &rebarPattern);
-                    CComPtr<IRebar> rebar;
-                    rebarPattern->get_Rebar(&rebar);
+                CComPtr<IRebarPattern> rebarPattern;
+                layoutItem->get_Item(patternIdx, &rebarPattern);
+                CComPtr<IRebar> rebar;
+                rebarPattern->get_Rebar(&rebar);
 
-                    CComBSTR barname;
-                    rebar->get_Name(&barname);
+                CComBSTR barname;
+                rebar->get_Name(&barname);
 
-                    WBFL::Materials::Rebar::Size size = WBFL::LRFD::RebarPool::GetBarSize(OLE2CT(barname));
+                WBFL::Materials::Rebar::Size size = WBFL::LRFD::RebarPool::GetBarSize(OLE2CT(barname));
 
-                    Float64 Ab, db, fy;
-                    rebar->get_NominalArea(&Ab);
-                    rebar->get_NominalDiameter(&db);
-                    rebar->get_YieldStrength(&fy);
+                Float64 Ab, db, fy;
+                rebar->get_NominalArea(&Ab);
+                rebar->get_NominalDiameter(&db);
+                rebar->get_YieldStrength(&fy);
 
-                    const CConcreteMaterial& concrete = pProject->GetConcrete(pierID);
-                    Float64 fc = concrete.Fc;
+                const CConcreteMaterial& concrete = pProject->GetConcrete(pierID);
+                Float64 fc = concrete.Fc;
 
-                    WBFL::Materials::ConcreteType type = WBFL::Materials::ConcreteType::Normal;
-                    bool hasFct = false;
-                    Float64 Fct = 0.0;
+                WBFL::Materials::ConcreteType type = WBFL::Materials::ConcreteType::Normal;
+                bool hasFct = false;
+                Float64 Fct = 0.0;
 
-                    // Need distance to bottom of pier. Use max from both ends
-                    GET_IFACE2(pBroker, IXBRPier, pPier);
-                    Float64 pier_length = pPier->GetXBeamLength(xbrTypes::xblBottomXBeam, pierID);
-                    Float64 startLoc, barLength;
-                    layoutItem->get_Start(&startLoc);
-                    layoutItem->get_Length(&barLength);
-                    Float64 endLoc = startLoc + barLength;
+                GET_IFACE2(pBroker, IXBRPointOfInterest, pPoi);
+                std::vector<xbrPointOfInterest> vPoi = pPoi->GetXBeamPointsOfInterest(pierID);
 
+                const xbrPointOfInterest& poi = vPoi[0]; //get start Hg
 
+                // Height of pier at start and end of bar
+                GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
+                Float64 fullDepth = pSectProp->GetDepth(pierID, pgsTypes::Stage2, poi);
 
-                    // Height of pier at start and end of bar
-                    GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
-                    Float64 fullDepthStart = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(startLoc));
-                    Float64 fullDepthEnd = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(endLoc));
+                // get bar depth
+                CComPtr<IRebarSectionItem> rebarSectionItem;
+                Float64 devFactor = 1.0;
 
+                CComPtr<IRebarSection> rebarSection;
+                pRebar->GetRebarSection(pierID, pgsTypes::Stage2, xbrPointOfInterest(poi), &rebarSection);
 
+                CComPtr<IEnumRebarSectionItem> enumRebar;
+                rebarSection->get__EnumRebarSectionItem(&enumRebar);
 
-                    // get bar depth
-                    CComPtr<IRebarSectionItem> rebarSectionItem;
+                rebarDistToBottom = fullDepth - barRowPatternY;
 
-                    CComPtr<IRebarSection> rebarSectionStart;
-                    const auto& stage = pgsTypes::Stage::Stage2;
-                    pRebar->GetRebarSection(pierID, stage, xbrPointOfInterest(startLoc), &rebarSectionStart);
+                WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(
+                    size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, rebarDistToBottom, false, true);
 
-                    CComPtr<IEnumRebarSectionItem> enumRebarStart;
-                    rebarSectionStart->get__EnumRebarSectionItem(&enumRebarStart);
+                WriteRowToDevelopmentTable(pTable1, row, barname, details,
+                    area, length, stress, scalar, is_LocationFactor);
 
-                    while (enumRebarStart->Next(1, &rebarSectionItem, nullptr) != S_FALSE)
-                    {
-                        CComPtr<IPoint2d> pntRebar;
-                        rebarSectionItem->get_Location(&pntRebar);
+                row++;
 
-                        Float64 barStartY = pRebar->GetRebarDepth(pierID, startLoc, pgsTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
-
-                        if (barStartY < 0)
-                        {
-                            // rebar is not in the cross section (not applicable in this stage)
-                            rebarSectionItem.Release();
-                            continue;
-                        }
-
-                        if (!(seenBarStartYs.find(barStartY) != seenBarStartYs.end()))
-                        {
-                            barRowPatternStartY = barStartY;
-                            seenBarStartYs.insert(barStartY);
-                            rebarSectionItem.Release();
-                            break;
-                        }
-
-                        rebarSectionItem.Release();
-                    }
-
-                    CComPtr<IRebarSection> rebarSectionEnd;
-                    pRebar->GetRebarSection(pierID, pgsTypes::Stage2, xbrPointOfInterest(endLoc), &rebarSectionEnd);
-
-                    CComPtr<IEnumRebarSectionItem> enumRebarEnd;
-                    rebarSectionEnd->get__EnumRebarSectionItem(&enumRebarEnd);
-
-                    while (enumRebarEnd->Next(1, &rebarSectionItem, nullptr) != S_FALSE)
-                    {
-                        CComPtr<IPoint2d> pntRebar;
-                        rebarSectionItem->get_Location(&pntRebar);
-
-                        Float64 barEndY = pRebar->GetRebarDepth(pierID, xbrPointOfInterest(endLoc), pgsTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
-
-                        if (barEndY < 0)
-                        {
-                            // rebar is not in the cross section (not applicable in this stage)
-                            rebarSectionItem.Release();
-                            continue;
-                        }
-
-                        if (!(seenBarEndYs.find(barEndY) != seenBarEndYs.end()))
-                        {
-                            barRowPatternEndY = barEndY;
-                            seenBarEndYs.insert(barEndY);
-                            rebarSectionItem.Release();
-                            break;
-                        }
-
-                        rebarSectionItem.Release();
-
-                    }
-
-                    rebarDistToBottom = Max(fullDepthStart - barRowPatternStartY, fullDepthEnd - barRowPatternEndY);
-
-                    WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(
-                        size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, rebarDistToBottom, false, true);
-
-                    WriteRowToDevelopmentTable(pTable, row, barname, details, area, length, stress, scalar, is_LocationFactor);
-
-                    row++;
-                }
-                else
-                {
-                    CComPtr<IRebarPattern> rebarPattern;
-                    layoutItem->get_Item(patternIdx, &rebarPattern);
-                    CComPtr<IRebar> rebar;
-                    rebarPattern->get_Rebar(&rebar);
-
-                    CComBSTR barname;
-                    rebar->get_Name(&barname);
-
-                    WBFL::Materials::Rebar::Size size = WBFL::LRFD::RebarPool::GetBarSize(OLE2CT(barname));
-
-                    Float64 Ab, db, fy;
-                    rebar->get_NominalArea(&Ab);
-                    rebar->get_NominalDiameter(&db);
-                    rebar->get_YieldStrength(&fy);
-
-                    const CConcreteMaterial& concrete = pProject->GetConcrete(pierID);
-                    Float64 fc = concrete.Fc;
-
-                    WBFL::Materials::ConcreteType type = WBFL::Materials::ConcreteType::Normal;
-                    bool hasFct = false;
-                    Float64 Fct = 0.0;
-
-                    GET_IFACE2(pBroker, IXBRPointOfInterest, pPoi);
-                    std::vector<xbrPointOfInterest> vPoi = pPoi->GetXBeamPointsOfInterest(pierID);
-
-                    for (IndexType i = 0; i < vPoi.size(); i++)
-                    {
-                        const xbrPointOfInterest& poi = vPoi[i];
-                    
-                        // Height of pier at start and end of bar
-                        GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
-                        Float64 fullDepth = pSectProp->GetDepth(pierID, pgsTypes::Stage2, poi);
-
-                        // get bar depth
-                        CComPtr<IRebarSectionItem> rebarSectionItem;
-
-                        CComPtr<IRebarSection> rebarSection;
-                        pRebar->GetRebarSection(pierID, pgsTypes::Stage2, xbrPointOfInterest(poi), &rebarSection);
-
-                        CComPtr<IEnumRebarSectionItem> enumRebar;
-                        rebarSection->get__EnumRebarSectionItem(&enumRebar);
-
-                        while (enumRebar->Next(1, &rebarSectionItem, nullptr) != S_FALSE)
-                        {
-                            CComPtr<IPoint2d> pntRebar;
-                            rebarSectionItem->get_Location(&pntRebar);
-
-                            Float64 barY = pRebar->GetRebarDepth(pierID, poi, pgsTypes::Stage2, pntRebar); // depth from top of cross beam to rebar
-
-                            if (barY < 0)
-                            {
-                                // rebar is not in the cross section (not applicable in this stage)
-                                rebarSectionItem.Release();
-                                continue;
-                            }
-
-                            if (!(seenBarYs.find(barY) != seenBarYs.end()))
-                            {
-                                barRowPatternY = barY;
-                                seenBarYs.insert(barY);
-                                rebarSectionItem.Release();
-                                break;
-                            }
-
-                            rebarSectionItem.Release();
-
-                        }
-                        
-                        rebarDistToBottom = fullDepth - barRowPatternY;
-
-                        WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(
-                            size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, rebarDistToBottom, false, true);
-
-                        WriteRowToDevelopmentTable(pTable, row, barname, details, 
-                        area, length, stress, scalar, is_LocationFactor, &location, &poi);
-
-                        row++;
-                    }
-                }
             } // next patternIdx
         } // next rebarIdx
     }
@@ -487,10 +350,10 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                     layoutItem->get_Start(&startLoc);
                     layoutItem->get_Length(&barLength);
                     Float64 endLoc = startLoc + barLength;
-             
+
                     GET_IFACE2(pBroker, IXBRSectionProperties, pSectProp);
-					Float64 depthStart = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(startLoc));
-					Float64 depthEnd = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(endLoc));
+                    Float64 depthStart = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(startLoc));
+                    Float64 depthEnd = pSectProp->GetDepth(pierID, pgsTypes::Stage2, xbrPointOfInterest(endLoc));
 
                     // elevation of bar at ends
                     CComPtr<IPoint2d> barStart, barEnd;
@@ -504,13 +367,14 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
 
                     WBFL::LRFD::REBARDEVLENGTHDETAILS details = WBFL::LRFD::Rebar::GetRebarDevelopmentLengthDetails(size, Ab, db, fy, type, fc, hasFct, Fct, concrete.StrengthDensity, rebarDistToBottom, false, true);
 
-                    WriteRowToDevelopmentTable(pTable, row, barname, details, area, length, stress, scalar, is_LocationFactor);
+                    WriteRowToDevelopmentTable(pTable1, row, barname, details, area, length, stress, scalar, is_LocationFactor);
 
                     row++;
                 } // end if
             } // next patternIdx
         } // next rebarIdx
     } // end if
+
 
     return pChapter;
 }

@@ -59,6 +59,12 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
    INIT_UV_PROTOTYPE( rptStressUnitValue, stress, pDisplayUnits->GetStressUnit(), false);
    INIT_UV_PROTOTYPE( rptStressUnitValue, modE, pDisplayUnits->GetModEUnit(), false);
 
+   rptRcScalar scalar;
+   scalar.SetWidth(7);
+   scalar.SetPrecision(4);
+   scalar.SetFormat(WBFL::System::NumericFormatTool::Format::Fixed);
+   scalar.SetTolerance(1.0e-6);
+
    rptParagraph* pPara = new rptParagraph;
    *pChapter << pPara;
 
@@ -75,6 +81,8 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("XBR_de.png")) << rptNewLine;
 
+   *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("DevelopmentLengthFactor.png")) << rptNewLine;
+
    for ( int i = 0; i < 2; i++ )
    {
       bool bPositiveMoment = (i == 0 ? true : false);
@@ -84,7 +92,6 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 
       rptRcTable* pTable = rptStyleManager::CreateDefaultTable(nColumns,strTitle);
       *pPara << pTable << rptNewLine;
-
 
       ColumnIndexType col = 0;
       (*pTable)(0,col++) << COLHDR(_T("Location"), rptLengthUnitTag, pDisplayUnits->GetSpanLengthUnit());
@@ -140,7 +147,7 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
          (*pTable)(row,col++) << dim.SetValue(beta1*c);
          (*pTable)(row,col++) << dim.SetValue(bw);
 
-         rptRcTable* pReinfTable = rptStyleManager::CreateDefaultTable(6);
+         rptRcTable* pReinfTable = rptStyleManager::CreateDefaultTable(7);
          (*pTable)(row,col++) << pReinfTable;
 
          (*pTable)(row,col++) << dim.SetValue(mcd.de);
@@ -151,10 +158,11 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 
          (*pReinfTable)(0,0) << _T("Layer");
          (*pReinfTable)(0,1) << COLHDR(Sub2(_T("d"),_T("s")),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
-         (*pReinfTable)(0,2) << COLHDR(Sub2(_T("A"),_T("s")),rptAreaUnitTag,pDisplayUnits->GetAreaUnit());
-         (*pReinfTable)(0,3) << COLHDR(Sub2(_T("E"),_T("s")),rptStressUnitTag,pDisplayUnits->GetModEUnit());
-         (*pReinfTable)(0,4) << COLHDR(Sub2(_T("f"),_T("y")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
-         (*pReinfTable)(0,5) << COLHDR(Sub2(_T("f"),_T("s")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
+         (*pReinfTable)(0,2) << Sub2(_T("K"),_T("db"));
+         (*pReinfTable)(0,3) << COLHDR(Sub2(_T("A"),_T("s")),rptAreaUnitTag,pDisplayUnits->GetAreaUnit());
+         (*pReinfTable)(0,4) << COLHDR(Sub2(_T("E"),_T("s")),rptStressUnitTag,pDisplayUnits->GetModEUnit());
+         (*pReinfTable)(0,5) << COLHDR(Sub2(_T("f"),_T("y")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
+         (*pReinfTable)(0,6) << COLHDR(Sub2(_T("f"),_T("s")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
 
          IndexType nRebarLayers;
          mcd.rcBeam->get_RebarLayerCount(&nRebarLayers);
@@ -178,10 +186,11 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 
             (*pReinfTable)(reinfTableRow,0) << LABEL_INDEX(rebarLayerIdx);
             (*pReinfTable)(reinfTableRow,1) << dim.SetValue(ds);
-            (*pReinfTable)(reinfTableRow,2) << area.SetValue(devFactor*As);
-            (*pReinfTable)(reinfTableRow,3) << modE.SetValue(Es);
-            (*pReinfTable)(reinfTableRow,4) << stress.SetValue(Fy);
-            (*pReinfTable)(reinfTableRow,5) << stress.SetValue(fs);
+            (*pReinfTable)(reinfTableRow,2) << scalar.SetValue(devFactor);
+            (*pReinfTable)(reinfTableRow,3) << area.SetValue(As);
+            (*pReinfTable)(reinfTableRow,4) << modE.SetValue(Es);
+            (*pReinfTable)(reinfTableRow,5) << stress.SetValue(Fy);
+            (*pReinfTable)(reinfTableRow,6) << stress.SetValue(fs);
          }
 
 

@@ -923,6 +923,7 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage s
        Float64 Ybar;
        Float64 Es;
        Float64 Fy;
+       Float64 DevFactor;
    };
 
    struct RebarLumpKey_less
@@ -939,6 +940,11 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage s
            if (less(lhs.Fy, rhs.Fy))
                return true;
            if (less(rhs.Fy, lhs.Fy))
+               return false;
+
+           if (less(lhs.DevFactor, rhs.DevFactor))
+               return true;
+           if (less(rhs.DevFactor, lhs.DevFactor))
                return false;
 
            return less(lhs.Es, rhs.Es);
@@ -1000,12 +1006,11 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage s
       Float64 devFactor = pRebar->GetDevLengthFactor(pierID, poi, rebarSectionItem);
       ATLASSERT(::InRange(0.0, devFactor, 1.0));
 
-      As *= devFactor;
-
       RebarLumpKey key;
       key.Ybar = Ybar;
       key.Fy = Fy;
       key.Es = Es;
+      key.DevFactor = devFactor;
 
       // Combine only bars having the same elevation and material properties.
       std::map<RebarLumpKey, Float64, RebarLumpKey_less>::iterator found = rebarMap.find(key);
@@ -1030,9 +1035,10 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage s
        Float64 Ybar = iter->first.Ybar;
        Float64 Fy = iter->first.Fy;
        Float64 Es = iter->first.Es;
+       Float64 DevFactor = iter->first.DevFactor;
        Float64 As = iter->second;
 
-       rcBeam->AddRebarLayer(Ybar, As, Es, Fy, 1.0);
+       rcBeam->AddRebarLayer(Ybar, As, Es, Fy, DevFactor);
 
        dt = Max(dt, Ybar);
    }
