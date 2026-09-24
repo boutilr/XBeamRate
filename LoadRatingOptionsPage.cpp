@@ -32,6 +32,8 @@
 #include <EAF\EAFDisplayUnits.h>
 #include <EAF\EAFDocument.h>
 
+#include <..\..\PGSuper\Include\IFace\Project.h>
+
 
 
 // CLoadRatingOptionsPage dialog
@@ -105,14 +107,26 @@ void CLoadRatingOptionsPage::FillAnalysisModeComboBox()
 {
    CComboBox* pCB = (CComboBox*)GetDlgItem(IDC_ANALYSIS_MODE);
    pCB->ResetContent();
-   int idx = pCB->AddString(_T("Simple"));
-   pCB->SetItemData(idx,(DWORD_PTR)pgsTypes::Simple);
 
-   idx = pCB->AddString(_T("Continuous"));
-   pCB->SetItemData(idx,(DWORD_PTR)pgsTypes::Continuous);
+   auto pBroker = EAFGetBroker();
+   GET_IFACE2(pBroker, ILossParameters, pLossParams);
+   if (pLossParams->GetLossMethod() == PrestressLossCriteria::LossMethodType::TIME_STEP)
+   {
+	   int idx = pCB->AddString(_T("Continuous"));
+	   pCB->SetItemData(idx, (DWORD_PTR)pgsTypes::Continuous);
+	   pCB->SetCurSel(idx);
+   }
+   else
+   {
+	   int idx = pCB->AddString(_T("Simple"));
+	   pCB->SetItemData(idx, (DWORD_PTR)pgsTypes::Simple);
 
-   idx = pCB->AddString(_T("Envelope"));
-   pCB->SetItemData(idx,(DWORD_PTR)pgsTypes::Envelope);
+	   idx = pCB->AddString(_T("Continuous"));
+	   pCB->SetItemData(idx, (DWORD_PTR)pgsTypes::Continuous);
+
+	   idx = pCB->AddString(_T("Envelope"));
+	   pCB->SetItemData(idx, (DWORD_PTR)pgsTypes::Envelope);
+   }
 }
 
 void CLoadRatingOptionsPage::FillEmergencyRatingMethodComboBox()

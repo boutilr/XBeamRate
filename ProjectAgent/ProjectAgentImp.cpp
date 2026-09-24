@@ -1478,6 +1478,12 @@ WBFL::EAF::Broker::LoadResult CProjectAgentImp::Load(WBFL::System::IStructuredLo
       UpdatePiers();
    }
 
+   // At some point in time we saved the analysis type incorrectly for PGSplice load rating options.
+   // When the timestep method is used the analysis type for pier reactions should always be set to "Continuous"
+   GET_IFACE(ILossParameters, pLossParams);
+   if (pLossParams->GetLossMethod() == PrestressLossCriteria::LossMethodType::TIME_STEP)
+	   m_AnalysisType = pgsTypes::Continuous;
+
    return WBFL::EAF::Broker::LoadResult::Success;
 }
 
