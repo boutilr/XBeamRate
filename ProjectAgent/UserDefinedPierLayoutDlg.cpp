@@ -188,44 +188,56 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
             xRightColumn += spacing;
         }
 
+        // Calculate position of reference column and alignment offset
+        Float64 xRefColumn = 0;
+        for (IndexType idx = 0; idx < m_RefColumnIdx; idx++)
+        {
+            Float64 spacing = m_Pier.GetColumnSpacing(idx);
+            xRefColumn += spacing;
+        }
+        Float64 xShift = -(xRefColumn + m_TransverseOffset);
+
+        // Calculate limits outside the pier point loop (they don't depend on individual points)
+        const auto xLeftTop = xShift - m_XBeamOverhang[pgsTypes::stLeft];
+
+        const auto xRightTop = xShift + xRightColumn + m_XBeamOverhang[pgsTypes::stRight];
+
+        auto xLeftLimit =
+            xLeftTop + m_XBeamEndSlopeOffset[pgsTypes::stLeft];
+
+        auto xRightLimit =
+            xRightTop - m_XBeamEndSlopeOffset[pgsTypes::stRight];
+
         for (const auto& ppData : m_Pier.GetPierPointData())
         {
 			const auto& x = ppData.Get_X();
 			const auto& y = ppData.Get_Y();
 
-            const auto xLeftTop = - m_XBeamOverhang[pgsTypes::stLeft];
+             auto xLeftLimitAdjusted = xLeftLimit;
+             auto xRightLimitAdjusted = xRightLimit;
 
-            const auto xRightTop = xRightColumn + m_XBeamOverhang[pgsTypes::stRight];
+             // While the point is within H1L/H1R, the allowable
+             // x-coordinate is governed by the sloping side.
+             if (y < m_XBeamHeight[pgsTypes::stLeft])
+             {
+                 xLeftLimitAdjusted =
+                     xLeftTop +
+                     m_XBeamEndSlopeOffset[pgsTypes::stLeft] *
+                     y / m_XBeamHeight[pgsTypes::stLeft];
+             }
 
+             if (y < m_XBeamHeight[pgsTypes::stRight])
+             {
+                 xRightLimitAdjusted =
+                     xRightTop -
+                     m_XBeamEndSlopeOffset[pgsTypes::stRight] *
+                     y / m_XBeamHeight[pgsTypes::stRight];
+             }
 
-            auto xLeftLimit =
-                xLeftTop + m_XBeamEndSlopeOffset[pgsTypes::stLeft];
-
-            auto xRightLimit =
-                xRightTop - m_XBeamEndSlopeOffset[pgsTypes::stRight];
-
-            // While the point is within H1L/H1R, the allowable
-            // x-coordinate is governed by the sloping side.
-            if (y < m_XBeamHeight[pgsTypes::stLeft])
-            {
-                xLeftLimit =
-                    xLeftTop +
-                    m_XBeamEndSlopeOffset[pgsTypes::stLeft] *
-                    y / m_XBeamHeight[pgsTypes::stLeft];
-            }
-
-            if (y < m_XBeamHeight[pgsTypes::stRight])
-            {
-                xRightLimit =
-                    xRightTop -
-                    m_XBeamEndSlopeOffset[pgsTypes::stRight] *
-                    y / m_XBeamHeight[pgsTypes::stRight];
-            }
-
-            Float64 sLeft, sRight;
-            m_Pier.GetCrownSlope(&sLeft, &sRight);
-            Float64 cpOffset = m_Pier.GetCrownPointOffset();
-            Float64 yTopLimit;
+             Float64 sLeft, sRight;
+             m_Pier.GetCrownSlope(&sLeft, &sRight);
+             Float64 cpOffset = m_Pier.GetCrownPointOffset();
+             Float64 yTopLimit;
 			if (x < 0.0)
 			{
 				yTopLimit = (sLeft * (x - cpOffset));
@@ -235,16 +247,16 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 				yTopLimit = -(sRight * (x - cpOffset));
 			}
 
-            if (y < yTopLimit ||
-                x < xLeftLimit ||
-                x > xRightLimit)
-            {
-                CString msg = _T("Pier point must be within the top and sides of the lower crossbeam.");
-                AfxMessageBox(msg);
-                pDX->Fail();
-            }
+             if (y < yTopLimit ||
+                 x < xLeftLimitAdjusted ||
+                 x > xRightLimitAdjusted)
+             {
+                 CString msg = _T("Pier point must be within the top and sides of the lower crossbeam.");
+                 AfxMessageBox(msg);
+                 pDX->Fail();
+             }
 
-        }
+         }
 
     }
 }
