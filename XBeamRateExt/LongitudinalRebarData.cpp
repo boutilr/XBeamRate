@@ -106,11 +106,11 @@ HRESULT xbrLongitudinalRebarData::Save(IStructuredSave* pStrSave,std::shared_ptr
 {
    HRESULT hr = S_OK;
 
-   pStrSave->BeginUnit(_T("LongitudinalRebar"),2.0);
+   pStrSave->BeginUnit(_T("LongitudinalRebar"),1.0);
 
    for (const auto& rebar_row : RebarRows)
    {
-      pStrSave->BeginUnit(_T("RebarRow"),1.0);
+      pStrSave->BeginUnit(_T("RebarRow"),2.0);
       pStrSave->put_Property(_T("Datum"),        CComVariant(rebar_row.Datum));
       pStrSave->put_Property(_T("LayoutType"),   CComVariant(rebar_row.LayoutType));
       pStrSave->put_Property(_T("Start"),        CComVariant(rebar_row.Start));
@@ -141,12 +141,13 @@ HRESULT xbrLongitudinalRebarData::Load(IStructuredLoad* pStrLoad,std::shared_ptr
    {
       hr = pStrLoad->BeginUnit(_T("LongitudinalRebar")); 
 
-      Float64 version;
-      pStrLoad->get_Version(&version);
-
       RebarRows.clear();
       while ( SUCCEEDED(pStrLoad->BeginUnit(_T("RebarRow"))) )
       {
+
+         Float64 version;
+         pStrLoad->get_Version(&version);
+
          RebarRow rebar_row;
 
          var.vt = VT_I4;

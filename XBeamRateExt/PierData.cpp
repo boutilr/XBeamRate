@@ -1230,7 +1230,16 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
              {
 				 row.SetBarMaterial(type, grade);
              }
-
+         }
+         else
+         {
+             var.vt = VT_I4;
+             hr = pStrLoad->get_Property(_T("StirrupRebarType"), &var);
+             WBFL::Materials::Rebar::Type type = (WBFL::Materials::Rebar::Type)(var.lVal);
+             m_StirrupRebarType = (WBFL::Materials::Rebar::Type)(var.lVal);
+             hr = pStrLoad->get_Property(_T("StirrupRebarGrade"), &var);
+             WBFL::Materials::Rebar::Grade grade = (WBFL::Materials::Rebar::Grade)(var.lVal);
+             m_StirrupRebarGrade = (WBFL::Materials::Rebar::Grade)(var.lVal);
          }
 
          hr = m_LongitudinalRebar.Load(pStrLoad,nullptr);
