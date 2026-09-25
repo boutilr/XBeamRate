@@ -750,8 +750,8 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
 
 	  xbrPierData pierData = pProject->GetPierData(pierID);
 
-      WBFL::Geometry::Point2d pntTop(XpCol - pierData.GetX1L(), Ytop);
-      WBFL::Geometry::Point2d pntBot(XpCol - pierData.GetX1L(), Ybot);
+      WBFL::Geometry::Point2d pntTop(XpCol, Ytop);
+      WBFL::Geometry::Point2d pntBot(XpCol, Ybot);
    
       auto doTop = WBFL::DManip::PointDisplayObject::Create();
       doTop->Visible(false);
