@@ -195,7 +195,7 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
             Float64 spacing = m_Pier.GetColumnSpacing(idx);
             xRefColumn += spacing;
         }
-        Float64 xShift = -(xRefColumn + m_TransverseOffset);
+        Float64 xShift = m_TransverseOffset - xRefColumn;
 
         // Calculate limits outside the pier point loop (they don't depend on individual points)
         const auto xLeftTop = xShift - m_XBeamOverhang[pgsTypes::stLeft];
@@ -207,6 +207,8 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
         auto xRightLimit =
             xRightTop - m_XBeamEndSlopeOffset[pgsTypes::stRight];
+
+        Float64 prevPoint = -DBL_MAX;
 
         for (const auto& ppData : m_Pier.GetPierPointData())
         {
@@ -251,10 +253,21 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
                  x < xLeftLimitAdjusted ||
                  x > xRightLimitAdjusted)
              {
+                 OnRemovePierPoints();
                  CString msg = _T("Pier point must be within the top and sides of the lower crossbeam.");
                  AfxMessageBox(msg);
                  pDX->Fail();
              }
+
+             if (x < prevPoint)
+             {
+                 OnRemovePierPoints();
+                 CString msg = _T("Pier point must increase left to right along the crossbeam.");
+                 AfxMessageBox(msg);
+                 pDX->Fail();
+             }
+
+             prevPoint = x;
 
          }
 

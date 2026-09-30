@@ -282,7 +282,7 @@ void CPierPointGrid::GetPierPointData(ROWCOL row,CPierPointData* pPierPoint)
    X = WBFL::Units::ConvertToSysUnits(X, pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure);
    pPierPoint->Set_X(X);
 
-   Float64 Y = _tstof(GetCellValue(row,col++));
+   Float64 Y = _tstof(GetCellValue(row,col));
    Y = WBFL::Units::ConvertToSysUnits(Y, pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure);
    pPierPoint->Set_Y(Y);
 }
@@ -312,8 +312,6 @@ void CPierPointGrid::OnClickedButtonRowCol(ROWCOL nRow,ROWCOL nCol)
 
 void CPierPointGrid::OnModifyCell(ROWCOL nRow,ROWCOL nCol)
 {
-   if (GetParent())
-		//GetParent()->SendMessage(WM_PIERPOINT_GRID_CELL_CHANGED, (WPARAM)nRow, (LPARAM)nCol);
 
    if ( nCol == 3 )
    {
