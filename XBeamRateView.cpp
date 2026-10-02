@@ -1417,8 +1417,57 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
            WBFL::Geometry::Point2d depthBottomPoint(XpCol, YtopCol);
            WBFL::Geometry::Point2d depthTopPoint(XpCol, YtopCol + D);
            BuildDimensionLine(displayList, depthTopPoint, depthBottomPoint); // D Dimension
+
+           // Create points for dimension above the arc apex
+		   if (colIdx < nColumns - 1)
+		   {
+			   //Float64 XpArcMidPnt = (XpCol + pPier->ConvertCrossBeamToPierCoordinate(pierID, pPier->GetColumnLocation(pierID, colIdx + 1))) / 2.0;
+			   //// arc chord height at midpoint based on radius and distance from column center to midpoint
+			   //Float64 chordHeight = R - sqrt(R * R - pow(XpArcMidPnt - XpCol, 2));
+      //         WBFL::Geometry::Point2d apexBottomPoint(XpArcMidPnt, YtopCol + chordHeight);
+      //         WBFL::Geometry::Point2d apexTopPoint(XpArcMidPnt, YtopCol);
+      //         BuildDimensionLine(displayList, apexTopPoint, apexBottomPoint); // apex Dimension
+
+		   }
+
        }
        
+       for (ColumnIndexType colIdx = 0;
+           colIdx + 1 < nColumns; colIdx++)
+       {
+           Float64 X1 = pPier->GetColumnLocation(pierID, colIdx);
+           Float64 X2 = pPier->GetColumnLocation(pierID, colIdx + 1);
+
+           Float64 Xmid = (X1 + X2) / 2.0;
+
+           Float64 XpMid =
+               pPier->ConvertCrossBeamToPierCoordinate(pierID, Xmid);
+
+           CComPtr<IShape> shape;
+           pSectProp->GetXBeamShape(
+               pierID,
+               pgsTypes::Stage1,
+               xbrPointOfInterest(INVALID_ID, Xmid),
+               &shape);
+
+           CComQIPtr<IXYPosition> position(shape);
+
+           CComPtr<IPoint2d> pntTop;
+           CComPtr<IPoint2d> pntBot;
+
+           position->get_LocatorPoint(lpTopCenter, &pntTop);
+           position->get_LocatorPoint(lpBottomCenter, &pntBot);
+
+           Float64 Ytop, Ybot;
+           pntTop->get_Y(&Ytop);
+           pntBot->get_Y(&Ybot);
+
+           WBFL::Geometry::Point2d top(XpMid, Ytop);
+           WBFL::Geometry::Point2d bottom(XpMid, Ybot);
+
+           BuildDimensionLine(displayList, top, bottom);
+       }
+
    }
 
    // Column Dimensions
