@@ -1414,18 +1414,6 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
            WBFL::Geometry::Point2d depthTopPoint(XpCol, YtopCol + D);
            BuildDimensionLine(displayList, depthTopPoint, depthBottomPoint); // D Dimension
 
-           // Create points for dimension above the arc apex
-		   if (colIdx < nColumns - 1)
-		   {
-			   //Float64 XpArcMidPnt = (XpCol + pPier->ConvertCrossBeamToPierCoordinate(pierID, pPier->GetColumnLocation(pierID, colIdx + 1))) / 2.0;
-			   //// arc chord height at midpoint based on radius and distance from column center to midpoint
-			   //Float64 chordHeight = R - sqrt(R * R - pow(XpArcMidPnt - XpCol, 2));
-      //         WBFL::Geometry::Point2d apexBottomPoint(XpArcMidPnt, YtopCol + chordHeight);
-      //         WBFL::Geometry::Point2d apexTopPoint(XpArcMidPnt, YtopCol);
-      //         BuildDimensionLine(displayList, apexTopPoint, apexBottomPoint); // apex Dimension
-
-		   }
-
        }
        
        for (ColumnIndexType colIdx = 0;
