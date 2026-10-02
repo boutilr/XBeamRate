@@ -788,10 +788,6 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
 
 	  pierData.GetRefColumnLocation(&refColMeasure, &refColIdx, &refColOffset);
 
-      if (colIdx == refColIdx)
-      {
-          X6 -= refColOffset;
-      }
       Float64 Y1 = fn.Evaluate(X1);
       Float64 Y2 = fn.Evaluate(X2);
       Float64 Y3 = fn.Evaluate(X3);
