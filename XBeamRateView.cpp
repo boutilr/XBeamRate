@@ -1270,9 +1270,9 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    Xcrown = pPier->ConvertCurbLineToCrossBeamCoordinate(pierID,Xcrown);
    Float64 Xoffset = CPO - Xcrown;
 
-   Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, Dx;
+   Float64 H1L, H1R, H2L, H2R, X1L, X1R, X2L, X2R, W, R, D;
    std::vector<CPierPointData> vPoints;
-   pProject->GetLowerXBeamDimensions(pierID , &H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &Dx, &vPoints);
+   pProject->GetLowerXBeamDimensions(pierID , &H1L, &H1R, &H2L, &H2R, &X1L, &X1R, &X2L, &X2R, &W, &R, &D, &vPoints);
 
    Float64 Dd, Hu;
    pProject->GetDiaphragmDimensions(pierID,&Hu,&Dd);
@@ -1374,12 +1374,57 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    BuildDimensionLine(displayList,lxbBL2,lxbBL1); // X1 Dimension
    BuildDimensionLine(displayList,lxbBR1,lxbBR2); // X3 Dimension
 
+   //Radius and depth of bottom scallop
+
+    // Get the center points for the arcs at column centers
+   ColumnIndexType nColumns = pPier->GetColumnCount(pierID);
+
+   xbrPierData pierData = pProject->GetPierData(pierID);
+   const auto& pierLayoutType = pierData.GetPierLayoutType();
+
+   if (pierLayoutType == pgsTypes::pltScalloped)
+   {
+       //Radius and depth of bottom scallop
+       // R = radius of bottom scallop arcs (same for both left and right)
+       // D = depth of lower cross beam at column center
+
+       for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+       {
+           // Left column arc center
+           Float64 XxbCol = pPier->GetColumnLocation(pierID, colIdx);
+           Float64 XpCol = pPier->ConvertCrossBeamToPierCoordinate(pierID, XxbCol);
+
+           // Get the top surface endpoints to interpolate Y at column center
+           pnt.Release();
+           topLowerXBeamProfile->get_Item(0, &pnt);
+           Float64 X0, Y0;
+           pnt->get_X(&X0);
+           pnt->get_Y(&Y0);
+
+           pnt.Release();
+           IndexType nPoints;
+           topLowerXBeamProfile->get_Count(&nPoints);
+           topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
+           Float64 Xn, Yn;
+           pnt->get_X(&Xn);
+           pnt->get_Y(&Yn);
+
+           // Interpolate Y value at column center accounting for slope
+           Float64 YtopCol = pPier->GetTopColumnElevation(pierID, colIdx);
+
+           // Create points for depth dimension (depth at column center)
+           // Depth is measured from the top of lower cross beam to the bottom of the scallop
+           WBFL::Geometry::Point2d depthBottomPoint(XpCol, YtopCol);
+           WBFL::Geometry::Point2d depthTopPoint(XpCol, YtopCol + D);
+           BuildDimensionLine(displayList, depthTopPoint, depthBottomPoint); // D Dimension
+       }
+       
+   }
 
    // Column Dimensions
 
    // Column Height
    Float64 YbotColMin = DBL_MAX;
-   ColumnIndexType nColumns = pPier->GetColumnCount(pierID);
    for ( ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++ )
    {
       Float64 XxbCol = pPier->GetColumnLocation(pierID,colIdx);
