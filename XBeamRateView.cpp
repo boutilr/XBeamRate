@@ -1335,41 +1335,6 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    BuildDimensionLine(displayList, lxbBL, uxbBL); // H1 Dimension
    BuildDimensionLine(displayList, uxbBR, lxbBR); // H3 Dimension
 
-   // Lower cross beam bottom taper, vertical dimensions
-   WBFL::Geometry::Point2d lxbBLC, lxbBRC;
-   lxbBLC.Move(lxbBL);
-   lxbBLC.Offset(0, -H2L);
-   lxbBRC.Move(lxbBR);
-   lxbBRC.Offset(0, -H2R);
-
-   BuildDimensionLine(displayList, lxbBLC, lxbBL); // H2 Dimension
-   BuildDimensionLine(displayList, lxbBR, lxbBRC); // H4 Dimension
-
-   // Lower cross beam bottom taper, horizontal dimensions
-   pnt.Release();
-   topLowerXBeamProfile->get_Item(0, &pnt);
-   WBFL::Geometry::Point2d lxbBL1, lxbBR1;
-   lxbBL1.Move(geomUtil::GetPoint(pnt));
-   lxbBL1.Offset(0, -H1L - H2L);
-
-   pnt.Release();
-   topLowerXBeamProfile->get_Count(&nPoints);
-   topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
-   lxbBR1.Move(geomUtil::GetPoint(pnt));
-   lxbBR1.Offset(0, -H1R - H2R);
-
-   WBFL::Geometry::Point2d lxbBL2, lxbBR2;
-   Float64 y;
-   std::tie(Xl,y) = lxbBL1.GetLocation(); // TRICKY: changing Xl to now be the x-location of left dimensions for the columns
-   lxbBL2.Move(Xl+X2L,y);
-
-   std::tie(Xr,y) = lxbBR1.GetLocation();
-   lxbBR2.Move(Xr-X2R,y); // TRICKY: changing Xr to now be the x-location of right dimensions for the columns
-
-   // Horizontal Cross Beam Dimensions
-   BuildDimensionLine(displayList,lxbBL2,lxbBL1); // X1 Dimension
-   BuildDimensionLine(displayList,lxbBR1,lxbBR2); // X3 Dimension
-
    Float64 Ybot = lxbBL.Y();
    WBFL::Geometry::Point2d blc(Xl, Ybot);
    WBFL::Geometry::Point2d x1l(Xl + X1L, Ybot);
@@ -1386,7 +1351,44 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    xbrPierData pierData = pProject->GetPierData(pierID);
    const auto& pierLayoutType = pierData.GetPierLayoutType();
 
-   if (pierLayoutType == pgsTypes::pltScalloped)
+   if (pierLayoutType == pgsTypes::pltCommon)
+   {
+       // Lower cross beam bottom taper, vertical dimensions
+       WBFL::Geometry::Point2d lxbBLC, lxbBRC;
+       lxbBLC.Move(lxbBL);
+       lxbBLC.Offset(0, -H2L);
+       lxbBRC.Move(lxbBR);
+       lxbBRC.Offset(0, -H2R);
+
+       BuildDimensionLine(displayList, lxbBLC, lxbBL); // H2L Dimension
+       BuildDimensionLine(displayList, lxbBR, lxbBRC); // H2R Dimension
+
+       // Lower cross beam bottom taper, horizontal dimensions
+       pnt.Release();
+       topLowerXBeamProfile->get_Item(0, &pnt);
+       WBFL::Geometry::Point2d lxbBL1, lxbBR1;
+       lxbBL1.Move(geomUtil::GetPoint(pnt));
+       lxbBL1.Offset(0, -H1L - H2L);
+
+       pnt.Release();
+       topLowerXBeamProfile->get_Count(&nPoints);
+       topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
+       lxbBR1.Move(geomUtil::GetPoint(pnt));
+       lxbBR1.Offset(0, -H1R - H2R);
+
+       WBFL::Geometry::Point2d lxbBL2, lxbBR2;
+       Float64 y;
+       std::tie(Xl, y) = lxbBL1.GetLocation(); // TRICKY: changing Xl to now be the x-location of left dimensions for the columns
+       lxbBL2.Move(Xl + X2L, y);
+
+       std::tie(Xr, y) = lxbBR1.GetLocation();
+       lxbBR2.Move(Xr - X2R, y); // TRICKY: changing Xr to now be the x-location of right dimensions for the columns
+
+       // Horizontal Cross Beam Dimensions
+       BuildDimensionLine(displayList, lxbBL2, lxbBL1); // X2L Dimension
+       BuildDimensionLine(displayList, lxbBR1, lxbBR2); // X2R Dimension
+   }
+   else if (pierLayoutType == pgsTypes::pltScalloped)
    {
        //Radius and depth of bottom scallop
        // R = radius of bottom scallop arcs (same for both left and right)
