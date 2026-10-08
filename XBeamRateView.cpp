@@ -1290,6 +1290,8 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    // Upper Cross Beam - Bottom Left (Lower Cross Beam - Top Left)
    pnt.Release();
    topLowerXBeamProfile->get_Item(0, &pnt);
+   Float64 ublc;
+   pnt->get_X(&ublc);
    WBFL::Geometry::Point2d uxbBL(geomUtil::GetPoint(pnt));
    WBFL::Geometry::Point2d origin(geomUtil::GetPoint(pnt));
    uxbBL.X() = Xl;
@@ -1317,6 +1319,8 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    pnt.Release();
    topLowerXBeamProfile->get_Count(&nPoints);
    topLowerXBeamProfile->get_Item(nPoints - 1, &pnt);
+   Float64 ubrc;
+   pnt->get_X(&ubrc);
    WBFL::Geometry::Point2d uxbBR(geomUtil::GetPoint(pnt));
    uxbBR.X() = Xr;
 
@@ -1520,9 +1524,6 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 
    }
 
-
-
-
    // Column Dimensions
 
    // Column Height
@@ -1545,7 +1546,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    // than proceeds with the spacing between columns at their base)
    // create the dimension line with rightpt,leftpt so the text comes
    // out on the correct side
-   WBFL::Geometry::Point2d pntLeft(Xl, YbotColMin);
+   WBFL::Geometry::Point2d pntLeft(ublc, YbotColMin);
    for ( ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++ )
    {
       Float64 XxbCol = pPier->GetColumnLocation(pierID,colIdx);
@@ -1553,14 +1554,14 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 
       WBFL::Geometry::Point2d pntRight(XpCol,YbotColMin);
      
-      BuildDimensionLine(displayList,pntRight,pntLeft); // first time this is X5, then S
+      BuildDimensionLine(displayList,pntRight,pntLeft); // first time this is OHL, then S
 
       pntLeft = pntRight;
    }
 
    // Right cross beam cantilever
-   WBFL::Geometry::Point2d pntRight(Xr,YbotColMin);
-   BuildDimensionLine(displayList,pntRight,pntLeft); // X6 Dimension
+   WBFL::Geometry::Point2d pntRight(ubrc,YbotColMin);
+   BuildDimensionLine(displayList,pntRight,pntLeft); // OHR Dimension
 
    //
    // Cross section dimensions
