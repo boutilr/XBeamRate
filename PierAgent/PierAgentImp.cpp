@@ -1483,9 +1483,17 @@ void CPierAgentImp::ValidatePierModel(PierIDType pierID) const
 	   {
 		   CComPtr<IPoint2d> point;
 		   point.CoCreateInstance(CLSID_Point2d);
-           Float64 xcl = ConvertPierToCurbLineCoordinate(pierID, pointData.Get_X());
-           Float64 Ydeck = GetElevation(pierID, xcl);
-		   point->Move(pointData.Get_X(), Ydeck - pointData.Get_Y() - pierData.GetDeckThickness() - HU);
+           Float64 Xcl = pointData.Get_X();
+
+           Float64 Xp = ConvertCurbLineToPierCoordinate(pierID, Xcl);
+
+           Float64 Ydeck = GetElevation(pierID, Xcl);
+
+           point->Move(Xp,
+               Ydeck - pointData.Get_Y()
+               - pierData.GetDeckThickness()
+               - HU);
+
 		   points->Add(point);
 	   }
 	   uxbeam->SetPoints(points);

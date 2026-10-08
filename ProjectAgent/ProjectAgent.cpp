@@ -56,6 +56,7 @@
 #include <..\..\PGSuper\Include\IFace\Project.h>
 #include <..\..\PGSuper\Include\IFace\EditByUI.h>
 #include <IFace\Bridge.h>
+#include <IFace\Pier.h>
 #include <IFace\Alignment.h>
 #include <IFace\Intervals.h>
 #include <IFace/Project.h>

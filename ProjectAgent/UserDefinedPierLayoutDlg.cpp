@@ -37,8 +37,9 @@
 #include "PierLayoutPage.h"
 #include "UserDefinedPierLayoutDlg.h"
 #include <EAF\EAFDisplayUnits.h>
-#include <IFace\Project.h>
 #include <IFace/Tools.h>
+#include <IFace\Project.h>
+#include <IFace\Pier.h>
 #include <PsgLib\GirderLabel.h>
 
 CUserDefinedPierLayoutDlg::CUserDefinedPierLayoutDlg(CWnd* pParent)
@@ -210,10 +211,14 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
         Float64 prevPoint = -DBL_MAX;
 
+        GET_IFACE2(pBroker, IXBRPier, pPier);
+
         for (const auto& ppData : m_Pier.GetPierPointData())
         {
-			const auto& x = ppData.Get_X();
+			const auto& xcl = ppData.Get_X();
 			const auto& y = ppData.Get_Y();
+
+			const auto& x = pPier->ConvertCurbLineToPierCoordinate(m_Pier.GetID(), xcl);
 
              auto xLeftLimitAdjusted = xLeftLimit;
              auto xRightLimitAdjusted = xRightLimit;

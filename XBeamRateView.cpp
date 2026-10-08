@@ -35,10 +35,10 @@
 #include <AgentTools.h>
 #include <IFace\XBeamRateAgent.h>
 #include <IFace\Project.h>
+#include <IFace\Pier.h>
 
 #include <IFace\AnalysisResults.h>
 #include <IFace\LoadRating.h>
-#include <IFace\Pier.h>
 #include <IFace\EditByUI.h>
 #include <..\..\PGSuper\Include\IFace\Project.h>
 #include <..\..\PGSuper\Include\IFace\Bridge.h>
@@ -1291,6 +1291,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    pnt.Release();
    topLowerXBeamProfile->get_Item(0, &pnt);
    WBFL::Geometry::Point2d uxbBL(geomUtil::GetPoint(pnt));
+   WBFL::Geometry::Point2d origin(geomUtil::GetPoint(pnt));
    uxbBL.X() = Xl;
 
    // Lower Cross Beam - Bottom Left
@@ -1332,8 +1333,8 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    }
 
    // Height of lower cross beam
-   BuildDimensionLine(displayList, lxbBL, uxbBL); // H1 Dimension
-   BuildDimensionLine(displayList, uxbBR, lxbBR); // H3 Dimension
+   BuildDimensionLine(displayList, lxbBL, uxbBL); // H1L Dimension
+   BuildDimensionLine(displayList, uxbBR, lxbBR); // H1R Dimension
 
    Float64 Ybot = lxbBL.Y();
    WBFL::Geometry::Point2d blc(Xl, Ybot);
@@ -1480,30 +1481,39 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
            pntTop.Release();
        }
 
+       CString strBlcLabel = _T("(0, 0)");
+
+       auto doBlcLabel = WBFL::DManip::TextBlock::Create();
+       doBlcLabel->SetText(strBlcLabel);
+       doBlcLabel->SetBkMode(TRANSPARENT);
+       doBlcLabel->SetTextAlign(TA_TOP | TA_CENTER);
+       doBlcLabel->SetPosition(origin);
+       displayList->AddDisplayObject(doBlcLabel);
+
        for (const auto& pnt : vPoints)
        {
-           const Float64 X = pnt.Get_X();
+           Float64 Xcl = pnt.Get_X();
+		   Float64 Xp = pPier->ConvertCurbLineToPierCoordinate(pierID, Xcl);
 
-           // Actual Y coordinate of the top of the lower cross beam
-           // at this X location.
-           const Float64 Ytop = fnTop.Evaluate(X);
+           const Float64 Ytop = fnTop.Evaluate(Xp);
 
-           // User-defined Y is measured downward from the
-           // top of the lower cross beam.
            const Float64 Ypoint = Ytop - pnt.Get_Y();
 
-           WBFL::Geometry::Point2d pp(X, Ypoint);
+           WBFL::Geometry::Point2d pp(Xp, Ypoint);
 
-           // X is measured from the alignment (X = 0)
-           WBFL::Geometry::Point2d fromX(0.0, Ypoint);
+           GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
-           // Y is measured from the actual top surface of the
-           // lower cross beam at this X.
-           WBFL::Geometry::Point2d fromY(X, Ytop);
+           CString strPntLabel;
+           strPntLabel.Format(_T("(%s,%s)"), ::FormatDimension(Xp - Xl, pDisplayUnits->GetSpanLengthUnit()), ::FormatDimension(Ytop - Ypoint, pDisplayUnits->GetSpanLengthUnit()));
 
-           BuildDimensionLine(displayList, fromX, pp);
-           BuildDimensionLine(displayList, fromY, pp);
+           auto doPntLabel = WBFL::DManip::TextBlock::Create();
+           doPntLabel->SetText(strPntLabel);
+           doPntLabel->SetBkMode(TRANSPARENT);
+           doPntLabel->SetTextAlign(TA_TOP | TA_CENTER);
+           doPntLabel->SetPosition(pp);
+           displayList->AddDisplayObject(doPntLabel);
        }
+
    }
 
 
