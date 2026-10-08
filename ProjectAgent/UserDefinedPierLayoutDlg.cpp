@@ -211,12 +211,12 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
         Float64 prevPoint = -DBL_MAX;
 
-        GET_IFACE2(pBroker, IXBRPier, pPier);
-
         for (const auto& ppData : m_Pier.GetPierPointData())
         {
 			const auto& xcl = ppData.Get_X();
 			const auto& y = ppData.Get_Y();
+
+            GET_IFACE2(pBroker, IXBRPier, pPier);
 
 			const auto& x = pPier->ConvertCurbLineToPierCoordinate(m_Pier.GetID(), xcl);
 
