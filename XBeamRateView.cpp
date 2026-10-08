@@ -1297,6 +1297,8 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    // Lower Cross Beam - Bottom Left
    pnt.Release();
    bottomXBeamProfile->get_Item(0, &pnt);
+   Float64 lblc;
+   pnt->get_X(&lblc);
    WBFL::Geometry::Point2d lxbBL(geomUtil::GetPoint(pnt));
    lxbBL.X() = Xl;
 
@@ -1322,6 +1324,8 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    pnt.Release();
    bottomXBeamProfile->get_Count(&nPoints);
    bottomXBeamProfile->get_Item(nPoints - 1, &pnt);
+   Float64 lbrc;
+   pnt->get_X(&lbrc);
    WBFL::Geometry::Point2d lxbBR(geomUtil::GetPoint(pnt));
    lxbBR.X() = Xr;
 
@@ -1337,11 +1341,11 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    BuildDimensionLine(displayList, uxbBR, lxbBR); // H1R Dimension
 
    Float64 Ybot = lxbBL.Y();
-   WBFL::Geometry::Point2d blc(Xl, Ybot);
-   WBFL::Geometry::Point2d x1l(Xl + X1L, Ybot);
+   WBFL::Geometry::Point2d blc(lblc - X1L, Ybot);
+   WBFL::Geometry::Point2d x1l(lblc, Ybot);
    BuildDimensionLine(displayList, x1l, blc);
-   WBFL::Geometry::Point2d brc(Xr, Ybot);
-   WBFL::Geometry::Point2d x1r(Xr - X1R, Ybot);
+   WBFL::Geometry::Point2d brc(lbrc + X1R, Ybot);
+   WBFL::Geometry::Point2d x1r(lbrc, Ybot);
    BuildDimensionLine(displayList, brc, x1r);
 
    //Radius and depth of bottom scallop
