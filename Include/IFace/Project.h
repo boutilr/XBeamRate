@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <PgsExt\ColumnData.h>
+#include <PsgLib\ColumnData.h>
 #include <XBeamRateExt\PierData.h>
 #include <XBeamRateExt\LiveLoadReactionData.h>
 #include <memory>
@@ -39,8 +39,9 @@ DESCRIPTION
 // {E27FD663-261C-40de-BFAD-01B03D98324D}
 DEFINE_GUID(IID_IXBRProjectProperties, 
 0xe27fd663, 0x261c, 0x40de, 0xbf, 0xad, 0x1, 0xb0, 0x3d, 0x98, 0x32, 0x4d);
-interface IXBRProjectProperties : IUnknown
+class IXBRProjectProperties
 {
+public:
    virtual LPCTSTR GetBridgeName() const = 0;
    virtual void SetBridgeName(LPCTSTR name) = 0;
    virtual LPCTSTR GetBridgeID() const = 0;
@@ -55,7 +56,7 @@ interface IXBRProjectProperties : IUnknown
    virtual void SetComments(LPCTSTR comments) = 0;
 
    virtual void ShowProjectPropertiesOnNewProject(bool bShow) = 0;
-   virtual bool ShowProjectPropertiesOnNewProject() = 0;
+   virtual bool ShowProjectPropertiesOnNewProject() const = 0;
    virtual void PromptForProjectProperties() = 0;
 };
 
@@ -71,8 +72,9 @@ DESCRIPTION
 // {50C5E910-0941-4135-8603-A8D7192F19CB}
 DEFINE_GUID(IID_IXBRProjectPropertiesEventSink, 
 0x50c5e910, 0x941, 0x4135, 0x86, 0x3, 0xa8, 0xd7, 0x19, 0x2f, 0x19, 0xcb);
-interface IXBRProjectPropertiesEventSink : IUnknown
+class IXBRProjectPropertiesEventSink
 {
+public:
    virtual HRESULT OnProjectPropertiesChanged() = 0;
 };
 
@@ -87,8 +89,9 @@ DESCRIPTION
 // {2600A729-D7E6-44f6-9F9B-DF086FF9E53B}
 DEFINE_GUID(IID_IXBRProject, 
 0x2600a729, 0xd7e6, 0x44f6, 0x9f, 0x9b, 0xdf, 0x8, 0x6f, 0xf9, 0xe5, 0x3b);
-interface IXBRProject : IUnknown
+class IXBRProject
 {
+public:
    virtual void SetPierData(const xbrPierData& pierData) = 0;
    virtual const xbrPierData& GetPierData(PierIDType pierID) const = 0;
 
@@ -107,7 +110,7 @@ interface IXBRProject : IUnknown
    virtual void SetCrownPointOffset(PierIDType pierID,Float64 cpo) = 0;
    virtual Float64 GetCrownPointOffset(PierIDType pierID) const = 0;
 
-   // Distance form alignemnt to bridge line, measured normal to the alignment
+   // Distance form alignment to bridge line, measured normal to the alignment
    virtual void SetBridgeLineOffset(PierIDType pierID,Float64 blo) = 0;
    virtual Float64 GetBridgeLineOffset(PierIDType pierID) const = 0;
 
@@ -268,8 +271,9 @@ DESCRIPTION
 // {9DD03140-A788-4e46-A283-0B343956A619}
 DEFINE_GUID(IID_IXBRProjectEventSink, 
 0x9dd03140, 0xa788, 0x4e46, 0xa2, 0x83, 0xb, 0x34, 0x39, 0x56, 0xa6, 0x19);
-interface IXBRProjectEventSink : IUnknown
+class IXBRProjectEventSink
 {
+public:
    virtual HRESULT OnProjectChanged() = 0;
 };
 
@@ -278,13 +282,14 @@ INTERFACE
    IXBRProjectEdit
 
 DESCRIPTION
-   Interface to enable programatic activation of the editing UI
+   Interface to enable programmatic activation of the editing UI
 *****************************************************************************/
 // {BBA7F95B-A5DE-4c2a-BB68-19983F308767}
 DEFINE_GUID(IID_IXBRProjectEdit, 
 0xbba7f95b, 0xa5de, 0x4c2a, 0xbb, 0x68, 0x19, 0x98, 0x3f, 0x30, 0x87, 0x67);
-interface IXBRProjectEdit : IUnknown
+class IXBRProjectEdit
 {
+public:
    virtual void EditPier(int nPage) = 0;
    virtual void EditOptions() = 0;
 };
@@ -302,8 +307,9 @@ DESCRIPTION
 // {F0674DBA-E867-4692-B214-FDB23F04685B}
 DEFINE_GUID(IID_IXBREvents, 
 0xf0674dba, 0xe867, 0x4692, 0xb2, 0x14, 0xfd, 0xb2, 0x3f, 0x4, 0x68, 0x5b);
-interface IXBREvents : IUnknown
+class IXBREvents
 {
+public:
    virtual void HoldEvents() = 0;
    virtual void FirePendingEvents() = 0;
    virtual void CancelPendingEvents() = 0;
@@ -321,8 +327,9 @@ DESCRIPTION
 // {46E15C3D-F822-4b97-A7E3-6ED0CE5FF37E}
 DEFINE_GUID(IID_IXBREventsSink, 
 0x46e15c3d, 0xf822, 0x4b97, 0xa7, 0xe3, 0x6e, 0xd0, 0xce, 0x5f, 0xf3, 0x7e);
-interface IXBREventsSink : IUnknown
+class IXBREventsSink
 {
+public:
    virtual HRESULT OnHoldEvents() = 0;
    virtual HRESULT OnFirePendingEvents() = 0;
    virtual HRESULT OnCancelPendingEvents() = 0;
@@ -339,8 +346,9 @@ DESCRIPTION
 *****************************************************************************/
 DEFINE_GUID(IID_IXBRUIEvents, 
 0xb2734352, 0xc900, 0x4c92, 0x9b, 0x68, 0x94, 0x84, 0xfc, 0x58, 0x1a, 0x1b);
-interface IXBRUIEvents : IUnknown
+class IXBRUIEvents
 {
+public:
    virtual void HoldEvents(bool bHold=true) = 0;
    virtual void FirePendingEvents() = 0;
    virtual void CancelPendingEvents() = 0;
@@ -356,8 +364,9 @@ INTERFACE
 // {DD3B518E-1CFE-45b7-AA7B-426ADE3138D6}
 DEFINE_GUID(IID_IXBRExport, 
 0xdd3b518e, 0x1cfe, 0x45b7, 0xaa, 0x7b, 0x42, 0x6a, 0xde, 0x31, 0x38, 0xd6);
-interface IXBRExport : IUnknown
+class IXBRExport
 {
+public:
    // Exports the pier model, for the specified pier, into a stand alone XBRate file
    // if pierIdx is INVALID_INDEX, the user is prompted to select the pier model to export
    virtual HRESULT Export(PierIndexType pierIdx) = 0;

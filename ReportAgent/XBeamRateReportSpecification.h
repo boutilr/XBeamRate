@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,13 +22,13 @@
 
 #pragma once
 
-#include <EAF\EAFBrokerReportSpecification.h>
+#include <EAF\BrokerReportSpecification.h>
 
 class CXBeamRateReportSpecification :
-   public CEAFBrokerReportSpecification
+   public WBFL::EAF::BrokerReportSpecification
 {
 public:
-   CXBeamRateReportSpecification(const std::_tstring& strReportName,IBroker* pBroker,PierIDType pierID, bool bReportEvenIncrements);
+   CXBeamRateReportSpecification(const std::_tstring& strReportName,std::weak_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID, bool bReportEvenIncrements);
    ~CXBeamRateReportSpecification(void);
 
    PierIDType GetPierID() const;

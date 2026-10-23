@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 #include "ConcreteGeneralPage.h"
 #include "AASHTOConcretePage.h"
 
-#include <PgsExt\ConcreteMaterial.h>
+#include <PsgLib\ConcreteMaterial.h>
 
 // ConcreteDetailsDlg.h : header file
 //

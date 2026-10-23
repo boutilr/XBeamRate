@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -20,34 +20,61 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 
-#ifndef INCLUDED_APP_H_
-#define INCLUDED_APP_H_
+#pragma once
 
-#include <EAF\EAFDocTemplate.h>
-class CXBeamRatePluginApp : public CWinApp
+#include <EAF\ComponentObject.h>
+#include <EAF\PluginApp.h>
+#include <WBFLUnitServer.h>
+#include <EAF\EAFCustomReport.h>
+#include <EAF\PluginAppDocumentationImpl.h>
+#include <EAF\EAFUnits.h>
+
+/////////////////////////////////////////////////////////////////////////////
+// CXBeamRatePluginApp
+class CXBeamRatePluginApp : public WBFL::EAF::ComponentObject,
+   public CEAFCustomReportMixin,
+   public WBFL::EAF::IPluginApp,
+   public WBFL::EAF::IAppCommandLine
 {
 public:
-   CXBeamRatePluginApp();
+	CXBeamRatePluginApp()
+	{
+      m_bDisplayFavoriteReports = FALSE;
+	  EAFCreateAppUnitSystem(&m_AppUnitSystem);
+	}
 
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CXBeamRatePluginApp)
-	public:
-    virtual BOOL InitInstance() override;
-    virtual int ExitInstance() override;
+   LPCTSTR GetAppName() const { return _T("XBeamRate"); }
 
-    CString GetVersion(bool bIncludeBuildNumber) const;
+   void GetAppUnitSystem(IAppUnitSystem** ppAppUnitSystem);
 
-    virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo) override;
-
-	//}}AFX_VIRTUAL
-
-	//{{AFX_MSG(CXBeamRatePluginApp)
-	//}}AFX_MSG
-	DECLARE_MESSAGE_MAP()
-
+// IPluginApp
 public:
-   HMENU m_hSharedMenu;
-};
+   BOOL Init(CEAFApp* pParent) override;
+   void Terminate() override;
+   void IntegrateWithUI(BOOL bIntegrate) override;
+   std::vector<CEAFDocTemplate*> CreateDocTemplates() override;
+   HMENU GetSharedMenuHandle() override;
+   CString GetName() override;
+   CString GetDocumentationSetName() override;
+   CString GetDocumentationURL() override;
+   CString GetDocumentationMapFile() override;
+   void LoadDocumentationMap() override;
+   std::pair<WBFL::EAF::HelpResult,CString> GetDocumentLocation(LPCTSTR lpszDocSetName,UINT nID) override;
 
-#endif // INCLUDED_APP_H_
+   void LoadCustomReportInformation() override;
+   void SaveCustomReportInformation() override;
+
+// IAppCommandLine
+public:
+   CString GetCommandLineAppName() const override;
+   CString GetUsageMessage() override;
+   BOOL ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo) override;
+
+private:
+   CComPtr<IAppUnitSystem> m_AppUnitSystem;
+
+   void LoadRegistryValues();
+   void SaveRegistryValues();
+
+   WBFL::EAF::PluginAppDocumentationImpl m_DocumentationImpl;
+};

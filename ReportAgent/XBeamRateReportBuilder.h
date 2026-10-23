@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -33,9 +33,9 @@ CLASS
    a custom version of the report builder
 *****************************************************************************/
 
-class CXBeamRateReportBuilder : public WBFL::Reporting::ReportBuilder
+class CXBeamRateReportBuilder : public WBFL::ReportMgr::ReportBuilder
 {
 public:
 	CXBeamRateReportBuilder(LPCTSTR strName,bool bHidden = false,bool bIncludeTimingChapter=false);
-   virtual std::shared_ptr<rptReport> CreateReport(const std::shared_ptr<const WBFL::Reporting::ReportSpecification> pRptSpec) const override;
+   virtual std::shared_ptr<rptReport> CreateReport(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification> pRptSpec) const override;
 };

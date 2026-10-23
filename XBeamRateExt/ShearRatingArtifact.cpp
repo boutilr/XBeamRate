@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,15 +21,11 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include <XBeamRateExt\ShearRatingArtifact.h>
 #include <IFace\AnalysisResults.h>
 #include <IFace\Project.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 /****************************************************************************
 CLASS
@@ -420,8 +416,8 @@ Float64 xbrShearRatingArtifact::GetRatingFactor() const
       Float64 _Vlegal;
 #endif
 
-      CComPtr<IBroker> pBroker;
-      EAFGetBroker(&pBroker);
+      auto pBroker = EAFGetBroker();
+
       GET_IFACE2(pBroker,IXBRProductForces,pProductForces);
       GET_IFACE2(pBroker,IXBRAnalysisResults,pAnalysisResults);
       GET_IFACE2_NOCHECK(pBroker,IXBRProject,pProject);

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 
 #include <Reporting\ReportingExp.h>
 
-interface IEAFDisplayUnits;
+class IEAFDisplayUnits;
 
 /*****************************************************************************
 CLASS 
@@ -50,18 +50,18 @@ public:
 
    //------------------------------------------------------------------------
    // Builds the rating summary table with results listed by limit state and structural action
-   virtual rptRcTable* BuildByLimitState(IBroker* pBroker,PierIDType pierID,RatingTableType ratingTableType) const;
+   virtual rptRcTable* BuildByLimitState(std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,RatingTableType ratingTableType) const;
 
    //------------------------------------------------------------------------
    // Builds the rating summary table with results listed by rating vehicle
-   virtual rptRcTable* BuildByVehicle(IBroker* pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType) const;
+   virtual rptRcTable* BuildByVehicle(std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType) const;
 
    //------------------------------------------------------------------------
    // Builds the load posting table for a a legal load rating (but not emergency vehicles)
-   virtual rptRcTable* BuildLoadPosting(IBroker* pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType, bool* pbMustCloseBridge) const;
+   virtual rptRcTable* BuildLoadPosting(std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType, bool* pbMustCloseBridge) const;
 
    //------------------------------------------------------------------------
    // Builds the load posting table for emergency vehicles
-   virtual rptRcTable* BuildEmergencyVehicleLoadPosting(IBroker* pBroker, PierIDType pierID) const;
+   virtual rptRcTable* BuildEmergencyVehicleLoadPosting(std::shared_ptr<WBFL::EAF::Broker> pBroker, PierIDType pierID) const;
 };
 

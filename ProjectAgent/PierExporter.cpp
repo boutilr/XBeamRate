@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -25,19 +25,14 @@
 #include "PierExporter.h"
 #include "ProjectAgentImp.h"
 #include <MFCTools\Prompts.h>
-#include <WBFLSTL.h>
+#include <numeric>
 
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\GirderLabel.h>
 
 #include <IFace\Bridge.h>
 #include <EAF\EAFApp.h>
-#include <PgsExt\BridgeDescription2.h>
+#include <PsgLib\BridgeDescription2.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 
@@ -70,7 +65,7 @@ void CPierChoiceValidator::DisplayValidationErrorMessage()
 
 ////////////////////////////////////////////////
 
-CPierExporter::CPierExporter(IBroker* pBroker,CProjectAgentImp* pProjectAgent)
+CPierExporter::CPierExporter(std::weak_ptr<WBFL::EAF::Broker> pBroker,CProjectAgentImp* pProjectAgent)
 {
    m_pBroker = pBroker;
    m_pProjectAgent = pProjectAgent;
@@ -81,7 +76,8 @@ HRESULT CPierExporter::Export(PierIndexType pierIdx)
    if ( pierIdx == INVALID_INDEX )
    {
       // Prompt for pier
-      GET_IFACE(IBridge,pBridge);
+      auto broker = m_pBroker.lock();
+      GET_IFACE2(broker,IBridge,pBridge);
       PierIndexType nPiers = pBridge->GetPierCount();
       CString strPiers;
       for ( PierIndexType pIdx = 0; pIdx < nPiers; pIdx++ )
@@ -143,7 +139,7 @@ HRESULT CPierExporter::Export(PierIndexType pierIdx)
       }
       else
       {
-         AfxMessageBox(_T("An error occured while exporting the pier data."),MB_ICONEXCLAMATION | MB_OK);
+         AfxMessageBox(_T("An error occurred while exporting the pier data."),MB_ICONEXCLAMATION | MB_OK);
          return E_FAIL;
       }
    }
@@ -155,7 +151,8 @@ HRESULT CPierExporter::BatchExport()
 {
    std::vector<PierIndexType> vPiers;
    CString strPiers;
-   GET_IFACE(IBridgeDescription,pIBridgeDesc);
+   auto broker = m_pBroker.lock();
+   GET_IFACE2(broker,IBridgeDescription,pIBridgeDesc);
    PierIndexType nPiers = pIBridgeDesc->GetPierCount();
    for ( PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++ )
    {
@@ -179,7 +176,7 @@ HRESULT CPierExporter::BatchExport()
    // make a default choice list of 0,1,2,...
    std::vector<int> vDefChoices;
    vDefChoices.resize(vPiers.size());
-   std::generate(vDefChoices.begin(),vDefChoices.end(),IncrementValue<int>(0));
+   std::iota(vDefChoices.begin(),vDefChoices.end(),0);
 
    CPierChoiceValidator validator;
    std::vector<int> vChoices = AfxMultiChoice(_T("Export Piers to XBRate"),_T("Select Piers to Export"),strPiers,&validator,vDefChoices,TRUE,TRUE);
@@ -195,7 +192,7 @@ HRESULT CPierExporter::BatchExport()
          if ( FAILED(hr) )
          {
             CString strMsg;
-            strMsg.Format(_T("An error occured while exporting Pier %s."),LABEL_PIER(pierIdx));
+            strMsg.Format(_T("An error occurred while exporting Pier %s."),LABEL_PIER(pierIdx));
             AfxMessageBox(strMsg,MB_ICONEXCLAMATION | MB_OK);
          }
       }
@@ -223,7 +220,8 @@ INT_PTR CPierExporter::GetFileName(const CString& strDefaultFileName,CString& st
 CString CPierExporter::GetDefaultPierExportFile(PierIndexType pierIdx)
 {
    CString strDefaultFileName;
-   GET_IFACE(IEAFDocument,pDoc);
+   auto broker = m_pBroker.lock();
+   GET_IFACE2(broker,IEAFDocument,pDoc);
 
    strDefaultFileName.Format(_T("%s%s_Pier_%s.xbr"),
                              pDoc->GetFileRoot(), // path to the file

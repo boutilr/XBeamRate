@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@
 #include <IFace\RatingSpecification.h>
 #include <IFace\Pier.h>
 #include <IFace\AnalysisResults.h>
+#include <EAF/AutoProgress.h>
 
 #include <IFace\Intervals.h>
 #include <IFace\Bridge.h>
@@ -47,25 +48,24 @@
 #include <WBFLGenericBridge.h>
 #include <WBFLSTL.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
-// CEngAgentImp
-CEngAgentImp::CEngAgentImp()
+//////////////////////////////////////////////////////////////////////
+// Agent
+bool CEngAgentImp::RegisterInterfaces()
 {
-   m_pBroker = 0;
-}
+   EAF_AGENT_REGISTER_INTERFACES;
 
-CEngAgentImp::~CEngAgentImp()
-{
-}
+   REGISTER_INTERFACE(IXBRMomentCapacity);
+   REGISTER_INTERFACE(IXBRShearCapacity);
+   REGISTER_INTERFACE(IXBRCrackedSection);
+   REGISTER_INTERFACE(IXBRArtifact);
 
-HRESULT CEngAgentImp::FinalConstruct()
+   return true;
+};
+
+bool CEngAgentImp::Init()
 {
+   EAF_AGENT_INIT;
+
    CreateDataStructures();
 
    HRESULT hr;
@@ -73,7 +73,7 @@ HRESULT CEngAgentImp::FinalConstruct()
    ATLASSERT(SUCCEEDED(hr));
 
    CComQIPtr<ILRFDSolver2> solver(m_MomentCapacitySolver);
-   if ( WBFL::LRFD::BDSManager::GetUnits() == WBFL::LRFD::BDSManager::Units::US )
+   if (WBFL::LRFD::BDSManager::GetUnits() == WBFL::LRFD::BDSManager::Units::US)
    {
       solver->put_UnitMode(suUS);
    }
@@ -89,87 +89,42 @@ HRESULT CEngAgentImp::FinalConstruct()
    CComQIPtr<INLSolver> nlsolver(m_CrackedSectionSolver);
    nlsolver->put_Slices(1);
 
-   return S_OK;
-}
-
-void CEngAgentImp::FinalRelease()
-{
-   Invalidate(false);
-}
-
-//////////////////////////////////////////////////////////////////////
-// IAgent
-STDMETHODIMP CEngAgentImp::SetBroker(IBroker* pBroker)
-{
-   EAF_AGENT_SET_BROKER(pBroker);
-   return S_OK;
-}
-
-STDMETHODIMP CEngAgentImp::RegInterfaces()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-
-   pBrokerInit->RegInterface( IID_IXBRMomentCapacity, this );
-   pBrokerInit->RegInterface( IID_IXBRShearCapacity,  this );
-   pBrokerInit->RegInterface( IID_IXBRCrackedSection, this );
-   pBrokerInit->RegInterface( IID_IXBRArtifact,       this );
-
-   return S_OK;
-};
-
-STDMETHODIMP CEngAgentImp::Init()
-{
-   //EAF_AGENT_INIT;
 
    //
    // Attach to connection points for interfaces this agent depends on
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   m_dwProjectCookie = REGISTER_EVENT_SINK(IXBRProjectEventSink);
+   m_dwBridgeDescCookie = REGISTER_EVENT_SINK(IBridgeDescriptionEventSink);
 
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Advise( GetUnknown(), &m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-
-   return S_OK;
+   return true;
 }
 
-STDMETHODIMP CEngAgentImp::Init2()
+bool CEngAgentImp::Reset()
 {
-   return S_OK;
+   EAF_AGENT_RESET;
+
+   return true;
 }
 
-STDMETHODIMP CEngAgentImp::Reset()
+CLSID CEngAgentImp::GetCLSID() const
 {
-   return S_OK;
+   return CLSID_XBeamRateEngAgent;
 }
 
-STDMETHODIMP CEngAgentImp::GetClassID(CLSID* pCLSID)
+bool CEngAgentImp::ShutDown()
 {
-   *pCLSID = CLSID_EngAgent;
-   return S_OK;
-}
+   EAF_AGENT_SHUTDOWN;
 
-STDMETHODIMP CEngAgentImp::ShutDown()
-{
+   Invalidate(false);
+
    //
    // Detach to connection points
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   UNREGISTER_EVENT_SINK(IXBRProjectEventSink, m_dwProjectCookie);
+   UNREGISTER_EVENT_SINK(IBridgeDescriptionEventSink, m_dwBridgeDescCookie);
 
-   hr = pBrokerInit->FindConnectionPoint(IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Unadvise( m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the connection point
-
-   EAF_AGENT_CLEAR_INTERFACE_CACHE;
-   return S_OK;
+   //EAF_AGENT_CLEAR_INTERFACE_CACHE;
+   return true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -397,6 +352,44 @@ HRESULT CEngAgentImp::OnProjectChanged()
 {
    Invalidate();
 
+   return S_OK;
+}
+
+//////////////////////////////////////////////////////////
+// IBridgeDescriptionEventSink
+HRESULT CEngAgentImp::OnBridgeChanged(CBridgeChangedHint* pHint)
+{
+   Invalidate();
+   return S_OK;
+}
+
+HRESULT CEngAgentImp::OnGirderFamilyChanged()
+{
+   Invalidate();
+   return S_OK;
+}
+
+HRESULT CEngAgentImp::OnGirderChanged(const CGirderKey& girderKey, Uint32 lHint)
+{
+   Invalidate();
+   return S_OK;
+}
+
+HRESULT CEngAgentImp::OnLiveLoadChanged()
+{
+   Invalidate();
+   return S_OK;
+}
+
+HRESULT CEngAgentImp::OnLiveLoadNameChanged(LPCTSTR strOldName, LPCTSTR strNewName)
+{
+   Invalidate();
+   return S_OK;
+}
+
+HRESULT CEngAgentImp::OnConstructionLoadChanged()
+{
+   Invalidate();
    return S_OK;
 }
 
@@ -1155,8 +1148,8 @@ CEngAgentImp::RatingArtifacts& CEngAgentImp::GetPrivateRatingArtifacts(PierIDTyp
 
 void CEngAgentImp::CreateRatingArtifact(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx) const
 {
-   GET_IFACE(IProgress, pProgress);
-   CEAFAutoProgress ap(pProgress,0);
+   GET_IFACE(IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress,0);
    pProgress->UpdateMessage(_T("Load rating cross beam"));
 
    RatingArtifacts& ratingArtifacts = GetPrivateRatingArtifacts(pierID,ratingType,vehicleIdx);

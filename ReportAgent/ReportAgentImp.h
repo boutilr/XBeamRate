@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -28,74 +28,42 @@
 
 #pragma once
 
-#include "resource.h"       // main symbols
+#include <EAF\Agent.h>
 #include <ReportAgent.h>
 #include "ReportAgentCLSID.h"
 
-#include <EAF\EAFInterfaceCache.h>
+
 
 #include <IFace\Project.h>
 
 /////////////////////////////////////////////////////////////////////////////
 // CReportAgentImp
-class ATL_NO_VTABLE CReportAgentImp : 
-	public CComObjectRootEx<CComSingleThreadModel>,
-   //public CComRefCountTracer<CReportAgentImp,CComObjectRootEx<CComSingleThreadModel> >,
-	public CComCoClass<CReportAgentImp, &CLSID_ReportAgent>,
-	//public IConnectionPointContainerImpl<CReportAgentImp>,
-   //public CProxyIProjectEventSink<CReportAgentImp>,
-   public IAgentEx,
+class CReportAgentImp : public WBFL::EAF::Agent,
    public IXBRProjectEventSink
 {
 public:
-	CReportAgentImp(); 
-   virtual ~CReportAgentImp();
+   CReportAgentImp() = default;
 
-   DECLARE_PROTECT_FINAL_CONSTRUCT();
-
-   HRESULT FinalConstruct();
-   void FinalRelease();
-
-DECLARE_REGISTRY_RESOURCEID(IDR_REPORTAGENT)
-
-BEGIN_COM_MAP(CReportAgentImp)
-	COM_INTERFACE_ENTRY(IAgent)
-   COM_INTERFACE_ENTRY(IAgentEx)
-   COM_INTERFACE_ENTRY(IXBRProjectEventSink)
-   //COM_INTERFACE_ENTRY_IMPL(IConnectionPointContainer)
-END_COM_MAP()
-
-//BEGIN_CONNECTION_POINT_MAP(CReportAgentImp)
-////   CONNECTION_POINT_ENTRY( IID_IProjectEventSink )
-//END_CONNECTION_POINT_MAP()
-
-// IAgentEx
+// Agent
 public:
-	STDMETHOD(SetBroker)(/*[in]*/ IBroker* pBroker);
-   STDMETHOD(RegInterfaces)();
-	STDMETHOD(Init)();
-	STDMETHOD(Reset)();
-	STDMETHOD(ShutDown)();
-   STDMETHOD(Init2)();
-   STDMETHOD(GetClassID)(CLSID* pCLSID);
+   std::_tstring GetName() const override { return _T("XBeam Rate Reporting Agent"); }
+   bool RegisterInterfaces() override;
+   bool Init() override;
+   bool Reset() override;
+   bool ShutDown() override;
+   CLSID GetCLSID() const override;
 
 // IXBRProjectEventSink
 public:
-   virtual HRESULT OnProjectChanged() override;
-
-#ifdef _DEBUG
-   bool AssertValid() const;
-#endif//
+   HRESULT OnProjectChanged() override;
 
 private:
-   DECLARE_EAF_AGENT_DATA;
+   EAF_DECLARE_AGENT_DATA;
 
-   DWORD m_dwProjectCookie;
+   IDType m_dwProjectCookie;
 
    void InitReportBuilders();
 
    std::set<std::_tstring> m_ReportNames;
 };
-
-OBJECT_ENTRY_AUTO(CLSID_ReportAgent, CReportAgentImp)
 

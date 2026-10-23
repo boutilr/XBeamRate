@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -70,8 +70,8 @@ public:
    bool operator == (const xbrLongitudinalRebarData& rOther) const;
    bool operator != (const xbrLongitudinalRebarData& rOther) const;
 
-	HRESULT Load(IStructuredLoad* pStrLoad,IProgress* pProgress);
-	HRESULT Save(IStructuredSave* pStrSave,IProgress* pProgress);
+	HRESULT Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress> pProgress);
+	HRESULT Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress> pProgress);
 
 protected:
    void MakeCopy(const xbrLongitudinalRebarData& rOther);

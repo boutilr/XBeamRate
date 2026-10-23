@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-
+#include "GraphingAgent.h"
 #include "resource.h"
 #include "LiveLoadGraphController.h"
 #include "LiveLoadGraphBuilder.h"
@@ -31,19 +31,14 @@
 #include <IFace\RatingSpecification.h>
 #include <..\..\PGSuper\Include\IFace\Project.h>
 
-#include <PgsExt\GirderLabel.h>
-#include <PgsExt\BridgeDescription2.h>
-#include <PgsExt\Helpers.h>
+#include <PsgLib\GirderLabel.h>
+#include <PsgLib\BridgeDescription2.h>
+#include <PsgLib\Helpers.h>
 
 #include <EAF\EAFUtilities.h>
 #include <XBeamRateExt\XBeamRateUtilities.h>
 #include <Graphs\ExportGraphXYTool.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 static LPCTSTR GetActionName(ActionType action)
 {
@@ -152,8 +147,8 @@ PierIDType CXBRLiveLoadGraphController::GetPierID()
    if (pierIdx == INVALID_INDEX)
       return INVALID_ID;
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
@@ -189,8 +184,8 @@ IndexType CXBRLiveLoadGraphController::GetPermitLaneIndex()
 {
    pgsTypes::LoadRatingType ratingType = GetLoadRatingType();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2_NOCHECK(pBroker,IXBRRatingSpecification,pRatingSpec);
    
    if (pRatingSpec->IsWSDOTEmergencyRating(ratingType) || pRatingSpec->IsWSDOTPermitRating(ratingType))
@@ -242,8 +237,8 @@ void CXBRLiveLoadGraphController::FillPierList()
    {
       // We are extending PGSuper/PGSplice
       // Fill the combo box with piers
-      CComPtr<IBroker> pBroker;
-      EAFGetBroker(&pBroker);
+      auto pBroker = EAFGetBroker();
+
 
       GET_IFACE2(pBroker,IBridgeDescription,pIBridgeDesc);
       const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
@@ -267,8 +262,8 @@ void CXBRLiveLoadGraphController::FillPierList()
 
 void CXBRLiveLoadGraphController::FillRatingType()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRProject,pProject);
 
    PierIDType pierID = GetPierID();
@@ -306,8 +301,8 @@ void CXBRLiveLoadGraphController::FillVehicleType()
    PierIDType pierID = GetPierID();
    pgsTypes::LoadRatingType ratingType = GetLoadRatingType();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRProject,pProject);
 
    VehicleIndexType nLiveLoads = pProject->GetLiveLoadReactionCount(pierID,ratingType);
@@ -360,8 +355,8 @@ void CXBRLiveLoadGraphController::RatingTypeChanged()
    FillLoadingList();
 
    pgsTypes::LoadRatingType ratingType = GetLoadRatingType();
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2_NOCHECK(pBroker,IXBRRatingSpecification,pRatingSpec);
    if (pRatingSpec->IsWSDOTEmergencyRating(ratingType) || pRatingSpec->IsWSDOTPermitRating(ratingType))
    {
@@ -393,8 +388,8 @@ void CXBRLiveLoadGraphController::LoadingChanged()
    }
    IndexType llConfigIdx = (IndexType)plbLoading->GetItemData(curSel);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRProductForces,pProductForces);
 
    PierIDType pierID = GetPierID();
@@ -425,8 +420,8 @@ void CXBRLiveLoadGraphController::FillLoadingList()
       return;
    }
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2(pBroker,IXBRProductForces,pProductForces);
 

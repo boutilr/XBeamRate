@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -27,17 +27,13 @@
 // rebar information is "discovered" rather than hard coded
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "resource.h"
 #include "LongitudinalRebarGrid.h"
 #include <EAF\EAFDisplayUnits.h>
 #include <LRFD\RebarPool.h>
 #include <XBeamRateExt\ReinforcementPage.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 GRID_IMPLEMENT_REGISTER(CLongitudinalRebarGrid, CS_DBLCLKS, 0, 0, 0);
 
@@ -93,8 +89,7 @@ void CLongitudinalRebarGrid::CustomInit()
 		);
 
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
 // set text along top row
@@ -367,8 +362,8 @@ bool CLongitudinalRebarGrid::SetRebarData(ROWCOL row,const xbrLongitudinalRebarD
       return false;
    }
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    // Datum
@@ -501,8 +496,8 @@ void CLongitudinalRebarGrid::AddRebarRow(const xbrLongitudinalRebarData::RebarRo
 
 void CLongitudinalRebarGrid::GetRebarData(ROWCOL row,xbrLongitudinalRebarData::RebarRow& rebarData)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    ROWCOL col = 1;

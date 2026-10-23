@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -20,215 +20,152 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 
-// BridgeLinkTestPlugin.cpp : Implementation of DLL Exports.
-
-
-// Note: Proxy/Stub Information
-//      To build a separate proxy/stub DLL, 
-//      run nmake -f BridgeLinkTestPluginps.mk in the project directory.
-
+// Plugin.cpp : Implementation of CXBeamRatePluginApp
 #include "stdafx.h"
 #include "resource.h"
-#include <MFCTools\VersionInfo.h>
 
-#include <WBFLGeometry.h>
-#include <WBFLUnitServer.h>
-#include <WBFLReportManagerAgent.h>
-#include <WBFLGraphManagerAgent.h>
-
-
-#include <initguid.h>
-#include <EAF\EAFAppPlugin.h>
-#include "CLSID.h"
-#include "SectionCut.h"
-
-// EAF Common Interfaces
-#include <EAF\EAFDisplayUnits.h>
-
-// XBeam Rate Interfaces
-#include <IFace\XBeamRateAgent.h>
-#include <IFace\Project.h>
-#include <IFace\AnalysisResults.h>
-#include <IFace\LoadRating.h>
-#include <IFace\Pier.h>
-#include <IFace\RatingSpecification.h>
-#include <IFace\Test.h>
-
-// PGSuper/PGSplice Interfaces
-#include <IFace\ExtendUI.h>
-#include <..\..\PGSuper\Include\IFace\Project.h>
-#include <..\..\PGSuper\Include\IFace\DocumentType.h>
-#include <IFace\EditByUI.h>
-#include <IFace\Bridge.h>
-#include <IFace\Selection.h>
-#include <IFace\ViewEvents.h>
-#include <IFace\Intervals.h>
-#include <..\..\PGSuper\Include\IFace\PointOfInterest.h>
-#include <IFace\Alignment.h>
-
-#include "PGSComponentInfo.h"
-
-#include <WBFLCore_i.c>
-#include <WBFLUnitServer_i.c>
-#include <WBFLReportManagerAgent_i.c>
-#include <WBFLGraphManagerAgent_i.c>
-#include <WBFLGeometry_i.c>
-
-#include "XBeamRateAppPlugin.h"
-#include "XBeamRateDocProxyAgent.h"
-#include <XBeamRateCatCom.h>
-
-#include <BridgeLinkCATID.h>
-#include <PGSuperCatCom.h>
-#include <PGSpliceCatCom.h>
-#include <System\ComCatMgr.h>
-#include <Plugins\PGSuperIEPlugin.h>
+#include "XBeamRateApp.h"
 
 #include "XBeamRatePluginApp.h"
 
-#include <EAF\EAFDocTemplate.h>
+#include "XBeamRateDocTemplate.h"
+
 #include "XBeamRateDoc.h"
-#include "ComponentInfo.h"
-#include "PGSuperExporter.h"
+#include "XBeamRateView.h"
+#include "XBeamRateChildFrame.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
+#include <EAF\EAFUnits.h>
+#include <MFCTools\AutoRegistry.h>
 
+#include "XBeamRateCommandLineInfo.h"
+#include "XBeamRateCommandLineProcessor.h"
 
-CComModule _Module;
+#include <XBeamRateVersionInfoImpl.h>
 
-BEGIN_OBJECT_MAP(ObjectMap)
-   OBJECT_ENTRY(CLSID_XBeamRateAppPlugin, CXBeamRateAppPlugin)
-   OBJECT_ENTRY(CLSID_XBeamRateComponentInfo, CXBeamRateComponentInfo)
-   OBJECT_ENTRY(CLSID_PGSuperDataExporter,    CPGSuperDataExporter)
-END_OBJECT_MAP()
+void CXBeamRatePluginApp::GetAppUnitSystem(IAppUnitSystem** ppAppUnitSystem)
+{
+   m_AppUnitSystem.CopyTo(ppAppUnitSystem);
+}
 
-BEGIN_MESSAGE_MAP(CXBeamRatePluginApp, CWinApp)
-	//{{AFX_MSG_MAP(CXBeamRatePluginApp)
-	//}}AFX_MSG_MAP
-END_MESSAGE_MAP()
+BOOL CXBeamRatePluginApp::Init(CEAFApp* pParent)
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   LoadRegistryValues();
 
-CXBeamRatePluginApp theApp;
+   auto plugin = std::dynamic_pointer_cast<WBFL::EAF::IPluginApp>(shared_from_this());
+   m_DocumentationImpl.Init(plugin);
 
-CXBeamRatePluginApp::CXBeamRatePluginApp()
+   return TRUE;
+}
+
+void CXBeamRatePluginApp::Terminate()
+{
+   SaveRegistryValues();
+}
+
+void CXBeamRatePluginApp::IntegrateWithUI(BOOL bIntegrate)
 {
 }
 
-BOOL CXBeamRatePluginApp::InitInstance()
+std::vector<CEAFDocTemplate*> CXBeamRatePluginApp::CreateDocTemplates()
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-   GXInit();
+   std::vector<CEAFDocTemplate*> templates;
 
-   SetRegistryKey( _T("Washington State Department of Transportation") );
+   std::unique_ptr<CXBeamRateDocTemplate> pDocTemplate = std::make_unique<CXBeamRateDocTemplate>(
+      IDR_XBEAMRATE,
+      nullptr,
+		RUNTIME_CLASS(CXBeamRateDoc),
+		RUNTIME_CLASS(CXBeamRateChildFrame),
+		RUNTIME_CLASS(CXBeamRateView),
+      nullptr,1);
 
-   // Using a shared menu
-   // See MSKB Article ID: Q118435, "Sharing Menus Between MDI Child Windows"
-   m_hSharedMenu = nullptr; /*::LoadMenu( m_hInstance, MAKEINTRESOURCE(IDR_???) );*/
+   auto plugin = std::dynamic_pointer_cast<WBFL::EAF::IPluginApp>(shared_from_this());
+   pDocTemplate->SetPluginApp(plugin);
 
-   _Module.Init(ObjectMap, m_hInstance);
-   return CWinApp::InitInstance();
+   templates.push_back(pDocTemplate.release());
+   return templates;
 }
 
-int CXBeamRatePluginApp::ExitInstance()
+HMENU CXBeamRatePluginApp::GetSharedMenuHandle()
 {
-   // if the doc template uses a shared menu, destroy it here
-   // release the shared menu
-   //::DestroyMenu( m_hSharedMenu );
-
-   GXForceTerminate();
-   _Module.Term();
-   return CWinApp::ExitInstance();
+   return nullptr;
 }
 
-CString CXBeamRatePluginApp::GetVersion(bool bIncludeBuildNumber) const
+CString CXBeamRatePluginApp::GetName()
+{
+   return CString("XBRate");
+}
+
+CString CXBeamRatePluginApp::GetDocumentationSetName()
+{
+   return GetName();
+}
+
+CString CXBeamRatePluginApp::GetDocumentationURL()
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
-   CWinApp* pApp = AfxGetApp();
-   CString strExe( pApp->m_pszExeName );
-   strExe += ".dll";
-
-   CVersionInfo verInfo;
-   verInfo.Load(strExe);
-   
-#if defined _DEBUG || defined _BETA_VERSION
-   // always include the build number in debug and beta versions
-   bIncludeBuildNumber = true;
-#endif
-   CString strVersion = verInfo.GetProductVersionAsString(bIncludeBuildNumber);
-
-   return strVersion;
+   return m_DocumentationImpl.GetDocumentationURL();
 }
 
-BOOL CXBeamRatePluginApp::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+CString CXBeamRatePluginApp::GetDocumentationMapFile()
 {
-   // in order scan the message map for this plugin, the module state must be set
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-   return CWinApp::OnCmdMsg(nID,nCode,pExtra,pHandlerInfo);
+   return m_DocumentationImpl.GetDocumentationMapFile();
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// Used to determine whether the DLL can be unloaded by OLE
-
-STDAPI DllCanUnloadNow(void)
+void CXBeamRatePluginApp::LoadDocumentationMap()
 {
-    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-    return (AfxDllCanUnloadNow()==S_OK && _Module.GetLockCount()==0) ? S_OK : S_FALSE;
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   return m_DocumentationImpl.LoadDocumentationMap();
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// Returns a class factory to create an object of the requested type
-
-STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
+std::pair<WBFL::EAF::HelpResult,CString> CXBeamRatePluginApp::GetDocumentLocation(LPCTSTR lpszDocSetName,UINT nID)
 {
-    return _Module.GetClassObject(rclsid, riid, ppv);
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   return m_DocumentationImpl.GetDocumentLocation(lpszDocSetName,nID);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// DllRegisterServer - Adds entries to the system registry
 
-void RegisterComponents(bool bRegister)
+void CXBeamRatePluginApp::LoadRegistryValues()
 {
-   // Component information objects
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperComponentInfo,CATID_PGSuperComponentInfo,bRegister);
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSpliceComponentInfo,CATID_PGSpliceComponentInfo,bRegister);
-
-   // These components are for the "stand alone" XBeam Rate application
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_XBeamRateAppPlugin,    CATID_BridgeLinkAppPlugin, bRegister);
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_XBeamRateComponentInfo,CATID_BridgeLinkComponentInfo,bRegister);
-
-   // These components are for the PGSuper and PGSplice extension agents
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_XBeamRateAgent, CATID_PGSuperExtensionAgent,  bRegister);
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_XBeamRateAgent, CATID_PGSpliceExtensionAgent, bRegister);
-
-   // These components are exporter plugins
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperDataExporter,   CATID_PGSuperDataExporter,    bRegister);
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperDataExporter,   CATID_PGSpliceDataExporter,   bRegister);
+   LoadCustomReportInformation();
 }
 
-STDAPI DllRegisterServer(void)
+void CXBeamRatePluginApp::SaveRegistryValues()
 {
-    // registers object, typelib and all interfaces in typelib
-
-   HRESULT hr = _Module.RegisterServer(FALSE);
-   if ( FAILED(hr) )
-      return hr;
-
-   RegisterComponents(true);
-
-   return S_OK;
+   SaveCustomReportInformation();
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// DllUnregisterServer - Removes entries from the system registry
-
-STDAPI DllUnregisterServer(void)
+void CXBeamRatePluginApp::LoadCustomReportInformation()
 {
-   RegisterComponents(false);
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CEAFCustomReportMixin::LoadCustomReportInformation();
+}
 
-   return _Module.UnregisterServer(FALSE);
+void CXBeamRatePluginApp::SaveCustomReportInformation()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CEAFCustomReportMixin::SaveCustomReportInformation();
+}
+
+////////////////////////////////////////////////////////
+// IEAFCommandLineInfo
+
+CString CXBeamRatePluginApp::GetCommandLineAppName() const
+{
+   return GetAppName();
+}
+
+CString CXBeamRatePluginApp::GetUsageMessage()
+{
+   CXBRateCommandLineInfo cmdInfo;
+   return cmdInfo.GetUsageMessage();
+}
+
+BOOL CXBeamRatePluginApp::ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo)
+{
+   CXBRateCommandLineProcessor processor;
+   return processor.ProcessCommandLineOptions(cmdInfo);
 }

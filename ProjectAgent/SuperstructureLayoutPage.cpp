@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 //
 
 #include "stdafx.h"
+#include "ProjectAgent.h"
 #include "resource.h"
 #include "SuperstructureLayoutPage.h"
 #include "PierDlg.h"
@@ -35,11 +36,6 @@
 #include "..\Documentation\XBRate.hh"
 
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 // CSuperstructureLayoutPage dialog
@@ -63,8 +59,7 @@ void CSuperstructureLayoutPage::DoDataExchange(CDataExchange* pDX)
  //  CString strImageName = GetImageName();
 	//DDX_MetaFileStatic(pDX, IDC_DIMENSIONS, m_Dimensions,strImageName, _T("Metafile") );
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
    CPierDlg* pParent = (CPierDlg*)GetParent();
 

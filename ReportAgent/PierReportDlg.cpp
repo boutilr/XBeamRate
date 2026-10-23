@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -30,35 +30,28 @@
 #include <IFace\Bridge.h>
 #include <IFace\DocumentType.h>
 
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\GirderLabel.h>
 #include <MFCTools\CustomDDX.h>
 
 #include <XBeamRateExt\XBeamRateUtilities.h>
 
 #include <..\..\PGSuper\Include\IFace\Project.h>
-#include <PgsExt\BridgeDescription2.h>
+#include <PsgLib\BridgeDescription2.h>
 
 #include <EAF\EAFDocument.h>
 
 #include "XBeamRateReportSpecification.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 // PierReportDlg dialog
 
 IMPLEMENT_DYNAMIC(CPierReportDlg, CDialog)
 
-CPierReportDlg::CPierReportDlg(IBroker* pBroker,const WBFL::Reporting::ReportDescription& rptDesc,std::shared_ptr<WBFL::Reporting::ReportSpecification>& pRptSpec,CWnd* pParent)
+CPierReportDlg::CPierReportDlg(const WBFL::ReportMgr::ReportDescription& rptDesc,std::shared_ptr<WBFL::ReportMgr::ReportSpecification>& pRptSpec,CWnd* pParent)
 : CDialog(CPierReportDlg::IDD, pParent), m_RptDesc(rptDesc), m_pInitRptSpec(pRptSpec)
 {
    m_PierID = INVALID_ID;
    m_bReportEvenIncrements = true;
-
-   m_pBroker = pBroker;
 }
 
 CPierReportDlg::~CPierReportDlg()
@@ -118,13 +111,13 @@ void CPierReportDlg::UpdateChapterList()
    m_ChList.ResetContent();
 
    // Get the chapters in the report
-   std::vector<WBFL::Reporting::ChapterInfo> chInfos = m_RptDesc.GetChapterInfo();
+   std::vector<WBFL::ReportMgr::ChapterInfo> chInfos = m_RptDesc.GetChapterInfo();
 
    // Populate the list box with the names of the chapters
-   std::vector<WBFL::Reporting::ChapterInfo>::iterator iter;
+   std::vector<WBFL::ReportMgr::ChapterInfo>::iterator iter;
    for ( iter = chInfos.begin(); iter != chInfos.end(); iter++ )
    {
-      WBFL::Reporting::ChapterInfo chInfo = *iter;
+      WBFL::ReportMgr::ChapterInfo chInfo = *iter;
 
       int idx = m_ChList.AddString( chInfo.Name.c_str() );
       if ( idx != LB_ERR ) // no error
@@ -187,7 +180,8 @@ BOOL CPierReportDlg::OnInitDialog()
 
       m_PierID = INVALID_ID;
 
-      GET_IFACE(IBridgeDescription,pIBridgeDesc);
+      auto broker = EAFGetBroker();
+      GET_IFACE2(broker,IBridgeDescription,pIBridgeDesc);
       const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
       PierIndexType nPiers = pBridgeDesc->GetPierCount();
       for ( PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++ )
@@ -254,11 +248,11 @@ void CPierReportDlg::InitFromRptSpec()
 void CPierReportDlg::InitChapterListFromSpec()
 {
    ClearChapterCheckMarks();
-   std::vector<WBFL::Reporting::ChapterInfo> chInfo = m_pInitRptSpec->GetChapterInfo();
-   std::vector<WBFL::Reporting::ChapterInfo>::iterator iter;
+   std::vector<WBFL::ReportMgr::ChapterInfo> chInfo = m_pInitRptSpec->GetChapterInfo();
+   std::vector<WBFL::ReportMgr::ChapterInfo>::iterator iter;
    for ( iter = chInfo.begin(); iter != chInfo.end(); iter++ )
    {
-      WBFL::Reporting::ChapterInfo& ch = *iter;
+      WBFL::ReportMgr::ChapterInfo& ch = *iter;
       int cChapters = m_ChList.GetCount();
       for ( int idx = 0; idx < cChapters; idx++ )
       {

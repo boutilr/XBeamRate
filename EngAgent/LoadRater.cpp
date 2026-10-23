@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "EngAgent.h"
 #include "LoadRater.h"
 #include <IFace\Project.h>
 #include <IFace\PointOfInterest.h>
@@ -29,21 +30,17 @@
 #include <IFace\LoadRating.h>
 #include <IFace\Pier.h>
 #include <EAF\EAFDisplayUnits.h>
+#include <EAF/AutoProgress.h>
+
 #include <WBFLGenericBridge.h>
 
 #include <PGSuperUnits.h> // for FormatDimension
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
-
-xbrLoadRater::xbrLoadRater(IBroker* pBroker)
+xbrLoadRater::xbrLoadRater(std::weak_ptr<WBFL::EAF::Broker> pBroker) :
+   m_pBroker(pBroker)
 {
    //CREATE_LOGFILE("LoadRating");
-   m_pBroker = pBroker;
 }
 
 xbrLoadRater::~xbrLoadRater(void)
@@ -51,22 +48,17 @@ xbrLoadRater::~xbrLoadRater(void)
    //CLOSE_LOGFILE;
 }
 
-void xbrLoadRater::SetBroker(IBroker* pBroker)
-{
-   m_pBroker = pBroker;
-}
-
 xbrRatingArtifact xbrLoadRater::RateXBeam(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx)
 {
-   GET_IFACE(IXBRPointOfInterest,pPOI);
+   GET_IFACE2(GetBroker(),IXBRPointOfInterest,pPOI);
 
-   GET_IFACE(IXBRProject, pProject);
+   GET_IFACE2(GetBroker(),IXBRProject, pProject);
    xbrTypes::PierType pierType = pProject->GetPierType(pierID);
    xbrTypes::Stage stage = (pierType == xbrTypes::pctIntegral ? xbrTypes::Stage2 : xbrTypes::Stage1);
 
    xbrRatingArtifact ratingArtifact(ratingType);
 
-   GET_IFACE(IXBRRatingSpecification, pRatingSpec);
+   GET_IFACE2(GetBroker(),IXBRRatingSpecification, pRatingSpec);
 
    // Rate for flexure
    MomentRating(pierID,stage,ratingType,vehicleIdx,ratingArtifact);
@@ -89,16 +81,16 @@ xbrRatingArtifact xbrLoadRater::RateXBeam(PierIDType pierID,pgsTypes::LoadRating
 
 void xbrLoadRater::MomentRating(PierIDType pierID, xbrTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
 {
-   GET_IFACE(IEAFDisplayUnits,pDisplayUnits);
-   GET_IFACE(IXBRPointOfInterest,pPOI);
+   GET_IFACE2(GetBroker(),IEAFDisplayUnits,pDisplayUnits);
+   GET_IFACE2(GetBroker(),IXBRPointOfInterest,pPOI);
 
-   GET_IFACE(IProgress, pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE2(GetBroker(),IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Load rating for moment"));
 
-   GET_IFACE(IXBRMomentCapacity,pMomentCapacity);
+   GET_IFACE2(GetBroker(),IXBRMomentCapacity,pMomentCapacity);
 
-   GET_IFACE(IXBRProject,pProject);
+   GET_IFACE2(GetBroker(),IXBRProject,pProject);
    Float64 system_factor    = pProject->GetSystemFactorFlexure();
    Float64 condition_factor = pProject->GetConditionFactor(pierID);
 
@@ -154,7 +146,7 @@ void xbrLoadRater::MomentRating(PierIDType pierID, xbrTypes::Stage stage,pgsType
          Float64 Mn = momentCapacityDetails.Mn;
 
          Float64 K = 1.0;
-         GET_IFACE(IXBRRatingSpecification, pSpec);
+         GET_IFACE2(GetBroker(),IXBRRatingSpecification, pSpec);
          if ( !pSpec->IsWSDOTEmergencyRating(ratingType) && !pSpec->IsWSDOTPermitRating(ratingType) )
          {
             // NOTE: For WSDOT Method - Permit cases, K has to be computed for each combination
@@ -208,7 +200,7 @@ void xbrLoadRater::MomentRating(PierIDType pierID, xbrTypes::Stage stage,pgsType
          if ( vehicleIdx == INVALID_INDEX && llConfigIdx != INVALID_INDEX )
          {
             // llConfigIdx is actually the index of the vehicle that governs the load case... we now need to get the live load configuration
-            GET_IFACE(IXBRAnalysisResults,pResults);
+            GET_IFACE2(GetBroker(),IXBRAnalysisResults,pResults);
             Float64 Mmin, Mmax;
             IndexType minLLConfigIdx, maxLLConfigIdx;
             pResults->GetMoment(pierID,ratingType,llConfigIdx/*this is actually a vehicle index*/,poi,&Mmin,&Mmax,&minLLConfigIdx,&maxLLConfigIdx);
@@ -233,15 +225,15 @@ void xbrLoadRater::MomentRating(PierIDType pierID, xbrTypes::Stage stage,pgsType
 
 void xbrLoadRater::ShearRating(PierIDType pierID, xbrTypes::Stage stage, const std::vector<xbrPointOfInterest>& vPoi,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
 {
-   GET_IFACE(IEAFDisplayUnits,pDisplayUnits);
-   GET_IFACE(IProgress, pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE2(GetBroker(),IEAFDisplayUnits,pDisplayUnits);
+   GET_IFACE2(GetBroker(),IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Load rating for shear"));
 
-   GET_IFACE(IXBRAnalysisResults,pAnalysisResults);
-   GET_IFACE(IXBRShearCapacity,pShearCapacity);
+   GET_IFACE2(GetBroker(),IXBRAnalysisResults,pAnalysisResults);
+   GET_IFACE2(GetBroker(),IXBRShearCapacity,pShearCapacity);
 
-   GET_IFACE(IXBRProject,pProject);
+   GET_IFACE2(GetBroker(),IXBRProject,pProject);
    Float64 system_factor    = pProject->GetSystemFactorShear();
    Float64 condition_factor = pProject->GetConditionFactor(pierID);
 
@@ -259,7 +251,7 @@ void xbrLoadRater::ShearRating(PierIDType pierID, xbrTypes::Stage stage, const s
 
    Float64 W = (vehicleIdx == INVALID_INDEX ? 0 : pProject->GetVehicleWeight(pierID,ratingType,vehicleIdx));
 
-   GET_IFACE(IXBRRatingSpecification, pSpec);
+   GET_IFACE2(GetBroker(),IXBRRatingSpecification, pSpec);
    xbrTypes::PermitRatingMethod ratingMethod = pSpec->GetPermitRatingMethod();
    xbrTypes::EmergencyRatingMethod emergencyRatingMethod = pSpec->GetEmergencyRatingMethod();
    bool bIsWSDOTMethodApplicable = pSpec->IsWSDOTEmergencyRating(ratingType) || pSpec->IsWSDOTPermitRating(ratingType);
@@ -405,22 +397,22 @@ void xbrLoadRater::ShearRating(PierIDType pierID, xbrTypes::Stage stage, const s
 
 void xbrLoadRater::CheckReinforcementYielding(PierIDType pierID, xbrTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)
 {
-   GET_IFACE(IEAFDisplayUnits,pDisplayUnits);
-   GET_IFACE(IProgress, pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE2(GetBroker(),IEAFDisplayUnits,pDisplayUnits);
+   GET_IFACE2(GetBroker(),IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
 
    ATLASSERT(::IsPermitRatingType(ratingType));
 
    pgsTypes::LimitState ls = (ratingType == pgsTypes::lrPermit_Routine ? pgsTypes::ServiceI_PermitRoutine : pgsTypes::ServiceI_PermitSpecial);
    ATLASSERT(::IsServiceLimitState(ls));
 
-   GET_IFACE(IXBRCrackedSection,pCrackedSection);
-   GET_IFACE(IXBRProject,pProject);
-   GET_IFACE(IXBRSectionProperties,pSectProps);
-   GET_IFACE(IXBRRebar,pRebar);
-   GET_IFACE(IXBRPointOfInterest,pPOI);
+   GET_IFACE2(GetBroker(),IXBRCrackedSection,pCrackedSection);
+   GET_IFACE2(GetBroker(),IXBRProject,pProject);
+   GET_IFACE2(GetBroker(),IXBRSectionProperties,pSectProps);
+   GET_IFACE2(GetBroker(),IXBRRebar,pRebar);
+   GET_IFACE2(GetBroker(),IXBRPointOfInterest,pPOI);
 
-   GET_IFACE(IXBRRatingSpecification,pRatingSpec);
+   GET_IFACE2(GetBroker(),IXBRRatingSpecification,pRatingSpec);
    Float64 K = pRatingSpec->GetYieldStressLimitCoefficient();
 
    // Get load factors
@@ -433,7 +425,7 @@ void xbrLoadRater::CheckReinforcementYielding(PierIDType pierID, xbrTypes::Stage
    Float64 gLL = pProject->GetLiveLoadFactor(pierID,ls,vehicleIdx);
 
 
-   GET_IFACE(IXBRMaterial,pMaterial);
+   GET_IFACE2(GetBroker(),IXBRMaterial,pMaterial);
    Float64 Es, fy, fu;
    pMaterial->GetRebarProperties(pierID,&Es,&fy,&fu);
 
@@ -547,7 +539,7 @@ void xbrLoadRater::GetMoments(PierIDType pierID,pgsTypes::LoadRatingType ratingT
 {
    pgsTypes::LiveLoadType llType = ::GetLiveLoadType(ratingType);
 
-   GET_IFACE(IXBRAnalysisResults,pResults);
+   GET_IFACE2(GetBroker(),IXBRAnalysisResults,pResults);
    vDC = pResults->GetMoment(pierID,xbrTypes::lcDC,vPoi);
    vDW = pResults->GetMoment(pierID,xbrTypes::lcDW,vPoi);
    vCR = pResults->GetMoment(pierID,xbrTypes::lcCR,vPoi);
@@ -555,7 +547,7 @@ void xbrLoadRater::GetMoments(PierIDType pierID,pgsTypes::LoadRatingType ratingT
    vRE = pResults->GetMoment(pierID,xbrTypes::lcRE,vPoi);
    vPS = pResults->GetMoment(pierID,xbrTypes::lcPS,vPoi);
 
-   GET_IFACE(IXBRRatingSpecification, pSpec);
+   GET_IFACE2(GetBroker(),IXBRRatingSpecification, pSpec);
    if ( pSpec->IsWSDOTEmergencyRating(ratingType) || pSpec->IsWSDOTPermitRating(ratingType))
    {
       // for WSDOT permit/emergency rating, the analysis is done in the rating artifact object

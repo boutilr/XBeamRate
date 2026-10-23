@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,13 +24,9 @@
 #include "stdafx.h"
 #include "txnEditReinforcement.h"
 
+#include <AgentTools.h>
 #include <IFace\Project.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 txnEditReinforcement::txnEditReinforcement(PierIDType pierID,const xbrEditReinforcementData& oldReinforcement,const xbrEditReinforcementData& newReinforcement)
@@ -58,8 +54,8 @@ void txnEditReinforcement::Undo()
 
 void txnEditReinforcement::Execute(int i)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2(pBroker,IXBREvents, pEvents);
    pEvents->HoldEvents(); // don't fire any changed events until all changes are done
@@ -74,7 +70,7 @@ void txnEditReinforcement::Execute(int i)
    pEvents->FirePendingEvents();
 }
 
-std::unique_ptr<CEAFTransaction> txnEditReinforcement::CreateClone() const
+std::unique_ptr<WBFL::EAF::Transaction> txnEditReinforcement::CreateClone() const
 {
    return std::make_unique<txnEditReinforcement>(m_PierID,m_Reinforcement[0],m_Reinforcement[1]);
 }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -29,29 +29,18 @@
 class xbrRatingArtifact;
 class xbrPointOfInterest;
 
-/*****************************************************************************
-CLASS 
-   CTestChapterBuilder
-
-*****************************************************************************/
-
 class CLoadRatingDetailsChapterBuilder : public CXBeamRateChapterBuilder
 {
 public:
    CLoadRatingDetailsChapterBuilder();
    virtual LPCTSTR GetName() const override;
-   rptChapter* Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const;
-   virtual std::unique_ptr<WBFL::Reporting::ChapterBuilder> Clone() const override;
+   rptChapter* Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec,Uint16 level) const;
 
 private:
-   // Prevent accidental copying and assignment
-   CLoadRatingDetailsChapterBuilder(const CLoadRatingDetailsChapterBuilder&) = delete;
-   CLoadRatingDetailsChapterBuilder& operator=(const CLoadRatingDetailsChapterBuilder&) = delete;
-
-   void MomentRatingDetails(rptChapter* pChapter,IBroker* pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType,bool bPositiveMoment,const xbrRatingArtifact* pRatingArtifact) const;
-   void ShearRatingDetails(rptChapter* pChapter,IBroker* pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType,const xbrRatingArtifact* pRatingArtifact) const;
-   void ReinforcementYieldingDetails(rptChapter* pChapter,IBroker* pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType,bool bPositiveMoment,const xbrRatingArtifact* pRatingArtifact) const;
-   void LoadPostingDetails(rptChapter* pChapter,IBroker* pBroker,const xbrRatingArtifact* pRatingArtifact) const;
+   void MomentRatingDetails(rptChapter* pChapter,std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType,bool bPositiveMoment,const xbrRatingArtifact* pRatingArtifact) const;
+   void ShearRatingDetails(rptChapter* pChapter,std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType,const xbrRatingArtifact* pRatingArtifact) const;
+   void ReinforcementYieldingDetails(rptChapter* pChapter,std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType,bool bPositiveMoment,const xbrRatingArtifact* pRatingArtifact) const;
+   void LoadPostingDetails(rptChapter* pChapter,std::shared_ptr<WBFL::EAF::Broker> pBroker,const xbrRatingArtifact* pRatingArtifact) const;
 
    bool ReportAtThisPoi(const xbrPointOfInterest& poi,const xbrPointOfInterest& controllingPoi, bool IsNegativeMoment) const;
 

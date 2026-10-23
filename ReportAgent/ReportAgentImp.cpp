@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #include "ReportAgent.h"
 #include "ReportAgentImp.h"
 
-#include <IReportManager.h>
+#include <EAF/EAFReportManager.h>
 
 #include "XBeamRateReportSpecificationBuilder.h"
 
@@ -46,140 +46,70 @@
 #include <EAF\EAFUIIntegration.h>
 #include <EAF\EAFReportView.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
-// CReportAgentImp
-CReportAgentImp::CReportAgentImp()
-{
-   m_pBroker = 0;
-}
-
-CReportAgentImp::~CReportAgentImp()
-{
-}
-
-HRESULT CReportAgentImp::FinalConstruct()
-{
-   return S_OK;
-}
-
-void CReportAgentImp::FinalRelease()
-{
-}
-
-#if defined _DEBUG
-bool CReportAgentImp::AssertValid() const
-{
-   return true;
-}
-#endif // _DEBUG
-
 //////////////////////////////////////////////////////////////////////
 // IAgent
-STDMETHODIMP CReportAgentImp::SetBroker(IBroker* pBroker)
+bool CReportAgentImp::RegisterInterfaces()
 {
-   EAF_AGENT_SET_BROKER(pBroker);
-   return S_OK;
-}
-
-STDMETHODIMP CReportAgentImp::RegInterfaces()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-
-   //pBrokerInit->RegInterface( IID_???,    this );
-   
-   // this agent doesn't implement any interfaces... it just provies reports
-
-   return S_OK;
+   EAF_AGENT_REGISTER_INTERFACES;
+   return true;
 };
 
-STDMETHODIMP CReportAgentImp::Init()
+bool CReportAgentImp::Init()
 {
    EAF_AGENT_INIT;
 
    InitReportBuilders();
 
-   return AGENT_S_SECONDPASSINIT;
-}
-
-STDMETHODIMP CReportAgentImp::Init2()
-{
    //
    // Attach to connection points
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   m_dwProjectCookie = REGISTER_EVENT_SINK(IXBRProjectEventSink);
 
-   // Connection point for the user interface extension events
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Advise( GetUnknown(), &m_dwProjectCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-   }
-
-   return S_OK;
+   return true;
 }
 
-STDMETHODIMP CReportAgentImp::Reset()
+bool CReportAgentImp::Reset()
 {
-   return S_OK;
+   EAF_AGENT_RESET;
+   return true;
 }
 
-STDMETHODIMP CReportAgentImp::GetClassID(CLSID* pCLSID)
+CLSID CReportAgentImp::GetCLSID() const
 {
-   *pCLSID = CLSID_ReportAgent;
-   return S_OK;
+   return CLSID_XBeamRateReportAgent;
 }
 
-STDMETHODIMP CReportAgentImp::ShutDown()
+bool CReportAgentImp::ShutDown()
 {
+   EAF_AGENT_SHUTDOWN;
    //
    // Detach to connection points
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   UNREGISTER_EVENT_SINK(IXBRProjectEventSink, m_dwProjectCookie);
 
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Unadvise( m_dwProjectCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-   }
-
-   EAF_AGENT_CLEAR_INTERFACE_CACHE;
-   return S_OK;
+   return true;
 }
 
 /////////////////////////////////////////////////////////////
 void CReportAgentImp::InitReportBuilders()
 {
-   GET_IFACE(IReportManager,pRptMgr);
+   GET_IFACE(IEAFReportManager,pRptMgr);
 
-   std::shared_ptr<WBFL::Reporting::ReportSpecificationBuilder> pRptSpecBuilder(std::make_shared<CXBeamRateReportSpecificationBuilder>(m_pBroker) );
+   std::shared_ptr<WBFL::ReportMgr::ReportSpecificationBuilder> pRptSpecBuilder(std::make_shared<CXBeamRateReportSpecificationBuilder>(m_pBroker) );
 
-   std::shared_ptr<WBFL::Reporting::ReportBuilder> pReportBuilder(std::make_shared<CXBeamRateReportBuilder>(IsStandAlone() ? _T("Load Rating Report") : _T("Cross Beam Load Rating Report")));
+   std::shared_ptr<WBFL::ReportMgr::ReportBuilder> pReportBuilder(std::make_shared<CXBeamRateReportBuilder>(IsStandAlone() ? _T("Load Rating Report") : _T("Cross Beam Load Rating Report")));
    m_ReportNames.insert(pReportBuilder->GetName());
 #if defined _DEBUG || defined _BETA_VERSION
    pReportBuilder->IncludeTimingChapter();
 #endif
    pReportBuilder->SetReportSpecificationBuilder( pRptSpecBuilder );
-   pReportBuilder->AddTitlePageBuilder(std::shared_ptr<WBFL::Reporting::TitlePageBuilder>(new CXBeamRateTitlePageBuilder(m_pBroker,pReportBuilder->GetName())));
-   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CLoadRatingChapterBuilder()));
-   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CLoadRatingDetailsChapterBuilder()));
-   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CPierDescriptionDetailsChapterBuilder()));
-   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CLoadingDetailsChapterBuilder()));
-   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CMomentCapacityDetailsChapterBuilder()));
-   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::Reporting::ChapterBuilder>(new CShearCapacityDetailsChapterBuilder()));
+   pReportBuilder->SetTitlePageBuilder(std::shared_ptr<WBFL::ReportMgr::TitlePageBuilder>(new CXBeamRateTitlePageBuilder(pReportBuilder->GetName())));
+   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CLoadRatingChapterBuilder()));
+   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CLoadRatingDetailsChapterBuilder()));
+   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CPierDescriptionDetailsChapterBuilder()));
+   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CLoadingDetailsChapterBuilder()));
+   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CMomentCapacityDetailsChapterBuilder()));
+   pReportBuilder->AddChapterBuilder(std::shared_ptr<WBFL::ReportMgr::ChapterBuilder>(new CShearCapacityDetailsChapterBuilder()));
    pRptMgr->AddReportBuilder(pReportBuilder);
 }
 

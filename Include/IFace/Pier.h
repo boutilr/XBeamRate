@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -33,8 +33,9 @@ interface IRebarSectionItem;
 // {7F04A0B9-FD4E-4965-8F26-8BE78B063803}
 DEFINE_GUID(IID_IXBRPier, 
 0x7f04a0b9, 0xfd4e, 0x4965, 0x8f, 0x26, 0x8b, 0xe7, 0x8b, 0x6, 0x38, 0x3);
-interface IXBRPier : public IUnknown
+class IXBRPier
 {
+public:
    virtual Float64 GetSkewAngle(PierIDType pierID) const = 0;
 
    virtual IndexType GetBearingLineCount(PierIDType pierID) const = 0;
@@ -88,8 +89,9 @@ interface IXBRPier : public IUnknown
 // {7F260544-5BBC-4be3-87E7-5DF89A45F35D}
 DEFINE_GUID(IID_IXBRSectionProperties, 
 0x7f260544, 0x5bbc, 0x4be3, 0x87, 0xe7, 0x5d, 0xf8, 0x9a, 0x45, 0xf3, 0x5d);
-interface IXBRSectionProperties : public IUnknown
+class IXBRSectionProperties
 {
+public:
    virtual Float64 GetDepth(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
    virtual Float64 GetArea(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
    virtual Float64 GetIxx(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
@@ -110,8 +112,9 @@ interface IXBRSectionProperties : public IUnknown
 // {BE372349-0F8D-48e4-90F2-536AC90BEBBE}
 DEFINE_GUID(IID_IXBRMaterial, 
 0xbe372349, 0xf8d, 0x48e4, 0x90, 0xf2, 0x53, 0x6a, 0xc9, 0xb, 0xeb, 0xbe);
-interface IXBRMaterial : public IUnknown
+class IXBRMaterial
 {
+public:
    virtual Float64 GetXBeamDensity(PierIDType pierID) const = 0;
    virtual Float64 GetXBeamFc(PierIDType pierID) const = 0;
    virtual Float64 GetXBeamEc(PierIDType pierID) const = 0;
@@ -125,8 +128,9 @@ interface IXBRMaterial : public IUnknown
 // {80B9F943-F0BF-4c4b-BCE9-70BBB3A55188}
 DEFINE_GUID(IID_IXBRRebar, 
 0x80b9f943, 0xf0bf, 0x4c4b, 0xbc, 0xe9, 0x70, 0xbb, 0xb3, 0xa5, 0x51, 0x88);
-interface IXBRRebar : public IUnknown
+class IXBRRebar
 {
+public:
    // The rebar points obtained through this method are in global cross section coordinates.
    virtual void GetRebarSection(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const = 0;
 
@@ -148,8 +152,9 @@ interface IXBRRebar : public IUnknown
 // {025A63FF-9FE0-4733-8AB9-B1B6B96E0F7B}
 DEFINE_GUID(IID_IXBRStirrups, 
 0x25a63ff, 0x9fe0, 0x4733, 0x8a, 0xb9, 0xb1, 0xb6, 0xb9, 0x6e, 0xf, 0x7b);
-interface IXBRStirrups : public IUnknown
+class IXBRStirrups
 {
+public:
    // Stage 1 = Lower cross beam
    // Stage 2 = Full depth cross beam
 

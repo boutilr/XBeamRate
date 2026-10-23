@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,40 +24,32 @@
 // dllmain.cpp : Implementation of DllMain.
 
 #include "stdafx.h"
-#include "resource.h"
 #include "dllmain.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
+#include "PierAgentCLSID.h"
+#include "PierAgentImp.h"
+#include <EAF\ComponentModule.h>
+
+WBFL::EAF::ComponentModule _Module;
+
+EAF_BEGIN_OBJECT_MAP(ObjectMap)
+   EAF_OBJECT_ENTRY(CLSID_XBeamRatePierAgent, CPierAgentImp)
+EAF_END_OBJECT_MAP()
 
 
-CPierAgentModule _AtlModule;
+/////////////////////////////////////////////////////////////////////////////
+// DLL Entry Point
 
-class CPierAgentModuleApp : public CWinApp
+extern "C"
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID /*lpReserved*/)
 {
-public:
-
-// Overrides
-	virtual BOOL InitInstance() override;
-	virtual int ExitInstance() override;
-
-	DECLARE_MESSAGE_MAP()
-};
-
-BEGIN_MESSAGE_MAP(CPierAgentModuleApp, CWinApp)
-END_MESSAGE_MAP()
-
-CPierAgentModuleApp theApp;
-
-BOOL CPierAgentModuleApp::InitInstance()
-{
-	return CWinApp::InitInstance();
-}
-
-int CPierAgentModuleApp::ExitInstance()
-{
-	return CWinApp::ExitInstance();
+   if (dwReason == DLL_PROCESS_ATTACH)
+   {
+      _Module.Init(ObjectMap);
+   }
+   else if (dwReason == DLL_PROCESS_DETACH)
+   {
+      _Module.Term();
+   }
+   return TRUE;    // ok
 }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -23,11 +23,6 @@
 #include "stdafx.h"
 #include <XBeamRateExt\PierData.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 xbrPierData::xbrPierData()
@@ -700,7 +695,7 @@ Float64 xbrPierData::GetXBeamLength() const
    return L;
 }
 
-HRESULT xbrPierData::Save(IStructuredSave* pStrSave,IProgress* pProgress)
+HRESULT xbrPierData::Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress> pProgress)
 {
    pStrSave->BeginUnit(_T("Pier"),1.0);
    pStrSave->put_Property(_T("ID"),CComVariant(m_ID));
@@ -810,7 +805,7 @@ HRESULT xbrPierData::Save(IStructuredSave* pStrSave,IProgress* pProgress)
    return S_OK;
 }
 
-HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,IProgress* pProgress)
+HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress> pProgress)
 {
    USES_CONVERSION;
    CHRException hr;

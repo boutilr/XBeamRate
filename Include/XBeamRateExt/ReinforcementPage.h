@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
 
 #include <XBeamRateExt\XBRExtExp.h>
 #include <MFCTools\RebarMaterialComboBox.h>
-#include <PgsExt\ConcreteMaterial.h>
-#include <PgsExt\PierData2.h>
+#include <PsgLib\ConcreteMaterial.h>
+#include <PsgLib\PierData2.h>
 #include <XBeamRateExt\PierData.h>
 
-interface IEditPierData;
+class IEditPierData;
 class CLongitudinalRebarGrid;
 class CStirrupGrid;
 class xbrLongitudinalRebarData;

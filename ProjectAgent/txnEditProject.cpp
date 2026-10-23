@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,15 +22,11 @@
 
 
 #include "stdafx.h"
+#include "ProjectAgent.h"
 #include "txnEditProject.h"
 
 #include <IFace\Project.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 txnEditProjectProperties::txnEditProjectProperties(
@@ -77,8 +73,8 @@ void txnEditProjectProperties::Undo()
 
 void txnEditProjectProperties::Execute(int i)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2(pBroker,IXBRProjectProperties,pProjProp);
    GET_IFACE2(pBroker,IXBREvents, pEvents);
@@ -95,7 +91,7 @@ void txnEditProjectProperties::Execute(int i)
    pEvents->FirePendingEvents();
 }
 
-std::unique_ptr<CEAFTransaction> txnEditProjectProperties::CreateClone() const
+std::unique_ptr<WBFL::EAF::Transaction> txnEditProjectProperties::CreateClone() const
 {
    return std::make_unique<txnEditProjectProperties>(m_BridgeName[0],
                                        m_BridgeName[1],

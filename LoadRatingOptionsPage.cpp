@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 //
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "resource.h"
 #include "LoadRatingOptionsPage.h"
 
@@ -31,11 +32,6 @@
 #include <EAF\EAFDisplayUnits.h>
 #include <EAF\EAFDocument.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 // CLoadRatingOptionsPage dialog
@@ -56,8 +52,7 @@ void CLoadRatingOptionsPage::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    DDX_CBEnum(pDX,IDC_ANALYSIS_MODE,m_AnalysisType);

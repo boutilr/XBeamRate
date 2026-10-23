@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 #include "stdafx.h"
 #include "GraphingAgent.h"
 #include "GraphingAgentImp.h"
-#include <IGraphManager.h>
+#include <EAF/EAFGraphManager.h>
 
 #include "AnalysisResultsGraphBuilder.h"
 #include "LiveLoadGraphBuilder.h"
@@ -36,124 +36,52 @@
 
 #include <XBeamRateExt\XBeamRateUtilities.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
-/////////////////////////////////////////////////////////////////////////////
-// CXBRGraphingAgentImp
-CGraphingAgentImp::CGraphingAgentImp()
+bool CGraphingAgentImp::RegisterInterfaces()
 {
-   m_pBroker = 0;
-}
-
-CGraphingAgentImp::~CGraphingAgentImp()
-{
-}
-
-HRESULT CGraphingAgentImp::FinalConstruct()
-{
-   return S_OK;
-}
-
-void CGraphingAgentImp::FinalRelease()
-{
-}
-
-#if defined _DEBUG
-bool CGraphingAgentImp::AssertValid() const
-{
+   EAF_AGENT_REGISTER_INTERFACES;
    return true;
-}
-#endif // _DEBUG
-
-//////////////////////////////////////////////////////////////////////
-// IAgent
-STDMETHODIMP CGraphingAgentImp::SetBroker(IBroker* pBroker)
-{
-   EAF_AGENT_SET_BROKER(pBroker);
-   return S_OK;
-}
-
-STDMETHODIMP CGraphingAgentImp::RegInterfaces()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-
-   //pBrokerInit->RegInterface( IID_ILoadRating,    this );
-
-   return S_OK;
 };
 
-STDMETHODIMP CGraphingAgentImp::Init()
+bool CGraphingAgentImp::Init()
 {
-   //EAF_AGENT_INIT;
-
-   ////
-   //// Attach to connection points for interfaces this agent depends on
-   ////
-   //CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   //CComPtr<IConnectionPoint> pCP;
-   //HRESULT hr = S_OK;
+   EAF_AGENT_INIT;
 
    InitGraphBuilders();
-
-   return AGENT_S_SECONDPASSINIT;
-}
-
-STDMETHODIMP CGraphingAgentImp::Init2()
-{
    //
    // Attach to connection points
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   m_dwProjectCookie = REGISTER_EVENT_SINK(IXBRProjectEventSink);
 
-   // Connection point for the bridge description
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Advise( GetUnknown(), &m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-
-   return S_OK;
+   return true;
 }
 
-STDMETHODIMP CGraphingAgentImp::Reset()
+bool CGraphingAgentImp::Reset()
 {
-   return S_OK;
+   EAF_AGENT_RESET;
+   return true;
 }
 
-STDMETHODIMP CGraphingAgentImp::GetClassID(CLSID* pCLSID)
+CLSID CGraphingAgentImp::GetCLSID() const
 {
-   *pCLSID = CLSID_GraphingAgent;
-   return S_OK;
+   return CLSID_XBeamRateGraphingAgent;
 }
 
-STDMETHODIMP CGraphingAgentImp::ShutDown()
+bool CGraphingAgentImp::ShutDown()
 {
+   EAF_AGENT_SHUTDOWN;
+
    //
    // Detach to connection points
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   UNREGISTER_EVENT_SINK(IXBRProjectEventSink, m_dwProjectCookie);
 
-   hr = pBrokerInit->FindConnectionPoint(IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Unadvise( m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the connection point
-
-   EAF_AGENT_CLEAR_INTERFACE_CACHE;
-   return S_OK;
+   return true;
 }
 
 HRESULT CGraphingAgentImp::InitGraphBuilders()
 {
-   GET_IFACE(IGraphManager,pGraphMgr);
+   GET_IFACE(IEAFGraphManager,pGraphMgr);
 
    std::unique_ptr<CXBRAnalysisResultsGraphBuilder> pAnalysisResultsGraphBuilder = std::make_unique<CXBRAnalysisResultsGraphBuilder>();
    pAnalysisResultsGraphBuilder->InitDocumentation(_T("XBRate"),IDH_ANALYSIS_RESULTS);

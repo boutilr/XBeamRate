@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,15 +22,11 @@
 
 
 #include "stdafx.h"
+#include "ProjectAgent.h"
 #include "ColumnLayoutGrid.h"
 #include <EAF\EAFDisplayUnits.h>
 #include <PGSuperUIUtil.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 GRID_IMPLEMENT_REGISTER(CColumnLayoutGrid, CS_DBLCLKS, 0, 0, 0);
 
@@ -86,8 +82,8 @@ void CColumnLayoutGrid::CustomInit()
 		);
 
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+    auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
 // set text along top row
@@ -171,8 +167,8 @@ void CColumnLayoutGrid::CustomInit()
 
 void CColumnLayoutGrid::SetHeightMeasurementType(CColumnData::ColumnHeightMeasurementType measure)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    CString cv;
@@ -310,8 +306,8 @@ void CColumnLayoutGrid::SetColumnData(const xbrPierData& pier)
 
 void CColumnLayoutGrid::SetColumnData(ROWCOL row,const CColumnData& column,Float64 S)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    ROWCOL col = 1;
@@ -411,8 +407,8 @@ void CColumnLayoutGrid::AddColumn(const CColumnData& column,Float64 S)
 
 void CColumnLayoutGrid::GetColumnData(ROWCOL row,CColumnData* pColumn,Float64* pS)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    ROWCOL col = 1;

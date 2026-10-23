@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-
+#include "GraphingAgent.h"
 #include "resource.h"
 #include "LiveLoadGraphBuilder.h"
 
@@ -30,7 +30,7 @@
 
 #include <EAF\EAFUtilities.h>
 #include <EAF\EAFDisplayUnits.h>
-#include <EAF\EAFAutoProgress.h>
+#include <EAF/AutoProgress.h>
 #include <MathEx.h>
 #include <Units\UnitValueNumericalFormatTools.h>
 
@@ -45,8 +45,8 @@
 #include <XBeamRateExt\XBeamRateUtilities.h>
 
 #include <..\..\PGSuper\Include\IFace\Project.h>
-#include <PgsExt\PierData2.h>
-#include <PgsExt\Helpers.h>
+#include <PsgLib\PierData2.h>
+#include <PsgLib\Helpers.h>
 
 #include <MFCTools\Format.h>
 #include <MFCTools\Text.h>
@@ -55,11 +55,6 @@
 
 #include <algorithm>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 // create a dummy unit conversion tool to pacify the graph constructor
 static WBFL::Units::LengthData DUMMY(WBFL::Units::Measure::Meter);
@@ -183,8 +178,8 @@ void CXBRLiveLoadGraphBuilder::OnVehicleTypeChanged()
 
 bool CXBRLiveLoadGraphBuilder::UpdateNow()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    if ( IsPGSExtension() )
    {
@@ -211,8 +206,8 @@ bool CXBRLiveLoadGraphBuilder::UpdateNow()
       }
    }
 
-   GET_IFACE2(pBroker,IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress,0);
+   GET_IFACE2(pBroker,IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress,0);
 
    pProgress->UpdateMessage(_T("Building Graph"));
 
@@ -231,8 +226,8 @@ void CXBRLiveLoadGraphBuilder::InitGraph()
    m_Graph.SetGridPenStyle(GRAPH_GRID_PEN_STYLE, GRAPH_GRID_PEN_WEIGHT, GRAPH_GRID_COLOR);
    m_Graph.SetClientAreaColor(GRAPH_BACKGROUND);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    m_pXFormat = new WBFL::Units::LengthTool(pDisplayUnits->GetSpanLengthUnit());
@@ -246,8 +241,8 @@ void CXBRLiveLoadGraphBuilder::UpdateYAxisUnits()
 
    ActionType actionType = m_GraphController.GetActionType();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    switch(actionType)
@@ -285,8 +280,8 @@ void CXBRLiveLoadGraphBuilder::UpdateGraphData()
 {
    m_Graph.ClearData();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2_NOCHECK(pBroker,IXBRRatingSpecification,pRatingSpec);
 
    ActionType actionType = m_GraphController.GetActionType();
@@ -421,8 +416,8 @@ LPCTSTR CXBRLiveLoadGraphBuilder::GetGraphTitle(ActionType actionType)
 
 void CXBRLiveLoadGraphBuilder::BuildControllingLiveLoadGraph(PierIDType pierID,const std::vector<xbrPointOfInterest>& vPoi,pgsTypes::LoadRatingType ratingType,ActionType actionType,IndexType minGraphIdx,IndexType maxGraphIdx)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    for (const auto& poi : vPoi)
@@ -458,8 +453,8 @@ void CXBRLiveLoadGraphBuilder::BuildControllingLiveLoadGraph(PierIDType pierID,c
 
 void CXBRLiveLoadGraphBuilder::BuildControllingVehicularLiveLoadGraph(PierIDType pierID,const std::vector<xbrPointOfInterest>& vPoi,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,ActionType actionType,IndexType minGraphIdx,IndexType maxGraphIdx)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    for (const auto& poi : vPoi)
@@ -494,8 +489,8 @@ void CXBRLiveLoadGraphBuilder::BuildControllingVehicularLiveLoadGraph(PierIDType
 
 void CXBRLiveLoadGraphBuilder::BuildLiveLoadGraph(PierIDType pierID,const std::vector<xbrPointOfInterest>& vPoi,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,ActionType actionType,IndexType graphIdx)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    for (const auto& poi : vPoi)
@@ -522,8 +517,8 @@ void CXBRLiveLoadGraphBuilder::BuildLiveLoadGraph(PierIDType pierID,const std::v
 
 void CXBRLiveLoadGraphBuilder::BuildWSDOTPermitLiveLoadGraph(PierIDType pierID,const std::vector<xbrPointOfInterest>& vPoi,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,ActionType actionType,IndexType permitGraphIdx,IndexType legalGraphIdx)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    // make sure the permitLaneIdx is value... if multipe loads are selected, and the live load cases
@@ -565,8 +560,8 @@ void CXBRLiveLoadGraphBuilder::BuildWSDOTPermitLiveLoadGraph(PierIDType pierID,c
 
 void CXBRLiveLoadGraphBuilder::DrawLiveLoadConfig(CWnd* pGraphWnd,CDC* pDC,PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRProductForces,pProductForces);
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 

@@ -3,9 +3,7 @@
 // Used by ProjectAgent.rc
 //
 #define IDS_PROJNAME                    100
-#define IDR_PROJECTAGENT                101
 #define IDS_NWC_MESSAGE                 101
-#define IDR_PROJECTAGENTMODULE          102
 #define IDS_LWC_MESSAGE                 102
 #define IDD_CAPACITY_OPTIONS            102
 #define IDD_PIER_LAYOUT_PAGE            106

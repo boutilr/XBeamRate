@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -20,25 +20,41 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 
-#pragma once
+#include "stdafx.h"
+#include <AgentTools.h>
+#include "XBeamRateAgent.h"
+#include "XBeamRateDataExporter.h"
 
-class CAgentCmdTarget : public CCmdTarget
+#include <IFace\Project.h>
+
+STDMETHODIMP CXBeamRateDataExporter::Init(UINT nCmdID)
 {
-public:
-   CAgentCmdTarget();
-   void Init(IBroker* pBroker);
+   return S_OK;
+}
 
-   void ShowProjectPropertiesOnNewProject(bool bShow);
-   bool ShowProjectPropertiesOnNewProject() const;
+CString CXBeamRateDataExporter::GetMenuText() const
+{
+   return CString("Piers to XBRate");
+}
 
-private:
-   IBroker* m_pBroker; // weak reference
+HBITMAP CXBeamRateDataExporter::GetBitmapHandle() const
+{
+   return nullptr;
+}
 
-   bool m_bShowProjectProperties;
+CString CXBeamRateDataExporter::GetCommandHintText() const
+{
+   return CString("Export a pier to XBRate\nTool tip text");
+}
 
-   DECLARE_MESSAGE_MAP()
-public:
-   afx_msg void OnEditPier();
-   afx_msg void OnEditOptions();
-   afx_msg void OnProjectProperties();
-};
+HRESULT CXBeamRateDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBroker)
+{
+   GET_IFACE2(pBroker, IXBRExport, pExport);
+   if ( !pExport )
+   {
+      AfxMessageBox(_T("XBRate Extension is not enabled. Piers cannot be exported"),MB_ICONEXCLAMATION | MB_OK);
+      return E_FAIL;
+   }
+
+   return pExport->BatchExport();
+}

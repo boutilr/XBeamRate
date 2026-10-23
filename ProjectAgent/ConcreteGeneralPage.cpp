@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 //
 
 #include "stdafx.h"
+#include "ProjectAgent.h"
 #include "resource.h"
 #include "PGSuperUnits.h"
 #include "ConcreteDetailsDlg.h"
@@ -38,11 +39,6 @@
 
 #include <EAF\EAFDocument.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // CConcreteGeneralPage dialog
@@ -78,8 +74,8 @@ void CConcreteGeneralPage::DoDataExchange(CDataExchange* pDX)
 	   DDX_Control(pDX, IDC_FC,      m_ctrlFc);
 	   DDX_Control(pDX, IDC_DS,      m_ctrlStrengthDensity);
 
-      CComPtr<IBroker> pBroker;
-      EAFGetBroker(&pBroker);
+       auto pBroker = EAFGetBroker();
+
       GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
       DDX_CBItemData(pDX, IDC_CONCRETE_TYPE, pParent->Concrete.Type);
@@ -288,8 +284,8 @@ HBRUSH CConcreteGeneralPage::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
          {
             CDataExchange dx(this,TRUE);
 
-            CComPtr<IBroker> pBroker;
-            EAFGetBroker(&pBroker);
+            auto pBroker = EAFGetBroker();
+
             GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
             Float64 value;
             DDX_UnitValue(&dx, IDC_DS, value, pDisplayUnits->GetDensityUnit() );

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 #include "SectionCut.h"
 #include "DisplayObjectFactory.h"
 
+#include <AgentTools.h>
 #include <IFace\XBeamRateAgent.h>
 #include <IFace\Project.h>
 
@@ -48,10 +49,11 @@
 #include <MFCTools\Format.h>
 
 #include <EAF\EAFDisplayUnits.h>
+#include <EAF\Menu.h>
 
 #include "XBRateCalculationSheet.h"
 
-#include <PgsExt\BridgeDescription2.h>
+#include <PsgLib\BridgeDescription2.h>
 
 #include <XBeamRateExt\XBeamRateUtilities.h>
 
@@ -154,9 +156,9 @@ BOOL CXBeamRateView::OnPreparePrinting(CPrintInfo* pInfo)
 void CXBeamRateView::OnPrint(CDC* pDC, CPrintInfo* pInfo) 
 {
    // get paper size
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
-   XBRateCalculationSheet border(pBroker);
+   auto pBroker = EAFGetBroker();
+
+   XBRateCalculationSheet border;
 
    CRect rcPrint = border.Print(pDC, 1);
 
@@ -316,8 +318,8 @@ void CXBeamRateView::OnUpdate(CView* pSender,LPARAM lHint,CObject* pHint)
    PierIDType pierID = GetPierID();
    if (pierID != INVALID_ID)
    {
-      CComPtr<IBroker> pBroker;
-      EAFGetBroker(&pBroker);
+      auto pBroker = EAFGetBroker();
+
       GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
       const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
       const CPierData2* pPier = pBridgeDesc->FindPier(pierID);
@@ -347,8 +349,8 @@ void CXBeamRateView::UpdateDisplayObjects()
    PierIndexType pierIdx = GetPierIndex();
    if ( pierIdx != INVALID_INDEX )
    {
-      CComPtr<IBroker> pBroker;
-      EAFGetBroker(&pBroker);
+      auto pBroker = EAFGetBroker();
+
       GET_IFACE2(pBroker,IBridgeDescription,pIBridgeDesc);
       const CPierData2* pPier = pIBridgeDesc->GetPier(pierIdx);
       if ( pPier->GetPierModelType() == pgsTypes::pmtIdealized )
@@ -399,8 +401,8 @@ void CXBeamRateView::UpdateRoadwayDisplayObjects()
 {
    auto displayList = m_pDispMgr->FindDisplayList(ROADWAY_DISPLAY_LIST_ID);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    PierIDType pierID = GetPierID();
 
@@ -600,8 +602,8 @@ void CXBeamRateView::UpdateXBeamDisplayObjects()
 {
    auto displayList = m_pDispMgr->FindDisplayList(XBEAM_DISPLAY_LIST_ID);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    PierIDType pierID = GetPierID();
 
@@ -707,8 +709,8 @@ void CXBeamRateView::UpdateColumnDisplayObjects()
 {
    auto displayList = m_pDispMgr->FindDisplayList(COLUMN_DISPLAY_LIST_ID);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2(pBroker,IXBRPier,pPier);
    GET_IFACE2(pBroker,IXBRProject,pProject);
@@ -797,8 +799,8 @@ void CXBeamRateView::UpdateRebarDisplayObjects()
 {
    auto displayList = m_pDispMgr->FindDisplayList(REBAR_DISPLAY_LIST_ID);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2(pBroker,IXBRPier,pPier);
 
@@ -853,8 +855,8 @@ void CXBeamRateView::UpdateStirrupDisplayObjects()
 {
    auto displayList = m_pDispMgr->FindDisplayList(STIRRUP_DISPLAY_LIST_ID);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2_NOCHECK(pBroker,IXBRPier,pPier);
    GET_IFACE2_NOCHECK(pBroker,IXBRSectionProperties,pSectProps);
@@ -979,8 +981,8 @@ void CXBeamRateView::UpdateBearingDisplayObjects()
 
    auto displayList = m_pDispMgr->FindDisplayList(BEARING_DISPLAY_LIST_ID);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    PierIDType pierID = GetPierID();
 
@@ -1024,8 +1026,8 @@ void CXBeamRateView::UpdateGirderDisplayObjects()
 
    auto displayList = m_pDispMgr->FindDisplayList(GIRDER_DISPLAY_LIST_ID);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    PierIndexType pierIdx = GetPierIndex();
    GET_IFACE2(pBroker,IBridge,pBridge);
@@ -1154,8 +1156,8 @@ void CXBeamRateView::UpdateGirderDisplayObjects()
 
 void CXBeamRateView::UpdateSectionCutDisplayObjects()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    auto display_list = m_pDispMgr->FindDisplayList(SECTION_CUT_DISPLAY_LIST_ID);
 
@@ -1186,8 +1188,8 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 {
    auto displayList = m_pDispMgr->FindDisplayList(DIMENSIONS_DISPLAY_LIST_ID);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    PierIDType pierID = GetPierID();
 
@@ -1483,8 +1485,8 @@ void CXBeamRateView::BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayLi
    auto textBlock = WBFL::DManip::TextBlock::Create();
 
    // Format the dimension text
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
    CString strDimension = FormatDimension(dimension,pDisplayUnits->GetSpanLengthUnit());
 
@@ -1500,8 +1502,8 @@ void CXBeamRateView::BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayLi
 void CXBeamRateView::HandleLButtonDblClk(UINT nFlags, CPoint logPoint)
 {
    CDisplayView::HandleLButtonDblClk(nFlags,logPoint);
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    if ( IsStandAlone() )
    {
@@ -1631,13 +1633,13 @@ void CXBeamRateView::HandleContextMenu(CWnd* pWnd,CPoint logPoint)
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
    CEAFBrokerDocument* pDoc = (CEAFBrokerDocument*)GetDocument();
-   CEAFMenu* pContextMenu = nullptr;
+   std::shared_ptr<WBFL::EAF::Menu> pContextMenu;
 
    PierIndexType pierIdx = GetPierIndex();
    if ( IsPGSExtension() )
    {
-      CComPtr<IBroker> pBroker;
-      EAFGetBroker(&pBroker);
+      auto pBroker = EAFGetBroker();
+
       GET_IFACE2(pBroker,IBridgeDescription,pIBridgeDesc);
       const CPierData2* pPierData = pIBridgeDesc->GetPier(pierIdx);
       if ( pPierData->GetPierModelType() == pgsTypes::pmtIdealized )
@@ -1646,13 +1648,13 @@ void CXBeamRateView::HandleContextMenu(CWnd* pWnd,CPoint logPoint)
       }
       else
       {
-         pContextMenu = CEAFMenu::CreateContextMenu(pDoc->GetPluginCommandManager());
+         pContextMenu = WBFL::EAF::Menu::CreateContextMenu(pDoc->GetPluginCommandManager());
          pContextMenu->LoadMenu(IDR_PGS_PIER_VIEW_CTX,nullptr);
       }
    }
    else
    {
-      pContextMenu = CEAFMenu::CreateContextMenu(pDoc->GetPluginCommandManager());
+      pContextMenu = WBFL::EAF::Menu::CreateContextMenu(pDoc->GetPluginCommandManager());
       pContextMenu->LoadMenu(IDR_XBR_PIER_VIEW_CTX,nullptr);
       pDoc->BuildReportMenu(pContextMenu,true);
    }
@@ -1669,23 +1671,22 @@ void CXBeamRateView::HandleContextMenu(CWnd* pWnd,CPoint logPoint)
    }
 
    pContextMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, logPoint.x, logPoint.y, this);
-   delete pContextMenu;
 }
 
 void CXBeamRateView::OnExportPier()
 {
    PierIndexType pierIdx = GetPierIndex();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRExport,pExport);
    pExport->Export(pierIdx);
 }
 
 void CXBeamRateView::OnEditPier()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    if ( IsStandAlone() )
    {

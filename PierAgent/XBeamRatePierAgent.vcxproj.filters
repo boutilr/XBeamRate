@@ -42,12 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="PierAgent.def" />
-    <None Include="PierAgent.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="PierAgentModule.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

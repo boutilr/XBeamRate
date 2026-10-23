@@ -3,8 +3,6 @@
 // Used by GraphingAgent.rc
 //
 #define IDS_PROJNAME                    100
-#define IDR_GRAPHINGAGENT               101
-#define IDR_GRAPHINGAGENTMODULE         102
 #define IDC_LIST1                       201
 #define IDC_LOADING                     201
 #define IDC_COMBO1                      202

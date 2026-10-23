@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,10 +21,12 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "resource.h"
 #include "XBeamRateDocProxyAgent.h"
 #include "XBeamRateDoc.h"
-#include "XBeamRateAppPlugin.h"
+#include "XBeamRateApp.h"
+#include "XBeamRatePluginApp.h"
 
 #include "XBeamRateStatusBar.h"
 
@@ -43,22 +45,17 @@
 
 #include "XBeamRateVersionInfoImpl.h"
 
-#include <EAF\EAFTxnManager.h>
+#include <EAF/TxnManager.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 /****************************************************************************
 CLASS
    CXBeamRateDocProxyAgent
 ****************************************************************************/
 
-CXBeamRateDocProxyAgent::CXBeamRateDocProxyAgent()
+CXBeamRateDocProxyAgent::CXBeamRateDocProxyAgent(CXBeamRateDoc* pDoc)
 {
-   m_pMyDocument = nullptr;
+   m_pMyDocument = pDoc;
    m_StdToolBarID = -1;
    
    m_EventHoldCount = 0;
@@ -69,119 +66,66 @@ CXBeamRateDocProxyAgent::~CXBeamRateDocProxyAgent()
 {
 }
 
-void CXBeamRateDocProxyAgent::SetDocument(CXBeamRateDoc* pDoc)
-{
-   m_pMyDocument = pDoc;
-}
-
 void CXBeamRateDocProxyAgent::AdviseEventSinks()
 {
-   //
-   // Attach to connection points
-   //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
-
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Advise( GetUnknown(), &m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-
-   hr = pBrokerInit->FindConnectionPoint( IID_IEAFDisplayUnitsEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Advise( GetUnknown(), &m_dwDisplayUnitsCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
+   m_dwProjectCookie = REGISTER_EVENT_SINK(IXBRProjectEventSink);
+   m_dwDisplayUnitsCookie = REGISTER_EVENT_SINK(IEAFDisplayUnitsEventSink);
 }
 
 void CXBeamRateDocProxyAgent::UnadviseEventSinks()
 {
-   //
-   // Detach to connection points
-   //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
-
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Unadvise( m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-
-   hr = pBrokerInit->FindConnectionPoint( IID_IEAFDisplayUnitsEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Unadvise( m_dwDisplayUnitsCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
+   UNREGISTER_EVENT_SINK(IXBRProjectEventSink, m_dwProjectCookie);
 }
 
-//////////////////////////////////////////////////////////
-// IAgentEx
-STDMETHODIMP CXBeamRateDocProxyAgent::SetBroker(IBroker* pBroker)
+bool CXBeamRateDocProxyAgent::RegisterInterfaces()
 {
-   EAF_AGENT_SET_BROKER(pBroker);
-   return S_OK;
+   EAF_AGENT_REGISTER_INTERFACES;
+   REGISTER_INTERFACE(IXBRUIEvents);
+   REGISTER_INTERFACE(IXBRVersionInfo);
+   REGISTER_INTERFACE(IXBRViews);
+   REGISTER_INTERFACE(IXBREditByUI);
+   return true;
 }
 
-STDMETHODIMP CXBeamRateDocProxyAgent::RegInterfaces()
+bool CXBeamRateDocProxyAgent::Init()
 {
-   CComQIPtr<IBrokerInitEx2> pBrokerInit(m_pBroker);
-   pBrokerInit->RegInterface( IID_IXBeamRate,      this );
-   pBrokerInit->RegInterface( IID_IXBRUIEvents,    this );
-   pBrokerInit->RegInterface( IID_IXBRVersionInfo, this );
-   pBrokerInit->RegInterface( IID_IXBRViews,       this );
-   pBrokerInit->RegInterface( IID_IXBREditByUI,    this );
-   return S_OK;
-}
-
-STDMETHODIMP CXBeamRateDocProxyAgent::Init()
-{
-   //EAF_AGENT_INIT;
-
-   return AGENT_S_SECONDPASSINIT;
-}
-
-STDMETHODIMP CXBeamRateDocProxyAgent::Init2()
-{
+   EAF_AGENT_INIT;
    AdviseEventSinks();
-   return S_OK;
+   return true;
 }
 
-STDMETHODIMP CXBeamRateDocProxyAgent::Reset()
+bool CXBeamRateDocProxyAgent::Reset()
 {
-   CEAFTxnManager::GetInstance().Clear();
-   return S_OK;
+   EAF_AGENT_RESET;
+   WBFL::EAF::TxnManager::GetInstance().Clear();
+   return true;
 }
 
-STDMETHODIMP CXBeamRateDocProxyAgent::ShutDown()
+bool CXBeamRateDocProxyAgent::ShutDown()
 {
+   EAF_AGENT_SHUTDOWN;
    UnadviseEventSinks();
 
-   EAF_AGENT_CLEAR_INTERFACE_CACHE;
    //CLOSE_LOGFILE;
 
    return S_OK;
 }
 
-STDMETHODIMP CXBeamRateDocProxyAgent::GetClassID(CLSID* pCLSID)
+CLSID CXBeamRateDocProxyAgent::GetCLSID() const
 {
-   *pCLSID = CLSID_XBeamRateDocProxyAgent;
-   return S_OK;
+   return CLSID_XBeamRateDocProxyAgent;
 }
 
 ////////////////////////////////////////////////////////////////////
 // IAgentPriority
-IndexType CXBeamRateDocProxyAgent::GetPriority()
+IndexType CXBeamRateDocProxyAgent::GetPriority() const
 {
    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////
 // IAgentUIIntegration
-STDMETHODIMP CXBeamRateDocProxyAgent::IntegrateWithUI(BOOL bIntegrate)
+bool CXBeamRateDocProxyAgent::IntegrateWithUI(bool bIntegrate)
 {
    if ( bIntegrate )
    {
@@ -199,21 +143,6 @@ STDMETHODIMP CXBeamRateDocProxyAgent::IntegrateWithUI(BOOL bIntegrate)
    }
 
    return S_OK;
-}
-
-////////////////////////////////////////////////////////////////////
-// IXBeamRate
-void CXBeamRateDocProxyAgent::GetUnitServer(IUnitServer** ppUnitServer)
-{
-   CEAFDocTemplate* pTemplate = (CEAFDocTemplate*)(m_pMyDocument->GetDocTemplate());
-   CComPtr<IEAFAppPlugin> pAppPlugin;
-   pTemplate->GetPlugin(&pAppPlugin);
-   CXBeamRateAppPlugin* pXBeamRate = dynamic_cast<CXBeamRateAppPlugin*>(pAppPlugin.p);
-
-   CComPtr<IAppUnitSystem> appUnitSystem;
-   pXBeamRate->GetAppUnitSystem(&appUnitSystem);
-
-   appUnitSystem->get_UnitServer(ppUnitServer);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -236,7 +165,7 @@ HRESULT CXBeamRateDocProxyAgent::OnUnitsChanging()
    return S_OK;
 }
 
-HRESULT CXBeamRateDocProxyAgent::OnUnitsChanged(eafTypes::UnitMode newUnitMode)
+HRESULT CXBeamRateDocProxyAgent::OnUnitsChanged(WBFL::EAF::UnitMode newUnitMode)
 {
    AFX_MANAGE_STATE(AfxGetAppModuleState());
    m_pMyDocument->SetModifiedFlag();
@@ -373,7 +302,7 @@ void CXBeamRateDocProxyAgent::CreateReportView(IndexType rptIdx,BOOL bPromptForS
    data.m_RptIdx = rptIdx;
    data.m_bPromptForSpec = bPromptForSpec;
 
-   GET_IFACE(IReportManager,pRptMgr);
+   GET_IFACE(IEAFReportManager,pRptMgr);
    data.m_pRptMgr = pRptMgr;
 
    GET_IFACE(IEAFViewRegistrar,pViewReg);
@@ -383,7 +312,7 @@ void CXBeamRateDocProxyAgent::CreateReportView(IndexType rptIdx,BOOL bPromptForS
 void CXBeamRateDocProxyAgent::CreateGraphView(IndexType graphIdx)
 {
    CEAFGraphViewCreationData data;
-   GET_IFACE(IGraphManager,pGraphMgr);
+   GET_IFACE(IEAFGraphManager,pGraphMgr);
    data.m_pIGraphMgr = pGraphMgr;
    data.m_GraphIndex = graphIdx;
 
@@ -410,10 +339,9 @@ void CXBeamRateDocProxyAgent::RegisterViews()
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
    CEAFDocTemplate* pTemplate = (CEAFDocTemplate*)(m_pMyDocument->GetDocTemplate());
-   CComPtr<IEAFAppPlugin> pAppPlugin;
-   pTemplate->GetPlugin(&pAppPlugin);
+   auto pluginApp = pTemplate->GetPluginApp();
 
-   HMENU hMenu = pAppPlugin->GetSharedMenuHandle();
+   HMENU hMenu = pluginApp->GetSharedMenuHandle();
 
    // Register all secondary views that are associated with our document type
    // TODO: After the menu and command extensions can be made, the agents that are responsble
@@ -440,7 +368,7 @@ void CXBeamRateDocProxyAgent::CreateToolBars()
    GET_IFACE(IEAFToolbars,pToolBars);
 
    m_StdToolBarID = pToolBars->CreateToolBar(_T("Standard"));
-   CEAFToolBar* pToolBar = pToolBars->GetToolBar(m_StdToolBarID);
+   auto pToolBar = pToolBars->GetToolBar(m_StdToolBarID);
    pToolBar->LoadToolBar(IDR_XBEAMRATE,nullptr); // don't use a command callback because these commands are handled by 
                                                // the standard MFC message routing
 
@@ -497,7 +425,7 @@ void CXBeamRateDocProxyAgent::OnStatusChanged()
    if (m_pBroker)
    {
       GET_IFACE(IEAFToolbars, pToolBars);
-      CEAFToolBar* pToolBar = pToolBars->GetToolBar(GetStdToolBarID());
+      auto pToolBar = pToolBars->GetToolBar(GetStdToolBarID());
 
       if (pToolBar == nullptr)
          return;
@@ -505,19 +433,19 @@ void CXBeamRateDocProxyAgent::OnStatusChanged()
       GET_IFACE(IEAFStatusCenter, pStatusCenter);
       switch (pStatusCenter->GetSeverity())
       {
-      case eafTypes::statusInformation:
+      case WBFL::EAF::StatusSeverityType::Information:
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER, nullptr, FALSE);
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER2, nullptr, TRUE);
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER3, nullptr, TRUE);
          break;
 
-      case eafTypes::statusWarning:
+      case WBFL::EAF::StatusSeverityType::Warning:
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER, nullptr, TRUE);
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER2, nullptr, FALSE);
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER3, nullptr, TRUE);
          break;
 
-      case eafTypes::statusError:
+      case WBFL::EAF::StatusSeverityType::Error:
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER, nullptr, TRUE);
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER2, nullptr, TRUE);
          pToolBar->HideButton(EAFID_VIEW_STATUSCENTER3, nullptr, FALSE);

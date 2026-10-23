@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
 // Used by EngAgent.rc
 //
 #define IDS_PROJNAME                    100
-#define IDR_ENGAGENT                101
+
 #define IDR_ENGAGENTMODULE          102
 
 // Next default values for new objects

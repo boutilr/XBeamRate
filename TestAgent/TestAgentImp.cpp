@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -25,84 +25,45 @@
 #include "TestAgent.h"
 #include "TestAgentImp.h"
 
-#include <EAF\EAFAutoProgress.h>
+#include <EAF/AutoProgress.h>
 #include <IFace\VersionInfo.h>
 #include <IFace\Project.h>
 #include <IFace\PointOfInterest.h>
 #include <IFace\AnalysisResults.h>
 #include <IFace\LoadRating.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
-/////////////////////////////////////////////////////////////////////////////
-// CTestAgentImp
-CTestAgentImp::CTestAgentImp()
+bool CTestAgentImp::RegisterInterfaces()
 {
-   m_pBroker = 0;
-}
+   EAF_AGENT_REGISTER_INTERFACES;
 
-CTestAgentImp::~CTestAgentImp()
-{
-}
+   REGISTER_INTERFACE(IXBRTest);
 
-HRESULT CTestAgentImp::FinalConstruct()
-{
-   return S_OK;
-}
-
-void CTestAgentImp::FinalRelease()
-{
-}
-
-//////////////////////////////////////////////////////////////////////
-// IAgent
-STDMETHODIMP CTestAgentImp::SetBroker(IBroker* pBroker)
-{
-   EAF_AGENT_SET_BROKER(pBroker);
-   return S_OK;
-}
-
-STDMETHODIMP CTestAgentImp::RegInterfaces()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-
-   pBrokerInit->RegInterface( IID_IXBRTest, this);
-
-   return S_OK;
+   return true;
 };
 
-STDMETHODIMP CTestAgentImp::Init()
+bool CTestAgentImp::Init()
 {
-   EAF_AGENT_INIT; // this macro defines pStatusCenter
-   m_StatusGroupID = pStatusCenter->CreateStatusGroupID();
+   EAF_AGENT_INIT;
 
-   return AGENT_S_SECONDPASSINIT;
+   return true;
 }
 
-STDMETHODIMP CTestAgentImp::Init2()
+bool CTestAgentImp::Reset()
 {
-   return S_OK;
+   EAF_AGENT_RESET;
+   return true;
 }
 
-STDMETHODIMP CTestAgentImp::Reset()
+CLSID CTestAgentImp::GetCLSID() const
 {
-   return S_OK;
+   return CLSID_XBeamRateTestAgent;
 }
 
-STDMETHODIMP CTestAgentImp::GetClassID(CLSID* pCLSID)
+bool CTestAgentImp::ShutDown()
 {
-   *pCLSID = CLSID_TestAgent;
-   return S_OK;
-}
-
-STDMETHODIMP CTestAgentImp::ShutDown()
-{
-   EAF_AGENT_CLEAR_INTERFACE_CACHE;
-   return S_OK;
+   EAF_AGENT_SHUTDOWN;
+   return true;
 }
 
 //////////////////////////////////////////
@@ -118,8 +79,8 @@ HRESULT CTestAgentImp::RunTest(PierIDType pierID,LPCTSTR lpszResultsFile)
    }
 
    // create progress window
-   GET_IFACE(IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE(IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
 
    GET_IFACE(IXBRPointOfInterest,pPoi);
    std::vector<xbrPointOfInterest> vPoi( pPoi->GetXBeamPointsOfInterest(pierID,POI_GRID) );

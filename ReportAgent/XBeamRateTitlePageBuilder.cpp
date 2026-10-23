@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,58 +22,38 @@
 
 
 #include "stdafx.h"
+#include "ReportAgent.h"
 #include <XBeamRateTitlePageBuilder.h>
 #include <XBeamRateReportSpecification.h>
 
 #include <IFace\VersionInfo.h>
 #include <IFace\Project.h>
-#include <IFace\StatusCenter.h>
+#include <EAF/EAFStatusCenter.h>
 
 #include <..\..\PGSuper\Include\IFace\Project.h>
 #include <EAF\EAFDocument.h>
 
-#include <PgsExt\PierData2.h>
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\PierData2.h>
+#include <PsgLib\GirderLabel.h>
 
 #include <MFCTools\AutoRegistry.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
-
-CXBeamRateTitlePageBuilder::CXBeamRateTitlePageBuilder(IBroker* pBroker,LPCTSTR strTitle) :
-WBFL::Reporting::TitlePageBuilder(strTitle),
-m_pBroker(pBroker)
-{
-}
-
-CXBeamRateTitlePageBuilder::CXBeamRateTitlePageBuilder(const CXBeamRateTitlePageBuilder& other) :
-WBFL::Reporting::TitlePageBuilder(other),
-m_pBroker(other.m_pBroker)
-{
-}
-
-CXBeamRateTitlePageBuilder::~CXBeamRateTitlePageBuilder(void)
-{
-}
-
-std::unique_ptr<WBFL::Reporting::TitlePageBuilder> CXBeamRateTitlePageBuilder::Clone() const
+std::unique_ptr<WBFL::ReportMgr::TitlePageBuilder> CXBeamRateTitlePageBuilder::Clone() const
 {
    return std::make_unique<CXBeamRateTitlePageBuilder>(*this);
 }
 
-bool CXBeamRateTitlePageBuilder::NeedsUpdate(const std::shared_ptr<const WBFL::Reporting::ReportHint>& pHint,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec) const
+bool CXBeamRateTitlePageBuilder::NeedsUpdate(const std::shared_ptr<const WBFL::ReportMgr::ReportHint>& pHint,const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec) const
 {
    // don't let the title page control whether or not a report needs updating
    return false;
 }
 
-rptChapter* CXBeamRateTitlePageBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec) const
+rptChapter* CXBeamRateTitlePageBuilder::Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec) const
 {
    auto pXBRRptSpec = std::dynamic_pointer_cast<const CXBeamRateReportSpecification>(pRptSpec);
+   auto pBroker = pXBRRptSpec->GetBroker();
 
    // Create a title page for the report
    rptChapter* pTitlePage = new rptChapter;
@@ -88,7 +68,7 @@ rptChapter* CXBeamRateTitlePageBuilder::Build(const std::shared_ptr<const WBFL::
 
    if (pXBRRptSpec->GetPierID() != INVALID_INDEX)
    {
-      GET_IFACE(IBridgeDescription, pIBridgeDesc);
+      GET_IFACE2(pBroker,IBridgeDescription, pIBridgeDesc);
 
       const CPierData2* pPier = pIBridgeDesc->FindPier(pXBRRptSpec->GetPierID());
       ATLASSERT(pPier);
@@ -114,7 +94,7 @@ rptChapter* CXBeamRateTitlePageBuilder::Build(const std::shared_ptr<const WBFL::
    pPara = new rptParagraph;
    pPara->SetStyleName(rptStyleManager::GetReportSubtitleStyle());
    *pTitlePage << pPara;
-   GET_IFACE(IXBRVersionInfo, pVerInfo);
+   GET_IFACE2(pBroker,IXBRVersionInfo, pVerInfo);
    *pPara << pVerInfo->GetVersionString() << rptNewLine;
 
    // Title page art image.
@@ -147,8 +127,8 @@ rptChapter* CXBeamRateTitlePageBuilder::Build(const std::shared_ptr<const WBFL::
    // use the IProjectProperties and report in PGSuper format
    ////////////////////////////
 
-   GET_IFACE(IEAFDocument, pDocument);
-   GET_IFACE(IXBRProjectProperties, pProps);
+   GET_IFACE2(pBroker,IEAFDocument, pDocument);
+   GET_IFACE2(pBroker,IXBRProjectProperties, pProps);
    rptParagraph* pPara3 = new rptParagraph(rptStyleManager::GetHeadingStyle());
    *pTitlePage << pPara3;
 
@@ -217,7 +197,7 @@ rptChapter* CXBeamRateTitlePageBuilder::Build(const std::shared_ptr<const WBFL::
 
    ///////////////////////////////////
    // Status items
-   GET_IFACE(IEAFStatusCenter, pStatusCenter);
+   GET_IFACE2(pBroker,IEAFStatusCenter, pStatusCenter);
    IndexType nItems = pStatusCenter->Count();
 
    if (0 < nItems)
@@ -241,17 +221,17 @@ rptChapter* CXBeamRateTitlePageBuilder::Build(const std::shared_ptr<const WBFL::
       CString strSeverityType[] = { _T("Information"), _T("Warning"), _T("Error") };
       for (IndexType i = 0; i < nItems; i++)
       {
-         CEAFStatusItem* pItem = pStatusCenter->GetByIndex(i);
+         auto pItem = pStatusCenter->GetByIndex(i);
 
-         eafTypes::StatusSeverityType severity = pStatusCenter->GetSeverity(pItem);
+         WBFL::EAF::StatusSeverityType severity = pStatusCenter->GetSeverity(pItem);
 
          // Set text and cell background
          rptRiStyle::FontColor colors[] = { rptRiStyle::LightGreen, rptRiStyle::Yellow, rptRiStyle::Red };
-         rptRiStyle::FontColor color = colors[severity];
+         rptRiStyle::FontColor color = colors[+severity];
          (*pTable)(row, 0) << new rptRcBgColor(color);
          (*pTable)(row, 0).SetFillBackGroundColor(color);
 
-         (*pTable)(row, 0) << strSeverityType[severity];
+         (*pTable)(row, 0) << strSeverityType[+severity];
          (*pTable)(row++, 1) << pItem->GetDescription();
       }
    }

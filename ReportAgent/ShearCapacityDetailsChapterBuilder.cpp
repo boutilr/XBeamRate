@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "ReportAgent.h"
 #include "ShearCapacityDetailsChapterBuilder.h"
 #include <EAF\EAFDisplayUnits.h>
 
@@ -31,36 +32,25 @@
 
 #include "XBeamRateReportSpecification.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
-/****************************************************************************
-CLASS
-   CShearCapacityDetailsChapterBuilder
-****************************************************************************/
 CShearCapacityDetailsChapterBuilder::CShearCapacityDetailsChapterBuilder()
 {
 }
 
-//======================== OPERATORS  =======================================
-//======================== OPERATIONS =======================================
 LPCTSTR CShearCapacityDetailsChapterBuilder::GetName() const
 {
    return TEXT("Shear Capacity Details");
 }
 
-rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    auto pXBRRptSpec = std::dynamic_pointer_cast<const CXBeamRateReportSpecification>(pRptSpec);
 
    // This report does not use the passd span and girder parameters
    rptChapter* pChapter = CXBeamRateChapterBuilder::Build(pRptSpec,level);
 
-   CComPtr<IBroker> pBroker;
-   pXBRRptSpec->GetBroker(&pBroker);
+   auto pBroker = pXBRRptSpec->GetBroker();
+
 
    PierIDType pierID = pXBRRptSpec->GetPierID();
 
@@ -484,9 +474,4 @@ rptChapter* CShearCapacityDetailsChapterBuilder::Build(const std::shared_ptr<con
    }
 
    return pChapter;
-}
-
-std::unique_ptr<WBFL::Reporting::ChapterBuilder> CShearCapacityDetailsChapterBuilder::Clone() const
-{
-   return std::make_unique<CShearCapacityDetailsChapterBuilder>();
 }

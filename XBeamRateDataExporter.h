@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,41 +22,24 @@
 
 // PGSuperExporter.h : Declaration of the CPGSuperExporter
 
-#ifndef __PGSUPEREXPORTER_H_
-#define __PGSUPEREXPORTER_H_
+#pragma once
 
 #include <Plugins\PGSuperIEPlugin.h>
-#include "resource.h"       // main symbols
+#include <EAF\ComponentObject.h>
 
 /////////////////////////////////////////////////////////////////////////////
-// CPGSuperDataExporter
-class ATL_NO_VTABLE CPGSuperDataExporter : 
-	public CComObjectRootEx<CComSingleThreadModel>,
-	public CComCoClass<CPGSuperDataExporter, &CLSID_PGSuperDataExporter>,
-   public IPGSDataExporter
+// CXBeamRateDataExporter
+class CXBeamRateDataExporter : public WBFL::EAF::ComponentObject,
+   public PGS::IDataExporter
 {
 public:
-	CPGSuperDataExporter()
-	{
-	}
+   CXBeamRateDataExporter() = default;
 
-   HRESULT FinalConstruct();
-
-DECLARE_REGISTRY_RESOURCEID(IDR_PGSUPEREXPORTER)
-
-DECLARE_PROTECT_FINAL_CONSTRUCT()
-
-BEGIN_COM_MAP(CPGSuperDataExporter)
-   COM_INTERFACE_ENTRY(IPGSDataExporter)
-END_COM_MAP()
-
-// IPGSDataExporter
+// IDataExporter
 public:
    STDMETHOD(Init)(UINT nCmdID) override;
-   STDMETHOD(GetMenuText)(/*[out,retval]*/BSTR*  bstrText) const override;
-   STDMETHOD(GetBitmapHandle)(/*[out]*/HBITMAP* phBmp) const override;
-   STDMETHOD(GetCommandHintText)(BSTR*  bstrText) const override;
-   STDMETHOD(Export)(/*[in]*/IBroker* pBroker) override;
+   CString GetMenuText() const override;
+   HBITMAP GetBitmapHandle() const override;
+   CString GetCommandHintText() const override;
+   HRESULT Export(std::shared_ptr<WBFL::EAF::Broker> pBroker) override;
 };
-
-#endif //__PGSUPEREXPORTER_H_

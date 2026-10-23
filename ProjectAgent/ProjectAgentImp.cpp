@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -27,18 +27,20 @@
 #include "ProjectAgent.h"
 #include "ProjectAgentImp.h"
 
-#include <XBeamRateExt\XBeamRateUtilities.h>
+#include <WBFLTools\StructuredStorageComAdapter.h>
+
 #include <XBeamRateExt\StatusItem.h>
 
 #include <EAF\EAFDisplayUnits.h>
 #include <IFace\XBeamRateAgent.h>
 #include <IFace\VersionInfo.h>
 
-#include <PgsExt\GirderLabel.h>
-#include <EAF\EAFAutoProgress.h>
 
-#include <PgsExt\BridgeDescription2.h>
-#include <PgsExt\Helpers.h>
+#include <PsgLib\GirderLabel.h>
+#include <EAF/AutoProgress.h>
+
+#include <PsgLib\BridgeDescription2.h>
+#include <PsgLib\Helpers.h>
 
 #include <..\..\PGSuper\Include\IFace\Bridge.h>
 #include <..\..\PGSuper\Include\IFace\Alignment.h>
@@ -55,11 +57,28 @@
 
 #include "PierExporter.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
+#include <MFCTools\Prompts.h>
+#include <EAF\EAFTransactions.h>
+#include <txnEditProject.h>
+#include <txnEditPier.h>
+#include <txnEditOptions.h>
+
+#include "PierDlg.h"
+#include "OptionsDlg.h"
+#include "ProjectPropertiesDlg.h"
+
+#include <XBeamRateExt\XBeamRateUtilities.h>
+
+#include <IFace\Project.h>
+#include <IFace\RatingSpecification.h>
+
+
+
+BEGIN_MESSAGE_MAP(CProjectAgentImp, CCmdTarget)
+   ON_COMMAND(ID_EDIT_PIER, OnEditPier)
+   ON_COMMAND(ID_EDIT_OPTIONS, OnEditOptions)
+   ON_COMMAND(ID_EDIT_PROPERTIES, OnProjectProperties)
+END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CProjectAgentImp
@@ -187,20 +206,6 @@ CProjectAgentImp::CProjectAgentImp()
    m_bExportingModel = false;
 }
 
-CProjectAgentImp::~CProjectAgentImp()
-{
-}
-
-HRESULT CProjectAgentImp::FinalConstruct()
-{
-   return S_OK;
-}
-
-void CProjectAgentImp::FinalRelease()
-{
-   Invalidate();
-}
-
 void CProjectAgentImp::Invalidate()
 {
    for ( int i = 0; i < RATING_LIMIT_STATE_COUNT; i++ )
@@ -241,8 +246,8 @@ HRESULT CProjectAgentImp::SavePier(PierIndexType pierIdx,LPCTSTR lpszPathName)
    const CPierData2* pPier = pIBridgeDesc->GetPier(pierIdx);
    PierIDType pierID = pPier->GetID();
 
-   GET_IFACE(IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE(IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
 
    CString strMsg;
    strMsg.Format(_T("Exporting Pier %s to XBRate"),LABEL_PIER(pierIdx));
@@ -273,11 +278,14 @@ HRESULT CProjectAgentImp::SavePier(PierIndexType pierIdx,LPCTSTR lpszPathName)
    pStrSave->BeginUnit(_T("Agent"),1.0);
 
    LPOLESTR postr;
-   StringFromCLSID(CLSID_ProjectAgent,&postr);
+   ::StringFromCLSID(CLSID_XBeamRateProjectAgent,&postr);
    pStrSave->put_Property(_T("CLSID"),CComVariant(postr));
-   CoTaskMemFree(postr);
+   ::CoTaskMemFree(postr);
 
-   Save(pStrSave);
+   // Save() takes the native WBFL::System::IStructuredSave interface; wrap the COM pointer this
+   // hand-rolled mini-Broker-save already created, same as WBFL::EAF::Broker::SaveAgentData does.
+   CStructuredSave native_save(pStrSave);
+   Save(&native_save);
 
    pStrSave->EndUnit(); // Agent
    pStrSave->EndUnit(); // Broker
@@ -286,45 +294,33 @@ HRESULT CProjectAgentImp::SavePier(PierIndexType pierIdx,LPCTSTR lpszPathName)
    return S_OK;
 }
 
-#if defined _DEBUG
-bool CProjectAgentImp::AssertValid() const
-{
-   return true;
-}
-#endif // _DEBUG
-
 //////////////////////////////////////////////////////////////////////
 // IAgent
-STDMETHODIMP CProjectAgentImp::SetBroker(IBroker* pBroker)
+bool CProjectAgentImp::RegisterInterfaces()
 {
-   EAF_AGENT_SET_BROKER(pBroker);
-   m_CommandTarget.Init(pBroker);
-   return S_OK;
-}
+   EAF_AGENT_REGISTER_INTERFACES;
 
-STDMETHODIMP CProjectAgentImp::RegInterfaces()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
+   REGISTER_INTERFACE(IXBRProject);
+   REGISTER_INTERFACE(IXBRProjectProperties);
+   REGISTER_INTERFACE(IXBRRatingSpecification);
+   REGISTER_INTERFACE(IXBRProjectEdit);
+   REGISTER_INTERFACE(IXBREvents);
+   REGISTER_INTERFACE(IXBRExport);
 
-   pBrokerInit->RegInterface( IID_IXBRProject,             this );
-   pBrokerInit->RegInterface( IID_IXBRProjectProperties,   this );
-   pBrokerInit->RegInterface( IID_IXBRRatingSpecification, this );
-   pBrokerInit->RegInterface( IID_IXBRProjectEdit,         this );
-   pBrokerInit->RegInterface( IID_IXBREvents,              this );
-   pBrokerInit->RegInterface( IID_IXBRExport,              this );
-
-   return S_OK;
+   return true;
 };
 
-STDMETHODIMP CProjectAgentImp::Init()
+bool CProjectAgentImp::Init()
 {
-   EAF_AGENT_INIT; // this macro defines pStatusCenter
+   EAF_AGENT_INIT;
+
+   GET_IFACE(IEAFStatusCenter, pStatusCenter);
    m_XBeamRateStatusGroupID = pStatusCenter->CreateStatusGroupID();
 
    // Register status callbacks that we want to use
-   m_scidBridgeInfo = pStatusCenter->RegisterCallback(new xbrBridgeStatusCallback(eafTypes::statusInformation));
-   m_scidBridgeWarn = pStatusCenter->RegisterCallback(new xbrBridgeStatusCallback(eafTypes::statusWarning));
-   m_scidBridgeError = pStatusCenter->RegisterCallback(new xbrBridgeStatusCallback(eafTypes::statusError));
+   m_scidBridgeInfo = pStatusCenter->RegisterCallback(std::make_shared<xbrBridgeStatusCallback>(WBFL::EAF::StatusSeverityType::Information));
+   m_scidBridgeWarn = pStatusCenter->RegisterCallback(std::make_shared<xbrBridgeStatusCallback>(WBFL::EAF::StatusSeverityType::Warning));
+   m_scidBridgeError = pStatusCenter->RegisterCallback(std::make_shared<xbrBridgeStatusCallback>(WBFL::EAF::StatusSeverityType::Error));
 
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    CWinApp* pApp = AfxGetApp();
@@ -332,96 +328,58 @@ STDMETHODIMP CProjectAgentImp::Init()
    CString strProjectProperties = pApp->GetProfileString(_T("Settings"),_T("ShowProjectProperties"),_T("On"));
    if ( strProjectProperties.CompareNoCase(_T("Off")) == 0 )
    {
-      m_CommandTarget.ShowProjectPropertiesOnNewProject(false);
+      ShowProjectPropertiesOnNewProject(false);
    }
    else
    {
-      m_CommandTarget.ShowProjectPropertiesOnNewProject(true);
+      ShowProjectPropertiesOnNewProject(true);
    }
 
-   return AGENT_S_SECONDPASSINIT;
-}
-
-STDMETHODIMP CProjectAgentImp::Init2()
-{
    //
    // Attach to connection points for interfaces this agent depends on
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   m_dwBridgeDescCookie = REGISTER_EVENT_SINK(IBridgeDescriptionEventSink);
+   m_dwEventsCookie = REGISTER_EVENT_SINK(IEventsSink);
 
-   // Connection point for the bridge description
-   hr = pBrokerInit->FindConnectionPoint( IID_IBridgeDescriptionEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Advise( GetUnknown(), &m_dwBridgeDescCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-   }
-
-   hr = pBrokerInit->FindConnectionPoint( IID_IEventsSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Advise( GetUnknown(), &m_dwEventsCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-   }
-
-   return S_OK;
+   return true;
 }
 
-STDMETHODIMP CProjectAgentImp::Reset()
+bool CProjectAgentImp::Reset()
 {
-   return S_OK;
+   EAF_AGENT_RESET;
+   return true;
 }
 
-STDMETHODIMP CProjectAgentImp::GetClassID(CLSID* pCLSID)
+CLSID CProjectAgentImp::GetCLSID() const
 {
-   *pCLSID = CLSID_ProjectAgent;
-   return S_OK;
+   return CLSID_XBeamRateProjectAgent;
 }
 
-IndexType CProjectAgentImp::GetPriority()
+bool CProjectAgentImp::ShutDown()
 {
-   return 1;
-}
-
-STDMETHODIMP CProjectAgentImp::ShutDown()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
-
-   hr = pBrokerInit->FindConnectionPoint(IID_IBridgeDescriptionEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Unadvise( m_dwBridgeDescCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the connection point
-   }
-
-   hr = pBrokerInit->FindConnectionPoint(IID_IEventsSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Unadvise( m_dwEventsCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the connection point
-   }
+   EAF_AGENT_SHUTDOWN;
+   Invalidate();
+   UNREGISTER_EVENT_SINK(IBridgeDescriptionEventSink, m_dwBridgeDescCookie);
+   UNREGISTER_EVENT_SINK(IEventsSink, m_dwEventsCookie);
 
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    CAutoRegistry autoReg(_T("XBeamRate"));
    CWinApp* pApp = AfxGetApp();
-   VERIFY(pApp->WriteProfileString( _T("Settings"),_T("ShowProjectProperties"),m_CommandTarget.ShowProjectPropertiesOnNewProject() ? _T("On") : _T("Off") ));
+   VERIFY(pApp->WriteProfileString( _T("Settings"),_T("ShowProjectProperties"),ShowProjectPropertiesOnNewProject() ? _T("On") : _T("Off") ));
 
-   EAF_AGENT_CLEAR_INTERFACE_CACHE;
+   //EAF_AGENT_CLEAR_INTERFACE_CACHE;
 
-   return S_OK;
+   return true;
+}
+
+IndexType CProjectAgentImp::GetPriority() const
+{
+   return 1;
 }
 
 //////////////////////////////////////////////////////////////////////
 // IAgentUIIntegration
-STDMETHODIMP CProjectAgentImp::IntegrateWithUI(BOOL bIntegrate)
+bool CProjectAgentImp::IntegrateWithUI(bool bIntegrate)
 {
    if ( IsPGSExtension())
    {
@@ -445,8 +403,14 @@ STDMETHODIMP CProjectAgentImp::IntegrateWithUI(BOOL bIntegrate)
 
 //////////////////////////////////////////////////////////////////////
 // IAgentPersist
-STDMETHODIMP CProjectAgentImp::Save(IStructuredSave* pStrSave)
+bool CProjectAgentImp::Save(WBFL::System::IStructuredSave* pNativeStrSave)
 {
+   // The internal save pipeline below is still COM-typed; unwrap back to the original COM
+   // pointer here until that call graph is migrated too. See WBFLTools\StructuredStorageComAdapter.h.
+   auto* pAdapter = dynamic_cast<CStructuredSave*>(pNativeStrSave);
+   ATLASSERT(pAdapter);
+   ::IStructuredSave* pStrSave = pAdapter->GetComInterface();
+
    HRESULT hr = S_OK;
 
    // Save project data, properties, reactions, settings, etc if we are in "stand alone" mode
@@ -477,7 +441,7 @@ STDMETHODIMP CProjectAgentImp::Save(IStructuredSave* pStrSave)
 
       pStrSave->BeginUnit(_T("ProjectSettings"),1.0);
          GET_IFACE(IEAFDisplayUnits,pDisplayUnits);
-         pStrSave->put_Property(_T("Units"),CComVariant(pDisplayUnits->GetUnitMode()));
+         pStrSave->put_Property(_T("Units"),CComVariant(+pDisplayUnits->GetUnitMode()));
       pStrSave->EndUnit(); // ProjectSettings
 
       // Need to save stuff like units and project properties,system factors
@@ -765,11 +729,17 @@ STDMETHODIMP CProjectAgentImp::Save(IStructuredSave* pStrSave)
       }
    }
 
-   return hr;
+   return true;
 }
 
-STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
+WBFL::EAF::Broker::LoadResult CProjectAgentImp::Load(WBFL::System::IStructuredLoad* pNativeStrLoad)
 {
+   // The internal load pipeline below is still COM-typed; unwrap back to the original COM
+   // pointer here until that call graph is migrated too. See WBFLTools\StructuredStorageComAdapter.h.
+   auto* pAdapter = dynamic_cast<CStructuredLoad*>(pNativeStrLoad);
+   ATLASSERT(pAdapter);
+   ::IStructuredLoad* pStrLoad = pAdapter->GetComInterface();
+
    USES_CONVERSION;
    CHRException hr;
    CComVariant var;
@@ -814,7 +784,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
             hr = pStrLoad->get_Property(_T("Units"),&var);
 
             GET_IFACE(IEAFDisplayUnits,pDisplayUnits);
-            eafTypes::UnitMode unitMode = (eafTypes::UnitMode)(var.iVal);
+            WBFL::EAF::UnitMode unitMode = (WBFL::EAF::UnitMode)(var.iVal);
             pDisplayUnits->SetUnitMode(unitMode);
 
             hr = pStrLoad->EndUnit(); // ProjectSettings
@@ -1222,7 +1192,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
 
                      if (1 < version)
                      {
-                        // added in vesion 2
+                        // added in version 2
                         hr = pStrLoad->BeginUnit(_T("Legal_Emergency"));
                         m_LiveLoadReactions[pgsTypes::lrLegal_Emergency][INVALID_ID].clear();
                         while (SUCCEEDED(pStrLoad->BeginUnit(_T("Reaction"))))
@@ -1315,7 +1285,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
 
          if (1 < version)
          {
-            // added in vesion 2
+            // added in version 2
             var.vt = VT_I4;
             hr = pStrLoad->get_Property(_T("EmergencyRatingMethod"), &var);
             m_EmergencyRatingMethod = (xbrTypes::EmergencyRatingMethod)var.lVal;
@@ -1386,10 +1356,9 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
             column.SetTransverseFixity(pgsTypes::ctftTopFixedBottomFixed);
 
             CString strMsg(_T("Single column piers cannot have a pinned fixity. The support fixity has been changed to Fixed"));
-            xbrBridgeStatusItem* pStatusItem = new xbrBridgeStatusItem(m_XBeamRateStatusGroupID, m_scidBridgeInfo, strMsg);
 
             GET_IFACE(IEAFStatusCenter, pStatusCenter);
-            pStatusCenter->Add(pStatusItem);
+            pStatusCenter->Add(std::make_shared<xbrBridgeStatusItem>(m_XBeamRateStatusGroupID, m_scidBridgeInfo, strMsg));
          }
       }
    }
@@ -1420,56 +1389,7 @@ STDMETHODIMP CProjectAgentImp::Load(IStructuredLoad* pStrLoad)
       UpdatePiers();
    }
 
-   return S_OK;
-}
-
-//////////////////////////////////////////////////////////////////////
-// IEAFCommandCallback
-BOOL CProjectAgentImp::OnCommandMessage(UINT nID,int nCode,void* pExtra,AFX_CMDHANDLERINFO* pHandlerInfo)
-{
-   return m_CommandTarget.OnCmdMsg(nID,nCode,pExtra,pHandlerInfo);
-}
-
-BOOL CProjectAgentImp::GetStatusBarMessageString(UINT nID, CString& rMessage) const
-{
-   AFX_MANAGE_STATE(AfxGetStaticModuleState());
-
-   // load appropriate string
-	if ( rMessage.LoadString(nID) )
-	{
-		// first newline terminates actual string
-      rMessage.Replace('\n','\0');
-	}
-	else
-	{
-		// not found
-      TRACE1("Warning (XBeamRate::ProjectAgent): no message line prompt for ID 0x%04X.\n", nID);
-	}
-
-   return TRUE;
-}
-
-BOOL CProjectAgentImp::GetToolTipMessageString(UINT nID, CString& rMessage) const
-{
-   AFX_MANAGE_STATE(AfxGetStaticModuleState());
-   CString string;
-   // load appropriate string
-	if ( string.LoadString(nID) )
-	{
-		// tip is after first newline 
-      int pos = string.Find('\n');
-      if ( 0 < pos )
-      {
-         rMessage = string.Mid(pos+1);
-      }
-	}
-	else
-	{
-		// not found
-      TRACE1("Warning (XBeamRate::ProjectAgent): no tool tip for ID 0x%04X.\n", nID);
-	}
-
-   return TRUE;
+   return WBFL::EAF::Broker::LoadResult::Success;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1604,21 +1524,6 @@ void CProjectAgentImp::SetComments(LPCTSTR comments)
       m_strComments = comments;
       Fire_OnProjectPropertiesChanged();
    }
-}
-
-void CProjectAgentImp::ShowProjectPropertiesOnNewProject(bool bShow)
-{
-   m_CommandTarget.ShowProjectPropertiesOnNewProject(bShow);
-}
-
-bool CProjectAgentImp::ShowProjectPropertiesOnNewProject()
-{
-   return m_CommandTarget.ShowProjectPropertiesOnNewProject();
-}
-
-void CProjectAgentImp::PromptForProjectProperties()
-{
-   return m_CommandTarget.OnProjectProperties();
 }
 
 
@@ -2170,7 +2075,7 @@ Float64 CProjectAgentImp::GetLiveLoadReaction(PierIDType pierID,pgsTypes::LoadRa
    ATLASSERT(vehicleIdx != INVALID_INDEX);
 
    // Detect the configurations from PGSuper/PGSplice that we can't model
-   // Throwns an unwind exception if we can't model this thing
+   // Throws an unwind exception if we can't model this thing
    CanModelPier(pierID,m_XBeamRateStatusGroupID,m_scidBridgeError);
 
    std::vector<xbrLiveLoadReactionData>& vLLReactions = GetPrivateLiveLoadReactions(pierID,ratingType);
@@ -2189,7 +2094,7 @@ Float64 CProjectAgentImp::GetVehicleWeight(PierIDType pierID,pgsTypes::LoadRatin
    ATLASSERT(vehicleIdx != INVALID_INDEX);
 
    // Detect the configurations from PGSuper/PGSplice that we can't model
-   // Throwns an unwind exception if we can't model this thing
+   // Throws an unwind exception if we can't model this thing
    CanModelPier(pierID,m_XBeamRateStatusGroupID,m_scidBridgeError);
 
    std::vector<xbrLiveLoadReactionData>& vLLReactions = GetPrivateLiveLoadReactions(pierID,ratingType);
@@ -2990,7 +2895,7 @@ bool CProjectAgentImp::DoCheckNegativeMomentBetweenFOCs(PierIDType pierID) const
    bool bCheckColWidth = pProject->GetDoAnalyzeNegativeMomentBetweenFocOptions(&minColWidth);
    if (bCheckColWidth)
    {
-      // We could create a lot of compexity here and vet pois column by column. But the normal case is that all columns are the same width.
+      // We could create a lot of complexity here and vet pois column by column. But the normal case is that all columns are the same width.
       // Check if any columns are wider that the threshold, and use the same option for all
       Float64 maxColWid = -Float64_Max;
       IndexType nCols = GetColumnCount(pierID);
@@ -3020,12 +2925,12 @@ bool CProjectAgentImp::DoCheckNegativeMomentBetweenFOCs(PierIDType pierID) const
 // IXBRProjectEdit
 void CProjectAgentImp::EditPier(int nPage)
 {
-   m_CommandTarget.OnEditPier();
+   OnEditPier();
 }
 
 void CProjectAgentImp::EditOptions()
 {
-   m_CommandTarget.OnEditOptions();
+   OnEditOptions();
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -3110,26 +3015,31 @@ HRESULT CProjectAgentImp::OnBridgeChanged(CBridgeChangedHint* pHint)
 
 HRESULT CProjectAgentImp::OnGirderFamilyChanged()
 {
+   Invalidate();
    return S_OK;
 }
 
 HRESULT CProjectAgentImp::OnGirderChanged(const CGirderKey& girderKey,Uint32 lHint)
 {
+   Invalidate();
    return S_OK;
 }
 
 HRESULT CProjectAgentImp::OnLiveLoadChanged()
 {
+   Invalidate();
    return S_OK;
 }
 
 HRESULT CProjectAgentImp::OnLiveLoadNameChanged(LPCTSTR strOldName,LPCTSTR strNewName)
 {
+   Invalidate();
    return S_OK;
 }
 
 HRESULT CProjectAgentImp::OnConstructionLoadChanged()
 {
+   Invalidate();
    return S_OK;
 }
 
@@ -3175,38 +3085,42 @@ void CProjectAgentImp::CreateMenus()
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
    GET_IFACE(IEAFMainMenu,pMainMenu);
-   CEAFMenu* pMenu = pMainMenu->GetMainMenu();
+   auto pMenu = pMainMenu->GetMainMenu();
+
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
 
    // Add our commands to the Edit menu
    UINT editPos = pMenu->FindMenuItem(_T("&Edit"));
-   CEAFMenu* pEditMenu = pMenu->GetSubMenu(editPos);
-   pEditMenu->AppendMenu(ID_EDIT_PIER,_T("&Pier..."),this);
+   auto pEditMenu = pMenu->GetSubMenu(editPos);
+   pEditMenu->AppendMenu(ID_EDIT_PIER,_T("&Pier..."),callback);
 
    // Add our commands to the Project menu
    UINT projPos = pMenu->FindMenuItem(_T("&Project"));
-   CEAFMenu* pProjectMenu = pMenu->GetSubMenu(projPos);
+   auto pProjectMenu = pMenu->GetSubMenu(projPos);
    pProjectMenu->AppendMenu(EAFID_EDIT_UNITS,_T("&Units..."),nullptr);
-   pProjectMenu->AppendMenu(ID_EDIT_OPTIONS,_T("Load Rating Options..."),this);
+   pProjectMenu->AppendMenu(ID_EDIT_OPTIONS,_T("Load Rating Options..."),callback);
    pProjectMenu->AppendSeparator();
-   pProjectMenu->AppendMenu(ID_EDIT_PROPERTIES,_T("&Properties..."),this);
+   pProjectMenu->AppendMenu(ID_EDIT_PROPERTIES,_T("&Properties..."),callback);
 }
 
 void CProjectAgentImp::RemoveMenus()
 {
    GET_IFACE(IEAFMainMenu,pMainMenu);
-   CEAFMenu* pMenu = pMainMenu->GetMainMenu();
+   auto pMenu = pMainMenu->GetMainMenu();
+
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
 
    // remove the our menus
    UINT editPos = pMenu->FindMenuItem(_T("&Edit"));
-   CEAFMenu* pEditMenu = pMenu->GetSubMenu(editPos);
-   pEditMenu->RemoveMenu(ID_EDIT_PIER,MF_BYCOMMAND,this);
-   pEditMenu->RemoveMenu(ID_EDIT_PROPERTIES,MF_BYCOMMAND,this);
+   auto pEditMenu = pMenu->GetSubMenu(editPos);
+   pEditMenu->RemoveMenu(ID_EDIT_PIER,MF_BYCOMMAND,callback);
+   pEditMenu->RemoveMenu(ID_EDIT_PROPERTIES,MF_BYCOMMAND,callback);
 
    UINT projPos = pMenu->FindMenuItem(_T("&Project"));
-   CEAFMenu* pProjectMenu = pMenu->GetSubMenu(projPos);
+   auto pProjectMenu = pMenu->GetSubMenu(projPos);
    pProjectMenu->RemoveMenu(EAFID_EDIT_UNITS,MF_BYCOMMAND,nullptr);
-   pProjectMenu->RemoveMenu(ID_EDIT_OPTIONS,MF_BYCOMMAND,this);
-   pProjectMenu->RemoveMenu(ID_EDIT_PROPERTIES,MF_BYCOMMAND,this);
+   pProjectMenu->RemoveMenu(ID_EDIT_OPTIONS,MF_BYCOMMAND,callback);
+   pProjectMenu->RemoveMenu(ID_EDIT_PROPERTIES,MF_BYCOMMAND,callback);
    pProjectMenu->RemoveMenu(pProjectMenu->GetMenuItemCount()-1,MF_BYPOSITION,nullptr); // remove the separator
 }
 
@@ -3217,11 +3131,13 @@ void CProjectAgentImp::CreateToolbars()
    GET_IFACE(IEAFToolbars,pToolBars);
    GET_IFACE(IXBREditByUI,pEditUI);
    UINT stdID = pEditUI->GetStdToolBarID();
-   CEAFToolBar* pStdToolBar = pToolBars->GetToolBar(stdID);
+   auto pStdToolBar = pToolBars->GetToolBar(stdID);
+
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
 
    int idx = pStdToolBar->CommandToIndex(ID_VIEW_PIER,nullptr); 
-   pStdToolBar->InsertButton(idx-1,ID_EDIT_OPTIONS,IDB_EDIT_OPTIONS,nullptr,this);
-   pStdToolBar->InsertButton(idx-1,ID_EDIT_PIER,IDB_EDIT_PIER,nullptr,this);
+   pStdToolBar->InsertButton(idx-1,ID_EDIT_OPTIONS,IDB_EDIT_OPTIONS,nullptr,callback);
+   pStdToolBar->InsertButton(idx-1,ID_EDIT_PIER,IDB_EDIT_PIER,nullptr,callback);
 }
 
 void CProjectAgentImp::RemoveToolbars()
@@ -3230,8 +3146,10 @@ void CProjectAgentImp::RemoveToolbars()
    GET_IFACE(IEAFToolbars,pToolBars);
    GET_IFACE(IXBREditByUI,pEditUI);
    UINT stdID = pEditUI->GetStdToolBarID();
-   CEAFToolBar* pStdToolBar = pToolBars->GetToolBar(stdID);
-   pStdToolBar->RemoveButtons(this);
+   auto pStdToolBar = pToolBars->GetToolBar(stdID);
+
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+   pStdToolBar->RemoveButtons(callback);
 }
 
 xbrPierData& CProjectAgentImp::GetPrivatePierData(PierIDType pierID) const
@@ -3427,7 +3345,7 @@ void CProjectAgentImp::UpdatePierData(const CPierData2* pPier,xbrPierData& pierD
    pierData.SetLowerXBeamDimensions(H1,H2,H3,H4,X1,X2,X3,X4,W);
 
    // Upper Cross Beam Diaphragm. Basically, this is vertical distance from top of lower cross beam to bottom of slab
-   // Take max of diaphgram depth and max girder bearing deducts
+   // Take max of diaphragm depth and max girder bearing deducts
    // (don't use the pPier object here... use the pBridge interface... it resolves
    // diaphragm dimensions that are computed based on bridge component geometry)
    Float64 Wback, Hback;
@@ -3619,8 +3537,7 @@ bool CProjectAgentImp::UseUniformLoads(PierIDType pierID,IndexType brgLineIdx) c
    const CSplicedGirderData* pGirder = pIBridgeDesc->GetGirder(girderKey);
    const GirderLibraryEntry* pGdrLibEntry = pGirder->GetGirderLibraryEntry();
 
-   CComPtr<IBeamFactory> beamFactory;
-   pGdrLibEntry->GetBeamFactory(&beamFactory);
+   auto beamFactory = pGdrLibEntry->GetBeamFactory();
 
    CLSID clsidBeamFamily = beamFactory->GetFamilyCLSID();
    if ( (clsidBeamFamily == CLSID_SlabBeamFamily) ||
@@ -3654,4 +3571,222 @@ GirderIndexType CProjectAgentImp::GetLongestGirderLine() const
       }
    }
    return gdrIdx;
+}
+
+
+void CProjectAgentImp::OnEditPier()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   GET_IFACE(IXBRProject, pProject);
+   CPierDlg dlg(_T("Edit Pier"));
+
+   PierIDType pierID = INVALID_ID;
+
+   txnEditPierData oldPierData;
+   oldPierData.m_PierData = pProject->GetPierData(pierID);
+
+   IndexType nBearingLines = oldPierData.m_PierData.GetBearingLineCount();
+   for (IndexType brgLineIdx = 0; brgLineIdx < nBearingLines; brgLineIdx++)
+   {
+      oldPierData.m_DeadLoadReactionType[brgLineIdx] = pProject->GetBearingReactionType(pierID, brgLineIdx);
+      IndexType nBearings = oldPierData.m_PierData.GetBearingCount(brgLineIdx);
+      for (IndexType brgIdx = 0; brgIdx < nBearings; brgIdx++)
+      {
+         txnDeadLoadReaction reaction;
+         pProject->GetBearingReactions(pierID, brgLineIdx, brgIdx, &reaction.m_DC, &reaction.m_DW, &reaction.m_CR, &reaction.m_SH, &reaction.m_PS, &reaction.m_RE, &reaction.m_W);
+         oldPierData.m_DeadLoadReactions[brgLineIdx].push_back(reaction);
+      }
+   }
+
+   ATLASSERT(IsStandAlone());
+   oldPierData.m_gDC_StrengthI = pProject->GetDCLoadFactor(pgsTypes::StrengthI_Inventory);
+   oldPierData.m_gDW_StrengthI = pProject->GetDWLoadFactor(pgsTypes::StrengthI_Inventory);
+   oldPierData.m_gCR_StrengthI = pProject->GetCRLoadFactor(pgsTypes::StrengthI_Inventory);
+   oldPierData.m_gSH_StrengthI = pProject->GetSHLoadFactor(pgsTypes::StrengthI_Inventory);
+   oldPierData.m_gPS_StrengthI = pProject->GetPSLoadFactor(pgsTypes::StrengthI_Inventory);
+
+   oldPierData.m_gDC_StrengthII = pProject->GetDCLoadFactor(pgsTypes::StrengthII_PermitRoutine);
+   oldPierData.m_gDW_StrengthII = pProject->GetDWLoadFactor(pgsTypes::StrengthII_PermitRoutine);
+   oldPierData.m_gCR_StrengthII = pProject->GetCRLoadFactor(pgsTypes::StrengthII_PermitRoutine);
+   oldPierData.m_gSH_StrengthII = pProject->GetSHLoadFactor(pgsTypes::StrengthII_PermitRoutine);
+   oldPierData.m_gPS_StrengthII = pProject->GetPSLoadFactor(pgsTypes::StrengthII_PermitRoutine);
+
+   oldPierData.m_gDC_ServiceI = pProject->GetDCLoadFactor(pgsTypes::ServiceI_PermitRoutine);
+   oldPierData.m_gDW_ServiceI = pProject->GetDWLoadFactor(pgsTypes::ServiceI_PermitRoutine);
+   oldPierData.m_gCR_ServiceI = pProject->GetCRLoadFactor(pgsTypes::ServiceI_PermitRoutine);
+   oldPierData.m_gSH_ServiceI = pProject->GetSHLoadFactor(pgsTypes::ServiceI_PermitRoutine);
+   oldPierData.m_gPS_ServiceI = pProject->GetPSLoadFactor(pgsTypes::ServiceI_PermitRoutine);
+
+   oldPierData.m_gLL[0] = pProject->GetLiveLoadFactor(pierID, pgsTypes::StrengthI_Inventory, INVALID_INDEX);
+   oldPierData.m_gLL[1] = pProject->GetLiveLoadFactor(pierID, pgsTypes::StrengthI_Operating, INVALID_INDEX);
+   oldPierData.m_gLL[2] = pProject->GetLiveLoadFactor(pierID, pgsTypes::StrengthI_LegalRoutine, INVALID_INDEX);
+   oldPierData.m_gLL[3] = pProject->GetLiveLoadFactor(pierID, pgsTypes::StrengthI_LegalSpecial, INVALID_INDEX);
+   oldPierData.m_gLL[4] = pProject->GetLiveLoadFactor(pierID, pgsTypes::StrengthI_LegalEmergency, INVALID_INDEX);
+   oldPierData.m_gLL[5] = pProject->GetLiveLoadFactor(pierID, pgsTypes::StrengthII_PermitRoutine, INVALID_INDEX);
+   oldPierData.m_gLL[6] = pProject->GetLiveLoadFactor(pierID, pgsTypes::StrengthII_PermitSpecial, INVALID_INDEX);
+   oldPierData.m_gLL[7] = pProject->GetLiveLoadFactor(pierID, pgsTypes::ServiceI_PermitRoutine, INVALID_INDEX);
+   oldPierData.m_gLL[8] = pProject->GetLiveLoadFactor(pierID, pgsTypes::ServiceI_PermitSpecial, INVALID_INDEX);
+
+   oldPierData.m_DesignLiveLoad.m_LLIM = pProject->GetLiveLoadReactions(pierID, pgsTypes::lrDesign_Inventory);
+   oldPierData.m_LegalRoutineLiveLoad.m_LLIM = pProject->GetLiveLoadReactions(pierID, pgsTypes::lrLegal_Routine);
+   oldPierData.m_LegalSpecialLiveLoad.m_LLIM = pProject->GetLiveLoadReactions(pierID, pgsTypes::lrLegal_Special);
+   oldPierData.m_LegalEmergencyLiveLoad.m_LLIM = pProject->GetLiveLoadReactions(pierID, pgsTypes::lrLegal_Emergency);
+   oldPierData.m_PermitRoutineLiveLoad.m_LLIM = pProject->GetLiveLoadReactions(pierID, pgsTypes::lrPermit_Routine);
+   oldPierData.m_PermitSpecialLiveLoad.m_LLIM = pProject->GetLiveLoadReactions(pierID, pgsTypes::lrPermit_Special);
+
+   dlg.SetEditPierData(oldPierData);
+   if (dlg.DoModal() == IDOK)
+   {
+      txnEditPierData newPierData = dlg.GetEditPierData();
+      txnEditPier txn(oldPierData, newPierData);
+      GET_IFACE(IEAFTransactions, pTransactions);
+      pTransactions->Execute(txn);
+   }
+}
+
+void CProjectAgentImp::OnEditOptions()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   GET_IFACE(IXBRRatingSpecification, pRatingSpec);
+
+   txnEditOptionsData oldOptions;
+   oldOptions.m_LRFDEdition = WBFL::LRFD::BDSManager::GetEdition();
+   oldOptions.m_LRFREdition = WBFL::LRFD::MBEManager::GetEdition();
+
+   oldOptions.m_bDesignRating = pRatingSpec->IsRatingEnabled(pgsTypes::lrDesign_Inventory);
+   oldOptions.m_bDesignRateForShear = pRatingSpec->RateForShear(pgsTypes::lrDesign_Inventory);
+
+   oldOptions.m_bLegalRating = pRatingSpec->IsRatingEnabled(pgsTypes::lrLegal_Routine);
+   oldOptions.m_bLegalRateForShear = pRatingSpec->RateForShear(pgsTypes::lrLegal_Routine);
+   oldOptions.m_EmergencyRatingMethod = pRatingSpec->GetEmergencyRatingMethod();
+
+   oldOptions.m_bPermitRating = pRatingSpec->IsRatingEnabled(pgsTypes::lrPermit_Routine);
+   oldOptions.m_bPermitRateForShear = pRatingSpec->RateForShear(pgsTypes::lrPermit_Routine);
+   oldOptions.m_bCheckYieldStress = pRatingSpec->CheckYieldStressLimit();
+   oldOptions.m_YieldStressCoefficient = pRatingSpec->GetYieldStressLimitCoefficient();
+   oldOptions.m_PermitRatingMethod = pRatingSpec->GetPermitRatingMethod();
+
+   GET_IFACE(IXBRProject, pProject);
+   oldOptions.m_MaxLLStepSize = pProject->GetMaxLiveLoadStepSize();
+   oldOptions.m_MaxLoadedLanes = pProject->GetMaxLoadedLanes();
+   oldOptions.m_LiveLoadReactionApplication = pProject->GetReactionLoadApplicationType(INVALID_ID);
+   oldOptions.m_SystemFactorFlexure = pProject->GetSystemFactorFlexure();
+   oldOptions.m_SystemFactorShear = pProject->GetSystemFactorShear();
+
+   pProject->GetFlexureResistanceFactors(&oldOptions.m_PhiC, &oldOptions.m_PhiT);
+   oldOptions.m_PhiV = pProject->GetShearResistanceFactor();
+
+   oldOptions.m_bDoAnalyzeNegativeMomentBetweenFOC = pProject->GetDoAnalyzeNegativeMomentBetweenFocOptions(&oldOptions.m_MinColumnWidthForNegMoment);
+
+   COptionsDlg dlg;
+   dlg.SetOptions(oldOptions);
+   if (dlg.DoModal() == IDOK)
+   {
+      txnEditOptionsData newOptions = dlg.GetOptions();
+
+      txnEditOptions txn(oldOptions, newOptions);
+      GET_IFACE(IEAFTransactions, pTransactions);
+      pTransactions->Execute(txn);
+   }
+}
+
+void CProjectAgentImp::OnProjectProperties()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   GET_IFACE(IXBRProjectProperties, pProjProp);
+
+   CProjectPropertiesDlg dlg;
+
+   dlg.m_Bridge = pProjProp->GetBridgeName();
+   dlg.m_BridgeID = pProjProp->GetBridgeID();
+   dlg.m_JobNumber = pProjProp->GetJobNumber();
+   dlg.m_Engineer = pProjProp->GetEngineer();
+   dlg.m_Company = pProjProp->GetCompany();
+   dlg.m_Comments = pProjProp->GetComments();
+   dlg.m_bShowProjectProperties = ShowProjectPropertiesOnNewProject();
+
+
+   if (dlg.DoModal() == IDOK)
+   {
+      std::unique_ptr<txnEditProjectProperties> pTxn(std::make_unique<txnEditProjectProperties>(pProjProp->GetBridgeName(), dlg.m_Bridge,
+         pProjProp->GetBridgeID(), dlg.m_BridgeID,
+         pProjProp->GetJobNumber(), dlg.m_JobNumber,
+         pProjProp->GetEngineer(), dlg.m_Engineer,
+         pProjProp->GetCompany(), dlg.m_Company,
+         pProjProp->GetComments(), dlg.m_Comments));
+
+
+      ShowProjectPropertiesOnNewProject(dlg.m_bShowProjectProperties);
+
+      GET_IFACE(IEAFTransactions, pTransactions);
+      pTransactions->Execute(std::move(pTxn));
+   }
+
+}
+
+void CProjectAgentImp::ShowProjectPropertiesOnNewProject(bool bShow)
+{
+   m_bShowProjectProperties = bShow;
+}
+
+bool CProjectAgentImp::ShowProjectPropertiesOnNewProject() const
+{
+   return m_bShowProjectProperties;
+}
+
+void CProjectAgentImp::PromptForProjectProperties()
+{
+   return OnProjectProperties();
+}
+
+//////////////////////////////////////////////////////////////////////
+// IEAFCommandCallback
+BOOL CProjectAgentImp::OnCommandMessage(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+   return OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+}
+
+BOOL CProjectAgentImp::GetStatusBarMessageString(UINT nID, CString& rMessage) const
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   // load appropriate string
+   if (rMessage.LoadString(nID))
+   {
+      // first newline terminates actual string
+      rMessage.Replace('\n', '\0');
+   }
+   else
+   {
+      // not found
+      TRACE1("Warning (XBeamRate::ProjectAgent): no message line prompt for ID 0x%04X.\n", nID);
+   }
+
+   return TRUE;
+}
+
+BOOL CProjectAgentImp::GetToolTipMessageString(UINT nID, CString& rMessage) const
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CString string;
+   // load appropriate string
+   if (string.LoadString(nID))
+   {
+      // tip is after first newline 
+      int pos = string.Find('\n');
+      if (0 < pos)
+      {
+         rMessage = string.Mid(pos + 1);
+      }
+   }
+   else
+   {
+      // not found
+      TRACE1("Warning (XBeamRate::ProjectAgent): no tool tip for ID 0x%04X.\n", nID);
+   }
+
+   return TRUE;
 }

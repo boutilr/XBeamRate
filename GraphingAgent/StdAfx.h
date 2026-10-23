@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <targetver.h>
+
 #include <XBeamRateAll.h>
 #include "GraphColors.h"
 
@@ -35,6 +37,6 @@
 #include <Graphing/GraphColor.h>
 #include <Graphing/GraphingTypes.h>
 
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\GirderLabel.h>
 
 #include <XBRate.hh>

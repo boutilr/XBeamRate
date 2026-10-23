@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -27,71 +27,40 @@
 
 #pragma once
 
-#include "resource.h"       // main symbols
+#include <EAF\Agent.h>
 #include <GraphingAgent.h>
 #include "GraphingAgentCLSID.h"
 
-#include <EAF\EAFInterfaceCache.h>
+
 #include <IFace\Project.h>
 
 /////////////////////////////////////////////////////////////////////////////
 // CGraphingAgentImp
-class ATL_NO_VTABLE CGraphingAgentImp : 
-	public CComObjectRootEx<CComSingleThreadModel>,
-   //public CComRefCountTracer<CGraphingAgentImp,CComObjectRootEx<CComSingleThreadModel> >,
-	public CComCoClass<CGraphingAgentImp, &CLSID_GraphingAgent>,
-	public IConnectionPointContainerImpl<CGraphingAgentImp>,
-   //public CProxyIProjectEventSink<CGraphingAgentImp>,
-   public IAgentEx,
+class CGraphingAgentImp : public WBFL::EAF::Agent,
    public IXBRProjectEventSink
 {  
 public:
-	CGraphingAgentImp(); 
-   virtual ~CGraphingAgentImp();
+   CGraphingAgentImp() = default;
 
-   DECLARE_PROTECT_FINAL_CONSTRUCT();
-
-   HRESULT FinalConstruct();
-   void FinalRelease();
-
-DECLARE_REGISTRY_RESOURCEID(IDR_GRAPHINGAGENT)
-
-BEGIN_COM_MAP(CGraphingAgentImp)
-	COM_INTERFACE_ENTRY(IAgent)
-   COM_INTERFACE_ENTRY(IAgentEx)
-   COM_INTERFACE_ENTRY(IXBRProjectEventSink)
-	COM_INTERFACE_ENTRY_IMPL(IConnectionPointContainer)
-END_COM_MAP()
-
-BEGIN_CONNECTION_POINT_MAP(CGraphingAgentImp)
-//   CONNECTION_POINT_ENTRY( IID_IProjectEventSink )
-END_CONNECTION_POINT_MAP()
-
-// IAgentEx
+// Agent
 public:
-	STDMETHOD(SetBroker)(/*[in]*/ IBroker* pBroker) override;
-   STDMETHOD(RegInterfaces)() override;
-	STDMETHOD(Init)() override;
-	STDMETHOD(Reset)() override;
-	STDMETHOD(ShutDown)() override;
-   STDMETHOD(Init2)() override;
-   STDMETHOD(GetClassID)(CLSID* pCLSID) override;
+   std::_tstring GetName() const override { return _T("XBeam Rate Graphing Agent"); }
+   bool RegisterInterfaces() override;
+   bool Init() override;
+   bool Reset() override;
+   bool ShutDown() override;
+   CLSID GetCLSID() const override;
 
 // IXBRProjectEventSink
 public:
    HRESULT OnProjectChanged() override;
 
-#ifdef _DEBUG
-   bool AssertValid() const;
-#endif//
 
 private:
-   DECLARE_EAF_AGENT_DATA;
+   EAF_DECLARE_AGENT_DATA;
 
-   DWORD m_dwProjectCookie;
+   IDType m_dwProjectCookie;
 
    HRESULT InitGraphBuilders();
 };
-
-OBJECT_ENTRY_AUTO(CLSID_GraphingAgent, CGraphingAgentImp)
 

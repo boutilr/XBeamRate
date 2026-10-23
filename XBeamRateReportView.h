@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -58,9 +58,9 @@ public:
 protected:
 	virtual ~CXBeamRateReportView();
 
-   virtual HRESULT UpdateReportBrowser(const std::shared_ptr<const WBFL::Reporting::ReportHint>& pHint) override;
+   virtual HRESULT UpdateReportBrowser(const std::shared_ptr<const WBFL::ReportMgr::ReportHint>& pHint) override;
    virtual void RefreshReport() override;
-   virtual WBFL::Reporting::ReportHint* TranslateHint(CView* pSender, LPARAM lHint, CObject* pHint) override;
+   virtual WBFL::ReportMgr::ReportHint* TranslateHint(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
 #ifdef _DEBUG
 	virtual void AssertValid() const override;

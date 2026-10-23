@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,24 +21,9 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "resource.h"
 #include "PGSuperComponentInfo.h"
 #include <MFCTools\VersionInfo.h>
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
-
-
-HRESULT CPGSuperComponentInfo::FinalConstruct()
-{
-   return S_OK;
-}
-
-void CPGSuperComponentInfo::FinalRelease()
-{
-}
 
 BOOL CPGSuperComponentInfo::Init(CPGSuperDoc* pDoc)
 {

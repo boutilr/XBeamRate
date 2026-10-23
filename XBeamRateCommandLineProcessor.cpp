@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@ CLASS
    CXBRateCommandLineProcessor
 ****************************************************************************/
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "XBeamRateCommandLineProcessor.h"
 #include "XBeamRateCommandLineInfo.h"
 #include "XBeamRateDoc.h"
@@ -37,14 +38,9 @@ CLASS
 #include <IFace\Test.h>
 #include <..\..\PGSuper\Include\IFace\Project.h>
 
-#include <PgsExt\BridgeDescription2.h>
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\BridgeDescription2.h>
+#include <PsgLib\GirderLabel.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 CXBRateCommandLineProcessor::CXBRateCommandLineProcessor()
@@ -71,8 +67,8 @@ BOOL CXBRateCommandLineProcessor::ProcessCommandLineOptions(CEAFCommandLineInfo&
    }
    else if (xbrCmdInfo.m_bRegTests)
    {
-      CComPtr<IBroker> pBroker;
-      EAFGetBroker(&pBroker);
+      auto pBroker = EAFGetBroker();
+
       GET_IFACE2(pBroker,IXBRTest,pTest);
 
       if ( IsStandAlone() )

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-
+#include "GraphingAgent.h"
 #include "resource.h"
 #include "AnalysisResultsGraphBuilder.h"
 
@@ -30,7 +30,7 @@
 
 #include <EAF\EAFUtilities.h>
 #include <EAF\EAFDisplayUnits.h>
-#include <EAF\EAFAutoProgress.h>
+#include <EAF/AutoProgress.h>
 #include <MathEx.h>
 #include <Units\UnitValueNumericalFormatTools.h>
 
@@ -45,17 +45,12 @@
 #include <XBeamRateExt\XBeamRateUtilities.h>
 
 #include <..\..\PGSuper\Include\IFace\Project.h>
-#include <PgsExt\PierData2.h>
+#include <PsgLib\PierData2.h>
 #include <Graphs\ExportGraphXYTool.h>
 
 #include <algorithm>
 
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 // create a dummy unit conversion tool to pacify the graph constructor
 static WBFL::Units::LengthData DUMMY(WBFL::Units::Measure::Meter);
@@ -158,8 +153,7 @@ void CXBRAnalysisResultsGraphBuilder::OnPierChanged()
 
 bool CXBRAnalysisResultsGraphBuilder::UpdateNow()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
 
    if ( IsPGSExtension() )
    {
@@ -186,8 +180,8 @@ bool CXBRAnalysisResultsGraphBuilder::UpdateNow()
       }
    }
 
-   GET_IFACE2(pBroker,IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress,0);
+   GET_IFACE2(pBroker,IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress,0);
 
    pProgress->UpdateMessage(_T("Building Graph"));
 
@@ -206,8 +200,7 @@ void CXBRAnalysisResultsGraphBuilder::InitGraph()
    m_Graph.SetGridPenStyle(GRAPH_GRID_PEN_STYLE, GRAPH_GRID_PEN_WEIGHT, GRAPH_GRID_COLOR);
    m_Graph.SetClientAreaColor(GRAPH_BACKGROUND);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    m_pXFormat = new WBFL::Units::LengthTool(pDisplayUnits->GetSpanLengthUnit());
@@ -221,8 +214,7 @@ void CXBRAnalysisResultsGraphBuilder::UpdateYAxisUnits()
 
    ActionType actionType = m_GraphController.GetActionType();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    switch(actionType)
@@ -264,8 +256,7 @@ void CXBRAnalysisResultsGraphBuilder::UpdateGraphData()
 
    PierIDType pierID = m_GraphController.GetPierID();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
 
    GET_IFACE2(pBroker,IXBRPier,pPier);
    Float64 Lxb = pPier->GetXBeamLength(xbrTypes::xblBottomXBeam, pierID);
@@ -351,10 +342,9 @@ void CXBRAnalysisResultsGraphBuilder::UpdateGraphDefinitions()
       return;
    }
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
 
-   // include time dependnet load cases if
+   // include time dependent load cases if
    // 1) we are running as a stand alone application
    // 2) we are running as a PGS extension and the losses are computed with the time-step method
    bool bIncludeTimeDependentLoads = true;
@@ -474,8 +464,7 @@ void CXBRAnalysisResultsGraphBuilder::BuildProductForceGraph(PierIDType pierID,c
 {
    xbrTypes::ProductForceType pfType = graphDef.m_LoadType.ProductLoadType;
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    for (const auto& poi : vPoi)
@@ -505,8 +494,8 @@ void CXBRAnalysisResultsGraphBuilder::BuildCombinedForceGraph(PierIDType pierID,
 {
    xbrTypes::CombinedForceType comboType = graphDef.m_LoadType.CombinedLoadType;
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    for (const auto& poi : vPoi)
@@ -536,8 +525,8 @@ void CXBRAnalysisResultsGraphBuilder::BuildVehicularLiveLoadGraph(PierIDType pie
 {
    pgsTypes::LoadRatingType ratingType = graphDef.m_LoadType.LiveLoadType;
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    for (const auto& poi : vPoi)
@@ -574,8 +563,8 @@ void CXBRAnalysisResultsGraphBuilder::BuildLiveLoadGraph(PierIDType pierID,const
 {
    pgsTypes::LoadRatingType ratingType = graphDef.m_LoadType.LiveLoadType;
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    for (const auto& poi : vPoi)
@@ -612,8 +601,8 @@ void CXBRAnalysisResultsGraphBuilder::BuildLimitStateGraph(PierIDType pierID,con
 {
    pgsTypes::LimitState limitState = graphDef.m_LoadType.LimitStateType;
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRAnalysisResults,pResults);
 
    for (const auto& poi : vPoi)
@@ -648,8 +637,7 @@ void CXBRAnalysisResultsGraphBuilder::BuildLimitStateGraph(PierIDType pierID,con
 
 void CXBRAnalysisResultsGraphBuilder::BuildCapacityGraph(PierIDType pierID,const std::vector<xbrPointOfInterest>& vPoi,ActionType actionType,IndexType minGraphIdx,IndexType maxGraphIdx)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
    GET_IFACE2_NOCHECK(pBroker,IXBRMomentCapacity,pMomentCapacity);
    GET_IFACE2_NOCHECK(pBroker,IXBRShearCapacity,pShearCapacity);
 

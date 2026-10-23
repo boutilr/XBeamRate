@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -29,9 +29,8 @@
 
 #include "stdafx.h"
 #include "resource.h"
-#include "initguid.h"
+#include <initguid.h>
 
-#include <WBFLCore_i.c>
 #include <WBFLTools_i.c>
 
 #include "dllmain.h"
@@ -51,58 +50,5 @@
 #include <IFace\AnalysisResults.h>
 #include <IFace\LoadRating.h>
 
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
-
-
-/////////////////////////////////////////////////////////////////////////////
-// Used to determine whether the DLL can be unloaded by OLE
-
-STDAPI DllCanUnloadNow(void)
-{
-    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-    return (AfxDllCanUnloadNow()==S_OK && _AtlModule.GetLockCount()==0) ? S_OK : S_FALSE;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// Returns a class factory to create an object of the requested type
-
-STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
-{
-    return _AtlModule.DllGetClassObject(rclsid, riid, ppv);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// DllRegisterServer - Adds entries to the system registry
-
-HRESULT RegisterAgent(bool bRegister)
-{
-   HRESULT hr = S_OK;
-   hr = WBFL::System::ComCatMgr::RegWithCategory(CLSID_TestAgent,CATID_XBeamRateAgent,bRegister);
-   if ( FAILED(hr) )
-      return hr;
-
-   return S_OK;
-}
-
-STDAPI DllRegisterServer(void)
-{
-    // registers object, typelib and all interfaces in typelib
-   HRESULT hr = _AtlModule.DllRegisterServer();
-
-   return RegisterAgent(true);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// DllUnregisterServer - Removes entries from the system registry
-
-STDAPI DllUnregisterServer(void)
-{
-	HRESULT hr = _AtlModule.DllUnregisterServer();
-   RegisterAgent(false);
-	return S_OK;
-}
+#include <EAF/EAFProgress.h>
+#include <EAF/EAFStatusCenter.h>

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "resource.h"
 #include <XBeamRateChildFrame.h>
 #include <XBeamRateView.h>
@@ -33,19 +34,14 @@
 #include <..\..\PGSuper\Include\IFace\Project.h>
 #include <IFace\Selection.h>
 
-#include <PgsExt\GirderLabel.h>
-#include <PgsExt\BridgeDescription2.h>
+#include <PsgLib\GirderLabel.h>
+#include <PsgLib\BridgeDescription2.h>
 
 #include <XBeamRateExt\XBeamRateUtilities.h>
 
 #include <EAF\EAFDocument.h>
 
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // CXBeamRateChildFrame
@@ -143,8 +139,8 @@ PierIndexType CXBeamRateChildFrame::GetPierIndex()
       return INVALID_INDEX;
    }
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2(pBroker,IBridgeDescription,pIBridgeDesc);
    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
@@ -169,8 +165,8 @@ BOOL CXBeamRateChildFrame::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
    HICON hIcon = AfxGetApp()->LoadIcon(IDI_PIERVIEW);
    SetIcon(hIcon,TRUE);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    if ( pBroker != nullptr )
    {
       // NOTE: We can't do 
@@ -199,8 +195,8 @@ BOOL CXBeamRateChildFrame::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
 
 void CXBeamRateChildFrame::UpdatePierList()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker, ISelection, pSelection);
    PierIndexType selPierIdx = pSelection->GetSelectedPier();
 
@@ -248,8 +244,8 @@ BOOL CXBeamRateChildFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWn
 
 BOOL CXBeamRateChildFrame::PreCreateWindow(CREATESTRUCT& cs) 
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    if ( pBroker == nullptr )
    {
       // If the broker is nullptr, it has not been initialized yet. This only happens during
@@ -281,8 +277,8 @@ void CXBeamRateChildFrame::UpdateCutLocation(const xbrPointOfInterest& poi)
 {
    PierIDType pierID = GetPierID();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRPointOfInterest,pPoi);
    m_CutLocation = pPoi->ConvertPoiToPierCoordinate(pierID,poi);
 
@@ -294,8 +290,8 @@ void CXBeamRateChildFrame::CutAt(Float64 Xp)
 {
    PierIDType pierID = GetPierID();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRPointOfInterest,pPoi);
    xbrPointOfInterest poi = pPoi->ConvertPierCoordinateToPoi(pierID,Xp);
    if ( poi.GetID() == INVALID_ID )
@@ -311,8 +307,8 @@ void CXBeamRateChildFrame::CutAtNext()
 {
    PierIDType pierID = GetPierID();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRPointOfInterest,pPoi);
    xbrPointOfInterest currentPoi = GetCutLocation();
    xbrPointOfInterest poi = pPoi->GetNextPointOfInterest(pierID,currentPoi.GetID());
@@ -327,8 +323,8 @@ void CXBeamRateChildFrame::CutAtPrev()
 {
    PierIDType pierID = GetPierID();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRPointOfInterest,pPoi);
    xbrPointOfInterest currentPoi = GetCutLocation();
    xbrPointOfInterest poi = pPoi->GetPrevPointOfInterest(pierID,currentPoi.GetID());
@@ -364,8 +360,8 @@ void CXBeamRateChildFrame::UpdateSectionCutExtents()
 {
    PierIDType pierID = GetPierID();
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRPier,pPier);
    Float64 Lxb = pPier->GetXBeamLength(xbrTypes::xblBottomXBeam,pierID);
    m_Xmin = pPier->ConvertCrossBeamToPierCoordinate(pierID,0);

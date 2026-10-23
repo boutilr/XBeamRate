@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -33,17 +33,12 @@
 #include <EAF\EAFDocument.h>
 #include <MFCTools\CustomDDX.h>
 
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\GirderLabel.h>
 #include "..\Documentation\XBRate.hh"
 
 // CPierLayoutPage dialog
 
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 void DDX_ColumnGrid(CDataExchange* pDX,CColumnLayoutGrid& grid,xbrPierData& pier)
 {
@@ -108,8 +103,7 @@ void CPierLayoutPage::DoDataExchange(CDataExchange* pDX)
 		// NOTE: the ClassWizard will add DDX and DDV calls here
 	//}}AFX_DATA_MAP
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    CPierDlg* pParent = (CPierDlg*)GetParent();

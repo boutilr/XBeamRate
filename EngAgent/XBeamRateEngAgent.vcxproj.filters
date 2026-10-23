@@ -51,9 +51,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="EngAgent.def" />
-    <None Include="EngAgent.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="EngAgentModule.rgs">
       <Filter>Resource Files</Filter>
     </None>

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,15 +22,15 @@
 
 #pragma once
 
-#include <EAF\EAFBrokerReportSpecificationBuilder.h>
+#include <EAF\BrokerReportSpecificationBuilder.h>
 
 class CXBeamRateReportSpecificationBuilder :
-   public CEAFBrokerReportSpecificationBuilder
+   public WBFL::EAF::BrokerReportSpecificationBuilder
 {
 public:
-   CXBeamRateReportSpecificationBuilder(IBroker* pBroker);
+   CXBeamRateReportSpecificationBuilder(std::weak_ptr<WBFL::EAF::Broker> pBroker);
    ~CXBeamRateReportSpecificationBuilder(void);
 
-   virtual std::shared_ptr<WBFL::Reporting::ReportSpecification> CreateReportSpec(const WBFL::Reporting::ReportDescription& rptDesc,std::shared_ptr<WBFL::Reporting::ReportSpecification> pRptSpec) const override;
-   virtual std::shared_ptr<WBFL::Reporting::ReportSpecification> CreateDefaultReportSpec(const WBFL::Reporting::ReportDescription& rptDesc) const override;
+   virtual std::shared_ptr<WBFL::ReportMgr::ReportSpecification> CreateReportSpec(const WBFL::ReportMgr::ReportDescription& rptDesc,std::shared_ptr<WBFL::ReportMgr::ReportSpecification> pRptSpec) const override;
+   virtual std::shared_ptr<WBFL::ReportMgr::ReportSpecification> CreateDefaultReportSpec(const WBFL::ReportMgr::ReportDescription& rptDesc) const override;
 };

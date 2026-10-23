@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // CProxyIXBRProjectPropertiesEventSink
 template <class T>
-class CProxyIXBRProjectPropertiesEventSink : public IConnectionPointImpl<T, &IID_IXBRProjectPropertiesEventSink, CComDynamicUnkArray>
+class CProxyIXBRProjectPropertiesEventSink : public WBFL::EAF::EventSinkManager<IXBRProjectPropertiesEventSink>
 {
 public:
 
@@ -42,19 +42,14 @@ public:
          return S_OK;
       }
 
-      pT->Lock();
+      //pT->Lock();
 		HRESULT ret = S_OK;
-		IUnknown** pp = this->m_vec.begin();
-		while (pp < this->m_vec.end())
+		for(auto& [id,sink] : this->m_EventSinks)
 		{
-			if (*pp != nullptr)
-			{
-				IXBRProjectPropertiesEventSink* pEventSink = reinterpret_cast<IXBRProjectPropertiesEventSink*>(*pp);
-				ret = pEventSink->OnProjectPropertiesChanged();
-			}
-			pp++;
+		   auto callback = sink.lock();
+		   callback->OnProjectPropertiesChanged();
 		}
-		pT->Unlock();
+		//pT->Unlock();
 		return ret;
 	}
 };
@@ -62,7 +57,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // CProxyIXBRProjectEventSink
 template <class T>
-class CProxyIXBRProjectEventSink : public IConnectionPointImpl<T, &IID_IXBRProjectEventSink, CComDynamicUnkArray>
+class CProxyIXBRProjectEventSink : public WBFL::EAF::EventSinkManager<IXBRProjectEventSink>
 {
 public:
 
@@ -78,19 +73,14 @@ public:
          return S_OK;
       }
 
-      pT->Lock();
+      //pT->Lock();
 		HRESULT ret = S_OK;
-		IUnknown** pp = this->m_vec.begin();
-		while (pp < this->m_vec.end())
+		for(auto& [id,sink] : this->m_EventSinks)
 		{
-			if (*pp != nullptr)
-			{
-				IXBRProjectEventSink* pEventSink = reinterpret_cast<IXBRProjectEventSink*>(*pp);
-				ret = pEventSink->OnProjectChanged();
-			}
-			pp++;
+		   auto callback = sink.lock();
+		   callback->OnProjectChanged();
 		}
-		pT->Unlock();
+		//pT->Unlock();
 		return ret;
 	}
 };
@@ -98,7 +88,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 // CProxyIXBREventsEventSink
 template <class T>
-class CProxyIXBREventsEventSink : public IConnectionPointImpl<T, &IID_IXBREventsSink, CComDynamicUnkArray>
+class CProxyIXBREventsEventSink : public WBFL::EAF::EventSinkManager<IXBREventsSink>
 {
 public:
 
@@ -108,19 +98,14 @@ public:
 	{
 		T* pT = (T*)this;
 
-      pT->Lock();
+      //pT->Lock();
 		HRESULT ret = S_OK;
-		IUnknown** pp = this->m_vec.begin();
-		while (pp < this->m_vec.end())
+		for(auto& [id,sink] : this->m_EventSinks)
 		{
-			if (*pp != nullptr)
-			{
-				IXBREventsSink* pEventSink = reinterpret_cast<IXBREventsSink*>(*pp);
-				ret = pEventSink->OnHoldEvents();
-			}
-			pp++;
+		   auto callback = sink.lock();
+		   callback->OnHoldEvents();
 		}
-		pT->Unlock();
+		//pT->Unlock();
 		return ret;
 	}
 
@@ -128,19 +113,14 @@ public:
 	{
 		T* pT = (T*)this;
 
-      pT->Lock();
+      //pT->Lock();
 		HRESULT ret = S_OK;
-		IUnknown** pp = this->m_vec.begin();
-		while (pp < this->m_vec.end())
+		for (auto& [id, sink] : this->m_EventSinks)
 		{
-			if (*pp != nullptr)
-			{
-				IXBREventsSink* pEventSink = reinterpret_cast<IXBREventsSink*>(*pp);
-				ret = pEventSink->OnFirePendingEvents();
-			}
-			pp++;
+		   auto callback = sink.lock();
+		   callback->OnFirePendingEvents();
 		}
-		pT->Unlock();
+		//pT->Unlock();
 		return ret;
 	}
 
@@ -148,19 +128,14 @@ public:
 	{
 		T* pT = (T*)this;
 
-      pT->Lock();
+      //pT->Lock();
 		HRESULT ret = S_OK;
-		IUnknown** pp = this->m_vec.begin();
-		while (pp < this->m_vec.end())
+		for (auto& [id, sink] : this->m_EventSinks)
 		{
-			if (*pp != nullptr)
-			{
-				IXBREventsSink* pEventSink = reinterpret_cast<IXBREventsSink*>(*pp);
-				ret = pEventSink->OnCancelPendingEvents();
-			}
-			pp++;
+		   auto callback = sink.lock();
+		   callback->OnCancelPendingEvents();
 		}
-		pT->Unlock();
+		//pT->Unlock();
 		return ret;
 	}
 };

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,6 @@
 #include "StdAfx.h"
 #include <XBeamRateChapterBuilder.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 CXBeamRateChapterBuilder::CXBeamRateChapterBuilder()
@@ -45,7 +40,7 @@ bool CXBeamRateChapterBuilder::Select() const
    return true;
 }
 
-rptChapter* CXBeamRateChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+rptChapter* CXBeamRateChapterBuilder::Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    ASSERT( level <= GetMaxLevel() );
 

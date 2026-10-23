@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -23,23 +23,23 @@
 #pragma once
 
 #include <XBeamRateExt\XBRExtExp.h>
-#include <EAF\EAFStatusItem.h>
+#include <EAF\StatusItem.h>
 
-class XBREXTCLASS xbrBridgeStatusItem : public CEAFStatusItem
+class XBREXTCLASS xbrBridgeStatusItem : public WBFL::EAF::StatusItem
 {
 public:
    xbrBridgeStatusItem(StatusGroupIDType statusGroupID,StatusCallbackIDType callbackID,LPCTSTR strDescription);
-   bool IsEqual(CEAFStatusItem* pOther);
+   bool IsEqual(std::shared_ptr<const WBFL::EAF::StatusItem> pOther) const override;
 };
 
-class XBREXTCLASS xbrBridgeStatusCallback : public iStatusCallback
+class XBREXTCLASS xbrBridgeStatusCallback : public WBFL::EAF::StatusCallback
 {
 public:
-   xbrBridgeStatusCallback(eafTypes::StatusSeverityType severity,UINT helpID=0);
-   virtual eafTypes::StatusSeverityType GetSeverity() const override;
-   virtual void Execute(CEAFStatusItem* pStatusItem) override;
+   xbrBridgeStatusCallback(WBFL::EAF::StatusSeverityType severity,UINT helpID=0);
+   WBFL::EAF::StatusSeverityType GetSeverity() const override;
+   void Execute(std::shared_ptr<WBFL::EAF::StatusItem> pStatusItem) override;
 
 private:
-   eafTypes::StatusSeverityType m_Severity;
+   WBFL::EAF::StatusSeverityType m_Severity;
    UINT m_HelpID;
 };

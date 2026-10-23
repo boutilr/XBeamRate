@@ -52,8 +52,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 8,1,0,1
- PRODUCTVERSION 8,1,0,1
+ FILEVERSION 9,1,0,1
+ PRODUCTVERSION 9,1,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,12 +69,12 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "FileDescription", "XBRate Module"
-            VALUE "FileVersion", "8.1.0.1"
+            VALUE "FileVersion", "9.1.0.1"
             VALUE "InternalName", "XBRate"
-            VALUE "LegalCopyright", "Copyright © 1999-2024, Washington State Department of Transportation, All Rights Reserved"
+            VALUE "LegalCopyright", "Copyright © 1999-2025, Washington State Department of Transportation, All Rights Reserved"
             VALUE "OriginalFilename", "XBeamRate.DLL"
             VALUE "ProductName", "XBRate Module"
-            VALUE "ProductVersion", "8.1.0.1"
+            VALUE "ProductVersion", "9.1.0.1"
         END
     END
     BLOCK "VarFileInfo"
@@ -82,25 +82,6 @@ BEGIN
         VALUE "Translation", 0x409, 1200
     END
 END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// REGISTRY
-//
-
-IDR_XBEAMRATEAPP        REGISTRY                "XBeamRateAppPlugin.rgs"
-
-IDR_COMPONENTINFO       REGISTRY                "ComponentInfo.rgs"
-
-IDR_XBEAMRATEAGENT      REGISTRY                "XBeamRateAgent.rgs"
-
-IDR_PGSUPERCOMPONENTINFO REGISTRY                "PGSuperComponentInfo.rgs"
-
-IDR_PGSPLICECOMPONENTINFO REGISTRY                "PGSpliceComponentInfo.rgs"
-
-IDR_PGSUPEREXPORTER     REGISTRY                "PGSuperExporter.rgs"
-
 
 /////////////////////////////////////////////////////////////////////////////
 //

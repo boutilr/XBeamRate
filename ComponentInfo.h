@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,34 +21,15 @@
 ///////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include <EAF\EAFComponentInfo.h>
-#include "CLSID.h"
-#include "resource.h"
 
-class ATL_NO_VTABLE CXBeamRateComponentInfo : 
-   public CComObjectRootEx<CComSingleThreadModel>,
-   public CComCoClass<CXBeamRateComponentInfo, &CLSID_XBeamRateComponentInfo>,
-   public IEAFComponentInfo
+#include <EAF\ApplicationComponentInfo.h>
+
+class CXBeamRateComponentInfo : public WBFL::EAF::ApplicationComponentInfo
 {
 public:
-   CXBeamRateComponentInfo()
-   {
-   }
+   CXBeamRateComponentInfo() = default;
 
-DECLARE_REGISTRY_RESOURCEID(IDR_COMPONENTINFO)
-DECLARE_CLASSFACTORY_SINGLETON(CXBeamRateComponentInfo)
-
-BEGIN_COM_MAP(CXBeamRateComponentInfo)
-   COM_INTERFACE_ENTRY(IEAFComponentInfo)
-END_COM_MAP()
-
-BEGIN_CONNECTION_POINT_MAP(CXBeamRateComponentInfo)
-END_CONNECTION_POINT_MAP()
-
-   HRESULT FinalConstruct();
-   void FinalRelease();
-
-// IEAFComponentInfo
+// IComponentInfo
 public:
    virtual BOOL Init(CEAFApp* pApp) override;
    virtual void Terminate() override;
@@ -58,5 +39,3 @@ public:
    virtual bool HasMoreInfo() override;
    virtual void OnMoreInfo() override;
 };
-
-OBJECT_ENTRY_AUTO(__uuidof(XBeamRateComponentInfo), CXBeamRateComponentInfo)

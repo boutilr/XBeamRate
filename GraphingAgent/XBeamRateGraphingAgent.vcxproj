@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -19,7 +19,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseOfAtl>Dynamic</UseOfAtl>
     <CharacterSet>Unicode</CharacterSet>
@@ -27,7 +27,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseOfAtl>Dynamic</UseOfAtl>
     <CharacterSet>Unicode</CharacterSet>
@@ -64,7 +64,7 @@
     <OutDir>$(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules />
     <CodeAnalysisRuleAssemblies />
@@ -113,7 +113,7 @@
       <AdditionalLibraryDirectories>$(ARPDIR)\WBFL\RegFreeCOM\$(Platform)\$(Configuration);$(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ModuleDefinitionFile>.\GraphingAgent.def</ModuleDefinitionFile>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
@@ -179,7 +179,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -206,8 +206,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="GraphingAgent.def" />
-    <None Include="GraphingAgent.rgs" />
-    <None Include="GraphingAgentModule.rgs" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GraphingAgent.rc" />

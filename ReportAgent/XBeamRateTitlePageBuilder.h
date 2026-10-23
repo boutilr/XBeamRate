@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -23,20 +23,15 @@
 #pragma once
 
 #include <ReportManager\TitlePageBuilder.h>
-#include <WBFLCore.h>
 
-class CXBeamRateTitlePageBuilder : public WBFL::Reporting::TitlePageBuilder
+
+class CXBeamRateTitlePageBuilder : public WBFL::ReportMgr::TitlePageBuilder
 {
 public:
-   CXBeamRateTitlePageBuilder(IBroker* pBroker,LPCTSTR strTitle);
-   CXBeamRateTitlePageBuilder(const CXBeamRateTitlePageBuilder& other);
-   ~CXBeamRateTitlePageBuilder(void);
+   using WBFL::ReportMgr::TitlePageBuilder::TitlePageBuilder;
 
-   virtual rptChapter* Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec) const override;
-   virtual bool NeedsUpdate(const std::shared_ptr<const WBFL::Reporting::ReportHint>& pHint,const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec) const override;
+   rptChapter* Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec) const override;
+   bool NeedsUpdate(const std::shared_ptr<const WBFL::ReportMgr::ReportHint>& pHint,const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec) const override;
 
-   virtual std::unique_ptr<WBFL::Reporting::TitlePageBuilder> Clone() const override;
-
-protected:
-   CComPtr<IBroker> m_pBroker;
+   std::unique_ptr<WBFL::ReportMgr::TitlePageBuilder> Clone() const override;
 };

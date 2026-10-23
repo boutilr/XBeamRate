@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,9 @@
 //
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "resource.h"
-#include "XBeamRateAppPlugin.h"
+#include "XBeamRateApp.h"
 #include "XBeamRatePluginApp.h"
 #include "XBeamRateDoc.h"
 #include "XBeamRateDocProxyAgent.h"
@@ -41,20 +42,12 @@
 #include <EAF\EAFMainFrame.h>
 #include <EAF\EAFUnits.h>
 
-#include <WBFLReportManagerAgent.h>
-#include <WBFLGraphManagerAgent.h>
-
 #include <PgsExt\StatusItem.h>
 
 #include "XBeamRateHints.h"
 
 #include "XBRate.hh"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // CXBeamRateDoc
@@ -92,8 +85,8 @@ CXBeamRateDoc::CXBeamRateDoc() :
    m_pMyDocProxyAgent = nullptr;
    m_bAutoCalcEnabled = true;
 
-   SetCustomReportHelpID(eafTypes::crhCustomReport,IDH_CUSTOM_REPORT);
-   SetCustomReportHelpID(eafTypes::crhFavoriteReport,IDH_FAVORITE_REPORT);
+   SetCustomReportHelpID(WBFL::EAF::CustomReportHelp::CustomReport,IDH_CUSTOM_REPORT);
+   SetCustomReportHelpID(WBFL::EAF::CustomReportHelp::FavoriteReport,IDH_FAVORITE_REPORT);
    SetCustomReportDefinitionHelpID(IDH_CUSTOM_REPORT_DEFINITION);
 
    CEAFAutoCalcDocMixin::SetDocument(this);
@@ -147,9 +140,8 @@ void CXBeamRateDoc::GetDocUnitSystem(IDocUnitSystem** ppDocUnitSystem)
 BOOL CXBeamRateDoc::Init()
 {
    CEAFDocTemplate* pTemplate = (CEAFDocTemplate*)GetDocTemplate();
-   CComPtr<IEAFAppPlugin> pAppPlugin;
-   pTemplate->GetPlugin(&pAppPlugin);
-   CXBeamRateAppPlugin* pXBeamRate = dynamic_cast<CXBeamRateAppPlugin*>(pAppPlugin.p);
+   auto pluginApp = pTemplate->GetPluginApp();
+   auto pXBeamRate = std::dynamic_pointer_cast<CXBeamRatePluginApp>(pluginApp);
 
    if ( !CEAFBrokerDocument::Init() )
    {
@@ -164,27 +156,23 @@ BOOL CXBeamRateDoc::Init()
    return TRUE;
 }
 
-BOOL CXBeamRateDoc::LoadSpecialAgents(IBrokerInitEx2* pBrokerInit)
+std::pair<bool, WBFL::EAF::AgentErrors> CXBeamRateDoc::LoadSpecialAgents()
 {
-   if ( !CEAFBrokerDocument::LoadSpecialAgents(pBrokerInit) )
+   auto errors = CEAFBrokerDocument::LoadSpecialAgents();
+
+   m_pMyDocProxyAgent = std::make_shared<CXBeamRateDocProxyAgent>(this);
+   auto result = m_pBroker->AddAgent(m_pMyDocProxyAgent);
+   if (result.first == false)
    {
-      return FALSE;
+      AFX_MANAGE_STATE(AfxGetStaticModuleState());
+      result.second.component.dll = AfxGetApp()->m_pszExeName;
+      result.second.reason += _T(" - could not add XBeamRateDocProxyAgent to broker");
+      errors.second.push_back(result.second);
    }
 
-   CComObject<CXBeamRateDocProxyAgent>* pDocProxyAgent;
-   CComObject<CXBeamRateDocProxyAgent>::CreateInstance(&pDocProxyAgent);
-   m_pMyDocProxyAgent = dynamic_cast<CXBeamRateDocProxyAgent*>(pDocProxyAgent);
-   m_pMyDocProxyAgent->SetDocument( this );
+   errors.first = errors.second.empty();
 
-   CComPtr<IAgentEx> pAgent(m_pMyDocProxyAgent);
-   
-   HRESULT hr = pBrokerInit->AddAgent( pAgent );
-   if ( FAILED(hr) )
-   {
-      return FALSE;
-   }
-
-   return TRUE;
+   return errors;
 }
 
 void CXBeamRateDoc::OnChangedFavoriteReports(BOOL bIsFavorites,BOOL bFromMenu)
@@ -193,7 +181,7 @@ void CXBeamRateDoc::OnChangedFavoriteReports(BOOL bIsFavorites,BOOL bFromMenu)
    PopulateReportMenu();
 }
 
-void CXBeamRateDoc::ShowCustomReportHelp(eafTypes::CustomReportHelp helpType)
+void CXBeamRateDoc::ShowCustomReportHelp(WBFL::EAF::CustomReportHelp helpType)
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    __super::ShowCustomReportHelp(helpType);
@@ -250,7 +238,7 @@ HRESULT CXBeamRateDoc::WriteTheDocument(IStructuredSave* pStrSave)
 {
    // before the standard broker document persistence, write out the version
    // number of the application that created this document
-   CXBeamRatePluginApp* pApp = (CXBeamRatePluginApp*)AfxGetApp();
+   CXBeamRateApp* pApp = (CXBeamRateApp*)AfxGetApp();
    HRESULT hr = pStrSave->put_Property(_T("Version"),CComVariant(pApp->GetVersion(true)));
    if ( FAILED(hr) )
    {
@@ -357,21 +345,20 @@ BOOL CXBeamRateDoc::OnNewDocument()
 
 void CXBeamRateDoc::OnCloseDocument()
 {
-   // Put report favorites options back into CXBeamRateAppPlugin
+   // Put report favorites options back into CXBeamRatePluginApp
    CEAFDocTemplate* pTemplate = (CEAFDocTemplate*)GetDocTemplate();
-   CComPtr<IEAFAppPlugin> pAppPlugin;
-   pTemplate->GetPlugin(&pAppPlugin);
-   CXBeamRateAppPlugin* pXBeamRateAppPlugin = dynamic_cast<CXBeamRateAppPlugin*>(pAppPlugin.p);
+   auto pluginApp = pTemplate->GetPluginApp();
+   auto pXBeamRate = std::dynamic_pointer_cast<CXBeamRatePluginApp>(pluginApp);
 
    BOOL bDisplayFavorites = DisplayFavoriteReports();
    std::vector<std::_tstring> vFavorites = GetFavoriteReports();
 
-   pXBeamRateAppPlugin->DisplayFavoriteReports(bDisplayFavorites);
-   pXBeamRateAppPlugin->SetFavoriteReports(vFavorites);
+   pXBeamRate->DisplayFavoriteReports(bDisplayFavorites);
+   pXBeamRate->SetFavoriteReports(vFavorites);
 
    // user-defined custom reports
    CEAFCustomReports reports = GetCustomReports();
-   pXBeamRateAppPlugin->SetCustomReports(reports);
+   pXBeamRate->SetCustomReports(reports);
 
    CEAFBrokerDocument::OnCloseDocument();
 }
@@ -472,14 +459,13 @@ void CXBeamRateDoc::OnCreateFinalize()
    CEAFBrokerDocument::OnCreateFinalize();
 
    GET_IFACE(IEAFStatusCenter,pStatusCenter);
-   m_scidInformationalError  = pStatusCenter->RegisterCallback(new pgsInformationalStatusCallback(eafTypes::statusWarning)); 
+   m_scidInformationalError  = pStatusCenter->RegisterCallback(std::make_shared<pgsInformationalStatusCallback>(WBFL::EAF::StatusSeverityType::Warning)); 
    m_StatusGroupID = pStatusCenter->CreateStatusGroupID();
 
-   // Transfer report favorites and custom reports data from CXBeamRateAppPlugin to CEAFBrokerDocument (this)
+   // Transfer report favorites and custom reports data from CXBeamRatePluginApp to CEAFBrokerDocument (this)
    CEAFDocTemplate* pTemplate = (CEAFDocTemplate*)GetDocTemplate();
-   CComPtr<IEAFAppPlugin> pAppPlugin;
-   pTemplate->GetPlugin(&pAppPlugin);
-   CXBeamRateAppPlugin* pXBeamRate = dynamic_cast<CXBeamRateAppPlugin*>(pAppPlugin.p);
+   auto pluginApp = pTemplate->GetPluginApp();
+   auto pXBeamRate = std::dynamic_pointer_cast<CXBeamRatePluginApp>(pluginApp);
 
    BOOL bDisplayFavorites = pXBeamRate->DisplayFavoriteReports();
    std::vector<std::_tstring> vFavorites = pXBeamRate->GetFavoriteReports();
@@ -499,7 +485,7 @@ void CXBeamRateDoc::OnCreateFinalize()
    CXBeamRateStatusBar* pStatusBar = ((CXBeamRateStatusBar*)EAFGetMainFrame()->GetStatusBar());
    pStatusBar->AutoCalcEnabled( IsAutoCalcEnabled() );
 
-   // views have been initilized so fire any pending events
+   // views have been initialized so fire any pending events
    GET_IFACE(IXBREvents,pEvents);
    GET_IFACE(IXBRUIEvents,pUIEvents);
    pEvents->FirePendingEvents(); 
@@ -508,9 +494,8 @@ void CXBeamRateDoc::OnCreateFinalize()
 
 void CXBeamRateDoc::BrokerShutDown()
 {
-   CEAFBrokerDocument::BrokerShutDown();
-
    m_pMyDocProxyAgent = nullptr;
+   CEAFBrokerDocument::BrokerShutDown();
 }
 
 void CXBeamRateDoc::OnStatusChanged()
@@ -524,19 +509,19 @@ void CXBeamRateDoc::OnStatusChanged()
 
 void CXBeamRateDoc::PopulateReportMenu()
 {
-   CEAFMenu* pMainMenu = GetMainMenu();
+   auto pMainMenu = GetMainMenu();
 
    UINT viewPos = pMainMenu->FindMenuItem(_T("&View"));
    ASSERT( 0 <= viewPos );
 
-   CEAFMenu* pViewMenu = pMainMenu->GetSubMenu(viewPos);
+   auto pViewMenu = pMainMenu->GetSubMenu(viewPos);
    ASSERT( pViewMenu != nullptr );
 
    UINT reportsPos = pViewMenu->FindMenuItem(_T("&Reports"));
    ASSERT( 0 <= reportsPos );
 
    // Get the reports menu
-   CEAFMenu* pReportsMenu = pViewMenu->GetSubMenu(reportsPos);
+   auto pReportsMenu = pViewMenu->GetSubMenu(reportsPos);
    ASSERT(pReportsMenu != nullptr);
 
    CEAFBrokerDocument::PopulateReportMenu(pReportsMenu);
@@ -544,19 +529,19 @@ void CXBeamRateDoc::PopulateReportMenu()
 
 void CXBeamRateDoc::PopulateGraphMenu()
 {
-   CEAFMenu* pMainMenu = GetMainMenu();
+   auto pMainMenu = GetMainMenu();
 
    UINT viewPos = pMainMenu->FindMenuItem(_T("&View"));
    ASSERT( 0 <= viewPos );
 
-   CEAFMenu* pViewMenu = pMainMenu->GetSubMenu(viewPos);
+   auto pViewMenu = pMainMenu->GetSubMenu(viewPos);
    ASSERT( pViewMenu != nullptr );
 
    UINT graphsPos = pViewMenu->FindMenuItem(_T("&Graphs"));
    ASSERT( 0 <= graphsPos );
 
    // Get the graphs menu
-   CEAFMenu* pGraphMenu = pViewMenu->GetSubMenu(graphsPos);
+   auto pGraphMenu = pViewMenu->GetSubMenu(graphsPos);
    ASSERT(pGraphMenu != nullptr);
 
    CEAFBrokerDocument::PopulateGraphMenu(pGraphMenu);
@@ -575,7 +560,7 @@ void CXBeamRateDoc::OnAbout()
 
 void CXBeamRateDoc::OnUpdateViewGraphs(CCmdUI* pCmdUI)
 {
-   GET_IFACE(IGraphManager,pGraphMgr);
+   GET_IFACE(IEAFGraphManager,pGraphMgr);
    pCmdUI->Enable( 0 < pGraphMgr->GetGraphBuilderCount() );
 }
 
@@ -596,27 +581,27 @@ BOOL CXBeamRateDoc::OnViewGraphs(NMHDR* pnmhdr,LRESULT* plr)
    CMenu* pMenu = menu.GetSubMenu(0);
    pMenu->RemoveMenu(0,MF_BYPOSITION); // remove the placeholder
 
-   CEAFMenu contextMenu(pMenu->Detach(),GetPluginCommandManager());
+   auto contextMenu = WBFL::EAF::Menu::CreateMenu(pMenu->Detach(),GetPluginCommandManager());
 
 
-   BuildGraphMenu(&contextMenu);
+   BuildGraphMenu(contextMenu);
 
    GET_IFACE(IEAFToolbars,pToolBars);
-   CEAFToolBar* pToolBar = pToolBars->GetToolBar( m_pMyDocProxyAgent->GetStdToolBarID() );
+   auto pToolBar = pToolBars->GetToolBar( m_pMyDocProxyAgent->GetStdToolBarID() );
    int idx = pToolBar->CommandToIndex(ID_VIEW_GRAPHS,nullptr);
    CRect rect;
    pToolBar->GetItemRect(idx,&rect);
 
    CPoint point(rect.left,rect.bottom);
    pToolBar->ClientToScreen(&point);
-   contextMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x,point.y, EAFGetMainFrame() );
+   contextMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x,point.y, EAFGetMainFrame() );
 
    return TRUE;
 }
 
 void CXBeamRateDoc::OnUpdateViewReports(CCmdUI* pCmdUI)
 {
-   GET_IFACE(IReportManager,pReportMgr);
+   GET_IFACE(IEAFReportManager,pReportMgr);
    pCmdUI->Enable( 0 < pReportMgr->GetReportBuilderCount() );
 }
 
@@ -637,19 +622,19 @@ BOOL CXBeamRateDoc::OnViewReports(NMHDR* pnmhdr,LRESULT* plr)
    CMenu* pMenu = menu.GetSubMenu(0);
    pMenu->RemoveMenu(0,MF_BYPOSITION); // remove the placeholder
 
-   CEAFMenu contextMenu(pMenu->Detach(),GetPluginCommandManager());
+   auto contextMenu = WBFL::EAF::Menu::CreateMenu(pMenu->Detach(),GetPluginCommandManager());
 
-   CEAFBrokerDocument::PopulateReportMenu(&contextMenu);
+   CEAFBrokerDocument::PopulateReportMenu(contextMenu);
 
    GET_IFACE(IEAFToolbars,pToolBars);
-   CEAFToolBar* pToolBar = pToolBars->GetToolBar( m_pMyDocProxyAgent->GetStdToolBarID() );
+   auto pToolBar = pToolBars->GetToolBar( m_pMyDocProxyAgent->GetStdToolBarID() );
    int idx = pToolBar->CommandToIndex(ID_VIEW_REPORTS,nullptr);
    CRect rect;
    pToolBar->GetItemRect(idx,&rect);
 
    CPoint point(rect.left,rect.bottom);
    pToolBar->ClientToScreen(&point);
-   contextMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x,point.y, EAFGetMainFrame() );
+   contextMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x,point.y, EAFGetMainFrame() );
 
    return TRUE;
 }

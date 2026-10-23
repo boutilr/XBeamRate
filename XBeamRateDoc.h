@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -45,22 +45,22 @@ protected: // create from serialization only
 
 // CEAFAutoCalcDocMixin over-rides
 public:
-   virtual bool IsAutoCalcEnabled() const override;
-   virtual void EnableAutoCalc(bool bEnable) override;
+   bool IsAutoCalcEnabled() const override;
+   void EnableAutoCalc(bool bEnable) override;
 
 // CEBrokerDocument over-rides
 public:
-   virtual BOOL Init() override;
-   virtual BOOL LoadSpecialAgents(IBrokerInitEx2* pBrokerInit) override;
+   BOOL Init() override;
+   std::pair<bool, WBFL::EAF::AgentErrors> LoadSpecialAgents() override;
 
-   virtual void OnChangedFavoriteReports(BOOL bIsFavorites, BOOL bFromMenu) override;
-   virtual void ShowCustomReportHelp(eafTypes::CustomReportHelp helpType) override;
-   virtual void ShowCustomReportDefinitionHelp() override;
+   void OnChangedFavoriteReports(BOOL bIsFavorites, BOOL bFromMenu) override;
+   void ShowCustomReportHelp(WBFL::EAF::CustomReportHelp helpType) override;
+   void ShowCustomReportDefinitionHelp() override;
 
 // Attributes
 public:
-   virtual CString GetRootNodeName() override;
-   virtual Float64 GetRootNodeVersion() override;
+   CString GetRootNodeName() override;
+   Float64 GetRootNodeVersion() override;
 
 // Operations
 public:
@@ -70,38 +70,38 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CXBeamRateDoc)
 	public:
-	virtual BOOL OnNewDocument() override;
-   virtual void OnCloseDocument() override;
-	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo) override;
+	BOOL OnNewDocument() override;
+    void OnCloseDocument() override;
+	BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo) override;
 	//}}AFX_VIRTUAL	//}}AFX_VIRTUAL
 
-   virtual void LoadToolbarState() override;
-   virtual void SaveToolbarState() override;
-   virtual CString GetToolbarSectionName() override;
-   virtual BOOL GetStatusBarMessageString(UINT nID,CString& rMessage) const override;
-   virtual BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
+   void LoadToolbarState() override;
+   void SaveToolbarState() override;
+   CString GetToolbarSectionName() override;
+   BOOL GetStatusBarMessageString(UINT nID,CString& rMessage) const override;
+   BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
 
 // Implementation
 public:
 	virtual ~CXBeamRateDoc();
 #ifdef _DEBUG
-	virtual void AssertValid() const override;
-	virtual void Dump(CDumpContext& dc) const override;
+	void AssertValid() const override;
+	void Dump(CDumpContext& dc) const override;
 #endif
 
 protected:
-   virtual CATID GetAgentCategoryID() override;
-   virtual HINSTANCE GetResourceInstance() override;
-   virtual HRESULT LoadTheDocument(IStructuredLoad* pStrLoad) override;
-   virtual HRESULT WriteTheDocument(IStructuredSave* pStrSave) override;
-   virtual void CreateReportView(IndexType rptIdx,BOOL bPrompt) override;
-   virtual void CreateGraphView(IndexType graphIdx) override;
+   CATID GetAgentCategoryID() override;
+   HINSTANCE GetResourceInstance() override;
+   HRESULT LoadTheDocument(IStructuredLoad* pStrLoad) override;
+   HRESULT WriteTheDocument(IStructuredSave* pStrSave) override;
+   void CreateReportView(IndexType rptIdx,BOOL bPrompt) override;
+   void CreateGraphView(IndexType graphIdx) override;
 
-   virtual void LoadDocumentSettings() override;
-   virtual void SaveDocumentSettings() override;
+   void LoadDocumentSettings() override;
+   void SaveDocumentSettings() override;
 
-   virtual CString GetDocumentationSetName() override;
-   virtual CString GetDocumentationRootLocation() override;
+   CString GetDocumentationSetName() override;
+   CString GetDocumentationRootLocation() override;
 
 // Generated message map functions
 protected:
@@ -126,19 +126,19 @@ protected:
    StatusGroupIDType m_StatusGroupID;
 
    friend CXBeamRateDocProxyAgent;
-   CXBeamRateDocProxyAgent* m_pMyDocProxyAgent;
+   std::shared_ptr<CXBeamRateDocProxyAgent> m_pMyDocProxyAgent;
 
    CComPtr<IDocUnitSystem> m_DocUnitSystem;
 
    bool m_bAutoCalcEnabled;
 
-   virtual BOOL OpenTheDocument(LPCTSTR lpszPathName) override;
-   virtual void OnCreateFinalize() override;
-   virtual void BrokerShutDown() override;
-   virtual void OnStatusChanged() override;
+   BOOL OpenTheDocument(LPCTSTR lpszPathName) override;
+   void OnCreateFinalize() override;
+   void BrokerShutDown() override;
+   void OnStatusChanged() override;
 
    // called when the UI Hints have been reset
-   virtual void OnUIHintsReset() override;
+   void OnUIHintsReset() override;
 
    void PopulateReportMenu();
    void PopulateGraphMenu();

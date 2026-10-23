@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,42 +21,23 @@
 ///////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include "PGSComponentInfo.h"
-#include "CLSID.h"
-#include "resource.h"
 
-class ATL_NO_VTABLE CPGSpliceComponentInfo : 
-   public CComObjectRootEx<CComSingleThreadModel>,
-   public CComCoClass<CPGSpliceComponentInfo, &CLSID_PGSpliceComponentInfo>,
+#include <EAF\ComponentObject.h>
+#include "PGSComponentInfo.h"
+
+class CPGSpliceComponentInfo : public WBFL::EAF::ComponentObject,
    public IPGSpliceComponentInfo
 {
 public:
-   CPGSpliceComponentInfo()
-   {
-   }
-
-DECLARE_REGISTRY_RESOURCEID(IDR_PGSPLICECOMPONENTINFO)
-DECLARE_CLASSFACTORY_SINGLETON(CPGSpliceComponentInfo)
-
-BEGIN_COM_MAP(CPGSpliceComponentInfo)
-   COM_INTERFACE_ENTRY(IPGSpliceComponentInfo)
-END_COM_MAP()
-
-BEGIN_CONNECTION_POINT_MAP(CPGSpliceComponentInfo)
-END_CONNECTION_POINT_MAP()
-
-   HRESULT FinalConstruct();
-   void FinalRelease();
+   CPGSpliceComponentInfo() = default;
 
 // IPGSpliceComponentInfo
 public:
-   virtual BOOL Init(CPGSpliceDoc* pDoc) override;
-   virtual void Terminate() override;
-   virtual CString GetName() const override;
-   virtual CString GetDescription() const override;
-   virtual HICON GetIcon() const override;
-   virtual bool HasMoreInfo() const override;
-   virtual void OnMoreInfo() const override;
+   BOOL Init(CPGSpliceDoc* pDoc) override;
+   void Terminate() override;
+   CString GetName() const override;
+   CString GetDescription() const override;
+   HICON GetIcon() const override;
+   bool HasMoreInfo() const override;
+   void OnMoreInfo() const override;
 };
-
-OBJECT_ENTRY_AUTO(__uuidof(PGSpliceComponentInfo), CPGSpliceComponentInfo)

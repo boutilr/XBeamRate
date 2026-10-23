@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -36,15 +36,16 @@ DESCRIPTION
 // {34BA2439-C0A2-4171-9FDC-B4307036C07C}
 DEFINE_GUID(IID_IXBRRatingSpecification, 
 0x34ba2439, 0xc0a2, 0x4171, 0x9f, 0xdc, 0xb4, 0x30, 0x70, 0x36, 0xc0, 0x7c);
-interface IXBRRatingSpecification : IUnknown
+class IXBRRatingSpecification
 {
+public:
    virtual bool IsRatingEnabled(pgsTypes::LoadRatingType ratingType) const = 0;
    virtual void EnableRating(pgsTypes::LoadRatingType ratingType,bool bEnable) = 0;
 
    virtual void RateForShear(pgsTypes::LoadRatingType ratingType,bool bRateForShear) = 0;
    virtual bool RateForShear(pgsTypes::LoadRatingType ratingType) const = 0;
 
-   // Evalute yield stress in reinforcement MBE 6A.5.4.2.2b
+   // Evaluate yield stress in reinforcement MBE 6A.5.4.2.2b
    virtual void CheckYieldStressLimit(bool bCheckYieldStress) = 0;
    virtual bool CheckYieldStressLimit() const = 0;
 

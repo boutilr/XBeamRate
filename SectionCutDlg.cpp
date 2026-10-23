@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 //
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "resource.h"
 #include "SectionCutDlg.h"
 #include <ostream>
@@ -36,11 +37,6 @@
 
 #include <MFCTools\Format.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // CSectionCutDlg dialog
@@ -116,8 +112,8 @@ xbrPointOfInterest CSectionCutDlg::GetPOI()
 
 void CSectionCutDlg::UpdatePOI()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IXBRPointOfInterest,pPOI);
    m_vPOI = pPOI->GetXBeamPointsOfInterest(m_PierID);
    if (m_Slider.GetSafeHwnd() != nullptr )
@@ -135,8 +131,8 @@ void CSectionCutDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CSectionCutDlg::UpdateSliderLabel()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
    GET_IFACE2(pBroker,IXBRPointOfInterest,pPoi);
 

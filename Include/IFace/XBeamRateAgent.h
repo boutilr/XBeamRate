@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,14 +22,12 @@
 
 #pragma once
 
-#include <WBFLUnitServer.h>
-
 /*****************************************************************************
 INTERFACE
    IXBeamRateAgent
 
 DESCRIPTION
-   This is a dummy interface used to determing if XBeam Rate is acting
+   This is a dummy interface used to determining if XBeam Rate is acting
    as a stand alone application or an extension to PGSuper/PGSplice.
    This interface is implemented on XBeamRateAgent. If a request for this
    interface fails, the XBeam Rate is acting as a stand alone application.
@@ -37,33 +35,21 @@ DESCRIPTION
 // {D07B5589-24FA-48b3-8C15-1371C80353AF}
 DEFINE_GUID(IID_IXBeamRateAgent, 
 0xd07b5589, 0x24fa, 0x48b3, 0x8c, 0x15, 0x13, 0x71, 0xc8, 0x3, 0x53, 0xaf);
-interface IXBeamRateAgent : IUnknown
+class IXBeamRateAgent
 {
+public:
    // always returns true. If this interface is implemented
    // XBeam Rate is an extension to PGSuper/PGSplice
    virtual bool IsExtendingPGSuper() = 0;
-};
-
-/*****************************************************************************
-INTERFACE
-   IXBeamRate
-
-DESCRIPTION
-*****************************************************************************/
-// {3AF5D94F-6CC6-4aec-907E-6663BB1317E8}
-DEFINE_GUID(IID_IXBeamRate, 
-0x3af5d94f, 0x6cc6, 0x4aec, 0x90, 0x7e, 0x66, 0x63, 0xbb, 0x13, 0x17, 0xe8);
-interface IXBeamRate : IUnknown
-{
-   virtual void GetUnitServer(IUnitServer** ppUnitServer) = 0;
 };
 
 // IXBRViews
 // {49B3DFCF-5611-42d7-8B19-A1FC52778846}
 DEFINE_GUID(IID_IXBRViews, 
 0x49b3dfcf, 0x5611, 0x42d7, 0x8b, 0x19, 0xa1, 0xfc, 0x52, 0x77, 0x88, 0x46);
-interface IXBRViews : IUnknown
+class IXBRViews
 {
+public:
    virtual void CreateReportView(IndexType rptIdx,BOOL bPromptForSpec=TRUE) = 0;
    virtual void CreateGraphView(IndexType graphIdx) = 0;
    virtual void CreatePierView() = 0;
@@ -73,7 +59,8 @@ interface IXBRViews : IUnknown
 // {C0FA29DA-CCA6-4a49-A21C-16F97DA3DED4}
 DEFINE_GUID(IID_IXBREditByUI, 
 0xc0fa29da, 0xcca6, 0x4a49, 0xa2, 0x1c, 0x16, 0xf9, 0x7d, 0xa3, 0xde, 0xd4);
-interface IXBREditByUI : IUnknown
+class IXBREditByUI
 {
+public:
    virtual UINT GetStdToolBarID() = 0;
 };

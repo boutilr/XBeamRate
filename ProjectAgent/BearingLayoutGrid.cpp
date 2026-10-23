@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,14 +22,10 @@
 
 
 #include "stdafx.h"
+#include "ProjectAgent.h"
 #include "BearingLayoutGrid.h"
 #include <EAF\EAFDisplayUnits.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 GRID_IMPLEMENT_REGISTER(CBearingLayoutGrid, CS_DBLCLKS, 0, 0, 0);
 
@@ -86,8 +82,8 @@ void CBearingLayoutGrid::CustomInit(xbrTypes::ReactionLoadType reactionLoadType)
 		);
 
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+    auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
 // set text along top row
@@ -225,7 +221,10 @@ void CBearingLayoutGrid::AddBearing()
    GetParam()->SetLockReadOnly(FALSE);
 
    // set the default spacing in the last row
-   SetBearingData(nRows,DC,DW,CR,SH,PS,RE,Wdefault,Sdefault);
+   if (nRows > 0)
+   {
+       SetBearingData(nRows, DC, DW, CR, SH, PS, RE, Wdefault, Sdefault);
+   }
 
    // add the new bearing (adds row to the grid)
    AddBearingRow(DC,DW,CR,SH,PS,RE,Wdefault,0);
@@ -307,13 +306,16 @@ void CBearingLayoutGrid::SetBearingData(xbrBearingLineData& brgLineData,std::vec
       for ( IndexType brgIdx = 0; brgIdx < nBearings; brgIdx++ )
       {
          Float64 S = (brgIdx != nBearings-1 ? brgLineData.GetSpacing(brgIdx) : 0);
-         Float64 DC = deadLoadReactions[brgIdx].m_DC;
-         Float64 DW = deadLoadReactions[brgIdx].m_DW;
-         Float64 CR = deadLoadReactions[brgIdx].m_CR;
-         Float64 SH = deadLoadReactions[brgIdx].m_SH;
-         Float64 PS = deadLoadReactions[brgIdx].m_PS;
-         Float64 RE = deadLoadReactions[brgIdx].m_RE;
-         Float64 W  = deadLoadReactions[brgIdx].m_W;
+         // A newly initialized bearing line may not have reactions yet.
+         const txnDeadLoadReaction zeroReaction;
+         const txnDeadLoadReaction& reaction = (brgIdx < deadLoadReactions.size() ? deadLoadReactions[brgIdx] : zeroReaction);
+         Float64 DC = reaction.m_DC;
+         Float64 DW = reaction.m_DW;
+         Float64 CR = reaction.m_CR;
+         Float64 SH = reaction.m_SH;
+         Float64 PS = reaction.m_PS;
+         Float64 RE = reaction.m_RE;
+         Float64 W  = reaction.m_W;
          AddBearingRow(DC,DW,CR,SH,PS,RE,W,S);
       }
    }
@@ -329,8 +331,8 @@ IndexType CBearingLayoutGrid::GetBearingCount()
 
 void CBearingLayoutGrid::SetBearingData(ROWCOL row,Float64 DC,Float64 DW,Float64 CR,Float64 SH,Float64 PS,Float64 RE,Float64 W,Float64 S)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    ROWCOL col = 1;
@@ -479,8 +481,8 @@ void CBearingLayoutGrid::SetBearingData(ROWCOL row,Float64 DC,Float64 DW,Float64
 
 void CBearingLayoutGrid::OnReactionLoadTypeChanged()
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    CString strDC,strDW,strCR,strSH,strPS,strRE;
@@ -504,6 +506,7 @@ void CBearingLayoutGrid::OnReactionLoadTypeChanged()
    }
 
    ROWCOL col = 1;
+   //DC
    SetStyleRange(CGXRange(0,col++), CGXStyle()
          .SetWrapText(TRUE)
 			.SetEnabled(FALSE)          // disables usage as current cell
@@ -511,7 +514,7 @@ void CBearingLayoutGrid::OnReactionLoadTypeChanged()
          .SetVerticalAlignment(DT_VCENTER)
 			.SetValue(strDC)
 		);
-
+   //DW
 	SetStyleRange(CGXRange(0,col++), CGXStyle()
          .SetWrapText(TRUE)
 			.SetEnabled(FALSE)          // disables usage as current cell
@@ -519,7 +522,7 @@ void CBearingLayoutGrid::OnReactionLoadTypeChanged()
          .SetVerticalAlignment(DT_VCENTER)
 			.SetValue(strDW)
 		);
-
+    //CR
 	SetStyleRange(CGXRange(0,col++), CGXStyle()
          .SetWrapText(TRUE)
 			.SetEnabled(FALSE)          // disables usage as current cell
@@ -527,7 +530,7 @@ void CBearingLayoutGrid::OnReactionLoadTypeChanged()
          .SetVerticalAlignment(DT_VCENTER)
 			.SetValue(strCR)
 		);
-
+    //SH
 	SetStyleRange(CGXRange(0,col++), CGXStyle()
          .SetWrapText(TRUE)
 			.SetEnabled(FALSE)          // disables usage as current cell
@@ -535,7 +538,7 @@ void CBearingLayoutGrid::OnReactionLoadTypeChanged()
          .SetVerticalAlignment(DT_VCENTER)
 			.SetValue(strSH)
 		);
-
+    //PS
 	SetStyleRange(CGXRange(0,col++), CGXStyle()
          .SetWrapText(TRUE)
 			.SetEnabled(FALSE)          // disables usage as current cell
@@ -543,7 +546,7 @@ void CBearingLayoutGrid::OnReactionLoadTypeChanged()
          .SetVerticalAlignment(DT_VCENTER)
 			.SetValue(strPS)
 		);
-
+    //RE
 	SetStyleRange(CGXRange(0,col++), CGXStyle()
          .SetWrapText(TRUE)
 			.SetEnabled(FALSE)          // disables usage as current cell
@@ -554,7 +557,7 @@ void CBearingLayoutGrid::OnReactionLoadTypeChanged()
 
    // Hide/Show the "W" column
    BOOL bHide = (m_ReactionLoadType == xbrTypes::rltConcentrated ? TRUE : FALSE);
-   HideCols(col,col++,bHide);
+   HideCols(col,col,bHide);
 
    ResizeColWidthsToFit(CGXRange(0,0,GetRowCount(),GetColCount()));
 }
@@ -570,8 +573,8 @@ void CBearingLayoutGrid::AddBearingRow(Float64 DC,Float64 DW,Float64 CR,Float64 
 
 void CBearingLayoutGrid::GetBearingData(ROWCOL row,Float64* pDC,Float64* pDW,Float64* pCR,Float64* pSH,Float64* pPS,Float64* pRE,Float64* pW,Float64* pS)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    ROWCOL col = 1;

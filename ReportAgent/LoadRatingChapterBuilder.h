@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -20,41 +20,15 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 
-
 #pragma once
+
 #include "XBeamRateChapterBuilder.h"
-
-
-/*****************************************************************************
-CLASS 
-   CLoadRatingChapterBuilder
-
-   Reports load rating outcome.
-
-
-DESCRIPTION
-   Reports load rating outcome.
-
-LOG
-   rab : 12.07.2009 : Created file
-*****************************************************************************/
 
 class CLoadRatingChapterBuilder : public CXBeamRateChapterBuilder
 {
 public:
    CLoadRatingChapterBuilder();
 
-   //------------------------------------------------------------------------
    virtual LPCTSTR GetName() const override;
-
-   //------------------------------------------------------------------------
-   virtual rptChapter* Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const override;
-
-   //------------------------------------------------------------------------
-   virtual std::unique_ptr<WBFL::Reporting::ChapterBuilder> Clone() const override;
-
-private:
-   // Prevent accidental copying and assignment
-   CLoadRatingChapterBuilder(const CLoadRatingChapterBuilder&) = delete;
-   CLoadRatingChapterBuilder& operator=(const CLoadRatingChapterBuilder&) = delete;
+   virtual rptChapter* Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec,Uint16 level) const override;
 };

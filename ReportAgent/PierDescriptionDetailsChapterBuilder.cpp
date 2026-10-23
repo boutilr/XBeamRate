@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "ReportAgent.h"
 #include "PierDescriptionDetailsChapterBuilder.h"
 #include <EAF\EAFDisplayUnits.h>
 
@@ -32,38 +33,27 @@
 #include <XBeamRateExt\LongitudinalRebarData.h>
 #include <XBeamRateExt\StirrupData.h>
 
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\GirderLabel.h>
 #include <PGSuperUIUtil.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
-void write_superstructure_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_substructure_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_concrete_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_reinforcement_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_longitudinal_reinforcement_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_transverse_reinforcement_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID,xbrTypes::Stage stage);
+void write_superstructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_substructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_concrete_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_longitudinal_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_transverse_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID,xbrTypes::Stage stage);
 
-/****************************************************************************
-CLASS
-   CPierDescriptionDetailsChapterBuilder
-****************************************************************************/
 CPierDescriptionDetailsChapterBuilder::CPierDescriptionDetailsChapterBuilder()
 {
 }
 
-//======================== OPERATORS  =======================================
-//======================== OPERATIONS =======================================
 LPCTSTR CPierDescriptionDetailsChapterBuilder::GetName() const
 {
    return TEXT("Pier Description Details");
 }
 
-rptChapter* CPierDescriptionDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+rptChapter* CPierDescriptionDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    USES_CONVERSION;
 
@@ -72,8 +62,8 @@ rptChapter* CPierDescriptionDetailsChapterBuilder::Build(const std::shared_ptr<c
    // This report does not use the passd span and girder parameters
    rptChapter* pChapter = CXBeamRateChapterBuilder::Build(pRptSpec,level);
 
-   CComPtr<IBroker> pBroker;
-   pXBRRptSpec->GetBroker(&pBroker);
+   auto pBroker = pXBRRptSpec->GetBroker();
+
 
    PierIDType pierID = pXBRRptSpec->GetPierID();
 
@@ -91,12 +81,7 @@ rptChapter* CPierDescriptionDetailsChapterBuilder::Build(const std::shared_ptr<c
 }
 
 
-std::unique_ptr<WBFL::Reporting::ChapterBuilder> CPierDescriptionDetailsChapterBuilder::Clone() const
-{
-   return std::make_unique<CPierDescriptionDetailsChapterBuilder>();
-}
-
-void write_superstructure_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_superstructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    INIT_UV_PROTOTYPE( rptLengthUnitValue, elevation, pDisplayUnits->GetAlignmentLengthUnit(), true );
    INIT_UV_PROTOTYPE( rptLengthUnitValue, length, pDisplayUnits->GetSpanLengthUnit(), true );
@@ -185,7 +170,7 @@ void write_superstructure_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,
    row++;
 }
 
-void write_substructure_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_substructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    INIT_UV_PROTOTYPE( rptLengthUnitValue, elevation, pDisplayUnits->GetAlignmentLengthUnit(), false );
    INIT_UV_PROTOTYPE( rptLengthUnitValue, length, pDisplayUnits->GetSpanLengthUnit(), false );
@@ -298,7 +283,7 @@ void write_substructure_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rp
    *pPara << _T("Column ") << LABEL_COLUMN(refColumnIdx) << _T(" is located ") << RPT_OFFSET(refColumnOffset,length) << _T("from the ") << strDatumType[columnDatum] << rptNewLine;
 }
 
-void write_concrete_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_concrete_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    rptParagraph* pPara = new rptParagraph;
    *pChapter << pPara;
@@ -431,7 +416,7 @@ void write_concrete_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptCha
    }
 }
 
-void write_reinforcement_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    GET_IFACE2(pBroker,IXBRProject,pProject);
    WBFL::Materials::Rebar::Type type;
@@ -463,7 +448,7 @@ void write_reinforcement_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,r
    (*pTable)(1,2) << stress.SetValue(fy);
 }
 
-void write_longitudinal_reinforcement_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_longitudinal_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    rptParagraph* pPara = new rptParagraph(rptStyleManager::GetHeadingStyle());
    *pChapter << pPara;
@@ -545,7 +530,7 @@ void write_longitudinal_reinforcement_data(IBroker* pBroker,IEAFDisplayUnits* pD
    }
 }
 
-void write_transverse_reinforcement_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID,xbrTypes::Stage stage)
+void write_transverse_reinforcement_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID,xbrTypes::Stage stage)
 {
    rptParagraph* pPara = new rptParagraph(rptStyleManager::GetHeadingStyle());
    *pChapter << pPara;

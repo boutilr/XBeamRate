@@ -25,7 +25,7 @@
     <ClCompile Include="PGSuperComponentInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PGSuperExporter.cpp">
+    <ClCompile Include="XBeamRateDataExporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ReinforcementPageParent.cpp">
@@ -52,7 +52,7 @@
     <ClCompile Include="XBeamRateAgent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="XBeamRateAppPlugin.cpp">
+    <ClCompile Include="XBeamRatePluginApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="XBeamRateChildFrame.cpp">
@@ -76,7 +76,7 @@
     <ClCompile Include="XBeamRateGraphView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="XBeamRatePluginApp.cpp">
+    <ClCompile Include="XBeamRateApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="XBeamRateReportView.cpp">
@@ -120,7 +120,7 @@
     <ClInclude Include="PGSuperComponentInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PGSuperExporter.h">
+    <ClInclude Include="XBeamRateDataExporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ReinforcementPageParent.h">
@@ -159,7 +159,7 @@
     <ClInclude Include="Include\XBeamRateAll.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="XBeamRateAppPlugin.h">
+    <ClInclude Include="XBeamRatePluginApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="XBeamRateChildFrame.h">
@@ -186,7 +186,7 @@
     <ClInclude Include="Include\XBeamRateHints.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="XBeamRatePluginApp.h">
+    <ClInclude Include="XBeamRateApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="XBeamRateReportView.h">
@@ -246,24 +246,6 @@
   <ItemGroup>
     <None Include="XBeamRate.def" />
     <None Include="XBeamRate.tip" />
-    <None Include="ComponentInfo.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="PGSpliceComponentInfo.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="PGSuperComponentInfo.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="PGSuperExporter.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="XBeamRateAgent.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="XBeamRateAppPlugin.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

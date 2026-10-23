@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,22 +22,18 @@
 
 
 #include "StdAfx.h"
+#include "ReportAgent.h"
 #include <RatingSummaryTable.h>
 
 #include <PgsExt\RatingArtifact.h>
 #include <PgsExt\CapacityToDemand.h>
-#include <PgsExt\Helpers.h>
+#include <PsgLib\Helpers.h>
 
 #include <EAF\EAFDisplayUnits.h>
 #include <IFace\Project.h>
 #include <IFace\RatingSpecification.h>
 #include <IFace\LoadRating.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 CRatingSummaryTable::CRatingSummaryTable()
 {
@@ -47,9 +43,7 @@ CRatingSummaryTable::~CRatingSummaryTable()
 {
 }
 
-//======================== OPERATORS  =======================================
-//======================== OPERATIONS =======================================
-rptRcTable* CRatingSummaryTable::BuildByLimitState(IBroker* pBroker,PierIDType pierID,CRatingSummaryTable::RatingTableType ratingTableType) const
+rptRcTable* CRatingSummaryTable::BuildByLimitState(std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,CRatingSummaryTable::RatingTableType ratingTableType) const
 {
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
    GET_IFACE2(pBroker,IXBRRatingSpecification,pRatingSpec);
@@ -410,7 +404,7 @@ rptRcTable* CRatingSummaryTable::BuildByLimitState(IBroker* pBroker,PierIDType p
    return table;
 }
 
-rptRcTable* CRatingSummaryTable::BuildByVehicle(IBroker* pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType) const
+rptRcTable* CRatingSummaryTable::BuildByVehicle(std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType) const
 {
    GET_IFACE2(pBroker,IXBRProject,pProject);
 
@@ -539,7 +533,7 @@ rptRcTable* CRatingSummaryTable::BuildByVehicle(IBroker* pBroker,PierIDType pier
    return pTable;
 }
 
-rptRcTable* CRatingSummaryTable::BuildLoadPosting(IBroker* pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType, bool* pbMustCloseBridge) const
+rptRcTable* CRatingSummaryTable::BuildLoadPosting(std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType, bool* pbMustCloseBridge) const
 {
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
    GET_IFACE2(pBroker,IXBRProject,pProject);
@@ -632,7 +626,7 @@ rptRcTable* CRatingSummaryTable::BuildLoadPosting(IBroker* pBroker,PierIDType pi
 }
 
 
-rptRcTable* CRatingSummaryTable::BuildEmergencyVehicleLoadPosting(IBroker* pBroker, PierIDType pierID) const
+rptRcTable* CRatingSummaryTable::BuildEmergencyVehicleLoadPosting(std::shared_ptr<WBFL::EAF::Broker> pBroker, PierIDType pierID) const
 {
    GET_IFACE2(pBroker, IXBRArtifact, pArtifact);
 

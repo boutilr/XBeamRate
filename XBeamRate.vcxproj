@@ -19,14 +19,14 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseOfAtl>Dynamic</UseOfAtl>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseOfAtl>Dynamic</UseOfAtl>
     <CharacterSet>Unicode</CharacterSet>
@@ -54,7 +54,7 @@
     <_ProjectFileVersion>14.0.25431.1</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules />
     <CodeAnalysisRuleAssemblies />
@@ -112,7 +112,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
@@ -166,7 +166,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>$(ARPDIR)\WBFL\RegFreeCOM\$(Platform)\$(Configuration);$(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>.\XBeamRate.def</ModuleDefinitionFile>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
@@ -192,7 +192,7 @@
     <ClCompile Include="mfcdual.cpp" />
     <ClCompile Include="PGSpliceComponentInfo.cpp" />
     <ClCompile Include="PGSuperComponentInfo.cpp" />
-    <ClCompile Include="PGSuperExporter.cpp" />
+    <ClCompile Include="XBeamRateDataExporter.cpp" />
     <ClCompile Include="ReinforcementPageParent.cpp" />
     <ClCompile Include="ReportViewChildFrame.cpp" />
     <ClCompile Include="SectionCut.cpp" />
@@ -204,7 +204,7 @@
     <ClCompile Include="txnEditLoadRatingOptions.cpp" />
     <ClCompile Include="txnEditReinforcement.cpp" />
     <ClCompile Include="XBeamRateAgent.cpp" />
-    <ClCompile Include="XBeamRateAppPlugin.cpp" />
+    <ClCompile Include="XBeamRatePluginApp.cpp" />
     <ClCompile Include="XBeamRateChildFrame.cpp" />
     <ClCompile Include="XBeamRateCommandLineInfo.cpp" />
     <ClCompile Include="XBeamRateCommandLineProcessor.cpp" />
@@ -212,7 +212,7 @@
     <ClCompile Include="XBeamRateDocProxyAgent.cpp" />
     <ClCompile Include="XBeamRateDocTemplate.cpp" />
     <ClCompile Include="XBeamRateGraphView.cpp" />
-    <ClCompile Include="XBeamRatePluginApp.cpp" />
+    <ClCompile Include="XBeamRateApp.cpp" />
     <ClCompile Include="XBeamRateReportView.cpp" />
     <ClCompile Include="XBeamRateStatusBar.cpp" />
     <ClCompile Include="XBeamRateVersionInfoImpl.cpp" />
@@ -220,14 +220,8 @@
     <ClCompile Include="XBRateCalculationSheet.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ComponentInfo.rgs" />
-    <None Include="PGSpliceComponentInfo.rgs" />
-    <None Include="PGSuperComponentInfo.rgs" />
-    <None Include="PGSuperExporter.rgs" />
     <None Include="XBeamRate.def" />
     <None Include="XBeamRate.tip" />
-    <None Include="XBeamRateAgent.rgs" />
-    <None Include="XBeamRateAppPlugin.rgs" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="XBeamRate.rc">
@@ -251,7 +245,7 @@
     <ClInclude Include="mfcdual.h" />
     <ClInclude Include="PGSpliceComponentInfo.h" />
     <ClInclude Include="PGSuperComponentInfo.h" />
-    <ClInclude Include="PGSuperExporter.h" />
+    <ClInclude Include="XBeamRateDataExporter.h" />
     <ClInclude Include="ReinforcementPageParent.h" />
     <ClInclude Include="ReportViewChildFrame.h" />
     <ClInclude Include="Resource.h" />
@@ -261,7 +255,7 @@
     <ClInclude Include="txnEditLoadRatingOptions.h" />
     <ClInclude Include="txnEditReinforcement.h" />
     <ClInclude Include="XBeamRateAgent.h" />
-    <ClInclude Include="XBeamRateAppPlugin.h" />
+    <ClInclude Include="XBeamRatePluginApp.h" />
     <ClInclude Include="XBeamRateChildFrame.h" />
     <ClInclude Include="XBeamRateCommandLineInfo.h" />
     <ClInclude Include="XBeamRateCommandLineProcessor.h" />
@@ -269,7 +263,7 @@
     <ClInclude Include="XBeamRateDocProxyAgent.h" />
     <ClInclude Include="XBeamRateDocTemplate.h" />
     <ClInclude Include="XBeamRateGraphView.h" />
-    <ClInclude Include="XBeamRatePluginApp.h" />
+    <ClInclude Include="XBeamRateApp.h" />
     <ClInclude Include="XBeamRateReportView.h" />
     <ClInclude Include="XBeamRateStatusBar.h" />
     <ClInclude Include="XBeamRateVersionInfoImpl.h" />

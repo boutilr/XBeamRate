@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,16 +22,12 @@
 
 
 #include "stdafx.h"
+#include "ProjectAgent.h"
 #include "txnEditPier.h"
 #include <XBeamRateExt\XBeamRateUtilities.h>
 
 #include <IFace\Project.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 txnDeadLoadReaction::txnDeadLoadReaction()
@@ -52,6 +48,8 @@ txnLiveLoadReactions::txnLiveLoadReactions()
 /////////////////////////////////////////////////////////////////
 txnEditPierData::txnEditPierData()
 {
+   m_DeadLoadReactionType[0] = xbrTypes::rltConcentrated;
+   m_DeadLoadReactionType[1] = xbrTypes::rltConcentrated;
 }
 
 /////////////////////////////////////////////////////////////////
@@ -78,8 +76,8 @@ void txnEditPier::Undo()
 
 void txnEditPier::Execute(int i)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+   auto pBroker = EAFGetBroker();
+
 
    GET_IFACE2(pBroker,IXBREvents, pEvents);
    pEvents->HoldEvents(); // don't fire any changed events until all changes are done
@@ -193,7 +191,7 @@ void txnEditPier::Execute(int i)
    pEvents->FirePendingEvents();
 }
 
-std::unique_ptr<CEAFTransaction> txnEditPier::CreateClone() const
+std::unique_ptr<WBFL::EAF::Transaction> txnEditPier::CreateClone() const
 {
    return std::make_unique<txnEditPier>(m_PierData[0],m_PierData[1]);
 }

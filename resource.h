@@ -7,17 +7,12 @@
 #define IDD_PIER_VIEW_CONTROLS          103
 #define IDD_RATING_OPTIONS              106
 #define IDD_ABOUTBOX                    107
-#define IDR_XBEAMRATEAPP                129
-#define IDR_COMPONENTINFO               130
-#define IDR_XBEAMRATEAGENT              131
 #define IDR_REPORT                      132
 #define IDR_REPORTS                     133
 #define IDR_GRAPHS                      134
 #define IDR_GRAPHING                    139
 #define IDC_APPICON                     140
 #define IDI_BSS                         191
-#define IDR_PGSUPEREXPORTER             200
-#define IDR_PGSPLICEEXPORTER            201
 #define IDC_COMBO1                      202
 #define IDC_PIERS                       202
 #define IDC_ANALYSIS_MODE               202
@@ -37,8 +32,6 @@
 #define IDR_PGS_PIER_VIEW_CTX           212
 #define IDR_XBR_PIER_VIEW_CTX           213
 #define IDI_TXDOT                       239
-#define IDR_PGSUPERCOMPONENTINFO        300
-#define IDR_PGSPLICECOMPONENTINFO       301
 #define IDC_PERMIT_FACTORS              304
 #define IDC_PERMIT_FACTORS2             305
 #define IDC_EMERGENCY_FACTORS           305

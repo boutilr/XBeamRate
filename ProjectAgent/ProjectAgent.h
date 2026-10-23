@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,10 +21,6 @@
 ///////////////////////////////////////////////////////////////////////
 
 
-#ifndef INCLUDED_PROJECTAGENT_H_
-#define INCLUDED_PROJECTAGENT_H_
+#pragma once
 
-#include <IFace\Project.h>
-#include <IFace\RatingSpecification.h>
-
-#endif // INCLUDED_PROJECTAGENT_H_
+#include <IFace/Tools.h>

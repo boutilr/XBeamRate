@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -27,58 +27,38 @@
 
 #pragma once
 
-#include "resource.h"       // main symbols
+#include <EAF\Agent.h>
 #include <TestAgent.h>
 #include "TestAgentCLSID.h"
 
-#include <EAF\EAFInterfaceCache.h>
+#include <IFace/Test.h>
+
 
 class xbrPointOfInterest;
 
 /////////////////////////////////////////////////////////////////////////////
 // CTestAgentImp
-class ATL_NO_VTABLE CTestAgentImp : 
-	public CComObjectRootEx<CComSingleThreadModel>,
-   //public CComRefCountTracer<CTestAgentImp,CComObjectRootEx<CComSingleThreadModel> >,
-	public CComCoClass<CTestAgentImp, &CLSID_TestAgent>,
-	//public IConnectionPointContainerImpl<CTestAgentImp>, // needed if we implement a connection point
-   //public CProxyIProjectEventSink<CTestAgentImp>,// needed if we implement a connection point
-   public IAgentEx,
+class CTestAgentImp : public WBFL::EAF::Agent,
    public IXBRTest
 {  
 public:
-	CTestAgentImp(); 
-   virtual ~CTestAgentImp();
+   CTestAgentImp() = default;;
 
-   DECLARE_PROTECT_FINAL_CONSTRUCT();
-
-   HRESULT FinalConstruct();
-   void FinalRelease();
-
-DECLARE_REGISTRY_RESOURCEID(IDR_TESTAGENT)
-
-BEGIN_COM_MAP(CTestAgentImp)
-	COM_INTERFACE_ENTRY(IAgent)
-   COM_INTERFACE_ENTRY(IAgentEx)
-   COM_INTERFACE_ENTRY(IXBRTest)
-END_COM_MAP()
-
-// IAgentEx
+// Agent
 public:
-	STDMETHOD(SetBroker)(/*[in]*/ IBroker* pBroker) override;
-   STDMETHOD(RegInterfaces)() override;
-	STDMETHOD(Init)() override;
-	STDMETHOD(Reset)() override;
-	STDMETHOD(ShutDown)() override;
-   STDMETHOD(Init2)() override;
-   STDMETHOD(GetClassID)(CLSID* pCLSID) override;
+   std::_tstring GetName() const override { return _T("XBeam Rate Test Agent"); }
+   bool RegisterInterfaces() override;
+   bool Init() override;
+   bool Reset() override;
+   bool ShutDown() override;
+   CLSID GetCLSID() const override;
 
 // IXBRTest
 public:
-   virtual HRESULT RunTest(PierIDType pierID,LPCTSTR lpszResultsFile) override;
+   HRESULT RunTest(PierIDType pierID,LPCTSTR lpszResultsFile) override;
 
 private:
-   DECLARE_EAF_AGENT_DATA;
+   EAF_DECLARE_AGENT_DATA;
 
    CString GetProcessID();
 
@@ -91,6 +71,4 @@ private:
    void RunCrackedSectionTest(std::_tostream& os,LPCTSTR lpszProcessID,PierIDType pierID,const std::vector<xbrPointOfInterest>& vPoi);
    void RunLoadRatingTest(std::_tostream& os,LPCTSTR lpszProcessID,PierIDType pierID);
 };
-
-OBJECT_ENTRY_AUTO(CLSID_TestAgent, CTestAgentImp)
 

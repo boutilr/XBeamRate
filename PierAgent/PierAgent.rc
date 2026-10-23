@@ -59,8 +59,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 8,1,0,1
- PRODUCTVERSION 8,1,0,1
+ FILEVERSION 9,1,0,1
+ PRODUCTVERSION 9,1,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -78,12 +78,12 @@ BEGIN
             VALUE "Comments", "A member of the Alternate Route Project"
             VALUE "CompanyName", "Washington State Department of Transportation"
             VALUE "FileDescription", "PierAgent Module"
-            VALUE "FileVersion", "8.1.0.1"
+            VALUE "FileVersion", "9.1.0.1"
             VALUE "InternalName", "PierAgent"
-            VALUE "LegalCopyright", "Copyright © 1999-2024, Washington State Department of Transportation, All Rights Reserved"
+            VALUE "LegalCopyright", "Copyright © 1999-2025, Washington State Department of Transportation, All Rights Reserved"
             VALUE "OriginalFilename", "PierAgent.DLL"
             VALUE "ProductName", "XBRate"
-            VALUE "ProductVersion", "8.1.0.1"
+            VALUE "ProductVersion", "9.1.0.1"
         END
     END
     BLOCK "VarFileInfo"
@@ -91,15 +91,6 @@ BEGIN
         VALUE "Translation", 0x409, 1200
     END
 END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// REGISTRY
-//
-
-IDR_PIERAGENT           REGISTRY                "PierAgent.rgs"
-IDR_PIERAGENTMODULE     REGISTRY                "PierAgentModule.rgs"
 
 /////////////////////////////////////////////////////////////////////////////
 //

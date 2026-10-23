@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -19,7 +19,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseOfAtl>Dynamic</UseOfAtl>
     <CharacterSet>Unicode</CharacterSet>
@@ -27,15 +27,12 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <UseOfMfc>Dynamic</UseOfMfc>
     <UseOfAtl>Dynamic</UseOfAtl>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(XSDDIR)\etc\vc-10.0\xsd-cxx-tree.props" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
@@ -69,7 +66,7 @@
     <OutDir>$(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules />
     <CodeAnalysisRuleAssemblies />
@@ -79,11 +76,6 @@
       <Message />
       <Command />
     </CustomBuildStep>
-    <CXX_Tree_Mapping_Rule>
-      <CharType>1</CharType>
-      <GenSerialization>true</GenSerialization>
-      <GenDoxygen>false</GenDoxygen>
-    </CXX_Tree_Mapping_Rule>
     <Midl>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ARPDIR)\WBFL\RegFreeCOM\$(Platform)\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -121,7 +113,7 @@
       <AdditionalLibraryDirectories>$(ARPDIR)\WBFL\RegFreeCOM\$(Platform)\$(Configuration);$(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ModuleDefinitionFile>.\ProjectAgent.def</ModuleDefinitionFile>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
@@ -143,11 +135,6 @@
       <Message />
       <Command />
     </CustomBuildStep>
-    <CXX_Tree_Mapping_Rule>
-      <CharType>1</CharType>
-      <GenSerialization>true</GenSerialization>
-      <GenDoxygen>false</GenDoxygen>
-    </CXX_Tree_Mapping_Rule>
     <Midl>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ARPDIR)\WBFL\RegFreeCOM\$(Platform)\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -190,7 +177,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -202,7 +189,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AASHTOConcretePage.cpp" />
-    <ClCompile Include="AgentCmdTarget.cpp" />
     <ClCompile Include="AnalysisOptionsPage.cpp" />
     <ClCompile Include="BearingLayoutGrid.cpp" />
     <ClCompile Include="BearingsPage.cpp" />
@@ -234,8 +220,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ProjectAgent.def" />
-    <None Include="ProjectAgent.rgs" />
-    <None Include="ProjectAgentModule.rgs" />
     <None Include="res\Dimensions_Alignment.emf" />
     <None Include="res\Dimensions_Alignment_Continuous.emf" />
     <None Include="res\Dimensions_Alignment_Expansion.emf" />
@@ -253,7 +237,6 @@
     <ClInclude Include="..\Include\IFace\Project.h" />
     <ClInclude Include="..\Include\IFace\RatingSpecification.h" />
     <ClInclude Include="AASHTOConcretePage.h" />
-    <ClInclude Include="AgentCmdTarget.h" />
     <ClInclude Include="AnalysisOptionsPage.h" />
     <ClInclude Include="BearingLayoutGrid.h" />
     <ClInclude Include="BearingsPage.h" />
@@ -298,9 +281,6 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(XSDDIR)\etc\vc-10.0\xsd-cxx-tree.targets" />
-  </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
       <UserProperties RESOURCE_FILE="ProjectAgent.rc" />

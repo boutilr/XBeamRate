@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -52,8 +52,9 @@ DESCRIPTION
 // {7ECAB28C-6887-4170-83F4-BA5DCAA53305}
 DEFINE_GUID(IID_IXBRProductForces, 
 0x7ecab28c, 0x6887, 0x4170, 0x83, 0xf4, 0xba, 0x5d, 0xca, 0xa5, 0x33, 0x5);
-interface IXBRProductForces : public IUnknown
+class IXBRProductForces
 {
+public:
    virtual const std::vector<LowerXBeamLoad>& GetLowerCrossBeamLoading(PierIDType pierID) const = 0;
    virtual Float64 GetUpperCrossBeamLoading(PierIDType pierID) const = 0;
 
@@ -79,8 +80,9 @@ DESCRIPTION
 // {D8B2E731-710A-48ae-9916-AC152FEF2031}
 DEFINE_GUID(IID_IXBRAnalysisResults, 
 0xd8b2e731, 0x710a, 0x48ae, 0x99, 0x16, 0xac, 0x15, 0x2f, 0xef, 0x20, 0x31);
-interface IXBRAnalysisResults : IUnknown
+class IXBRAnalysisResults
 {
+public:
    // Product Load Results
    virtual Float64 GetMoment(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const = 0;
    virtual WBFL::System::SectionValue GetShear(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const = 0;
@@ -101,7 +103,7 @@ interface IXBRAnalysisResults : IUnknown
    virtual std::vector<Float64> GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const std::vector<xbrPointOfInterest>& vPoi) const = 0;
    virtual std::vector<WBFL::System::SectionValue> GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const std::vector<xbrPointOfInterest>& vPoi) const = 0;
 
-   // Live results for a specified vehcile in a specified permit loading configuration with the permit vehicle in a specified lane
+   // Live results for a specified vehicle in a specified permit loading configuration with the permit vehicle in a specified lane
    virtual void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const xbrPointOfInterest& poi,Float64* pMpermit,Float64* pMlegal) const = 0;
    virtual void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMpermit,std::vector<Float64>* pvMlegal) const = 0;
    virtual void GetShear(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pVpermit,WBFL::System::SectionValue* pVlegal) const = 0;

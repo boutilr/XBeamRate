@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -34,15 +34,10 @@
 
 #include <PsgLib\UnitServer.h>
 #include <LRFD\Lrfd.h>
-#include <EAF\EAFAutoProgress.h>
+#include <EAF/AutoProgress.h>
 
 #include <XBeamRateExt\XBeamRateUtilities.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 class FindByID
 {
@@ -145,108 +140,54 @@ MaterialSpec GetRebarSpecification(WBFL::Materials::Rebar::Type type)
 
 /////////////////////////////////////////////////////////////////////////////
 // CPierAgentImp
-CPierAgentImp::CPierAgentImp()
-{
-   m_pBroker = 0;
-   m_NextPoiID = 0;
-}
 
-CPierAgentImp::~CPierAgentImp()
+bool CPierAgentImp::RegisterInterfaces()
 {
-}
+   EAF_AGENT_REGISTER_INTERFACES;
 
-HRESULT CPierAgentImp::FinalConstruct()
-{
-   return S_OK;
-}
+   REGISTER_INTERFACE(IXBRPier);
+   REGISTER_INTERFACE(IXBRSectionProperties);
+   REGISTER_INTERFACE(IXBRMaterial);
+   REGISTER_INTERFACE(IXBRRebar);
+   REGISTER_INTERFACE(IXBRStirrups);
+   REGISTER_INTERFACE(IXBRPointOfInterest);
 
-void CPierAgentImp::FinalRelease()
-{
-}
-
-#if defined _DEBUG
-bool CPierAgentImp::AssertValid() const
-{
    return true;
-}
-#endif // _DEBUG
-
-//////////////////////////////////////////////////////////////////////
-// IAgent
-STDMETHODIMP CPierAgentImp::SetBroker(IBroker* pBroker)
-{
-   EAF_AGENT_SET_BROKER(pBroker);
-   return S_OK;
-}
-
-STDMETHODIMP CPierAgentImp::RegInterfaces()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-
-   pBrokerInit->RegInterface(IID_IXBRPier,              this);
-   pBrokerInit->RegInterface(IID_IXBRSectionProperties, this);
-   pBrokerInit->RegInterface(IID_IXBRMaterial,          this);
-   pBrokerInit->RegInterface(IID_IXBRRebar,             this);
-   pBrokerInit->RegInterface(IID_IXBRStirrups,          this);
-   pBrokerInit->RegInterface(IID_IXBRPointOfInterest,   this);
-
-   return S_OK;
 };
 
-STDMETHODIMP CPierAgentImp::Init()
+bool CPierAgentImp::Init()
 {
-   //EAF_AGENT_INIT;
+   EAF_AGENT_INIT;
 
    //
    // Attach to connection points for interfaces this agent depends on
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   m_dwProjectCookie = REGISTER_EVENT_SINK(IXBRProjectEventSink);
 
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Advise( GetUnknown(), &m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-
-   return S_OK;
+   return true;
 }
 
-STDMETHODIMP CPierAgentImp::Init2()
+bool CPierAgentImp::Reset()
 {
-   return S_OK;
+   EAF_AGENT_RESET;
+   return true;
 }
 
-STDMETHODIMP CPierAgentImp::Reset()
+CLSID CPierAgentImp::GetCLSID() const
 {
-   return S_OK;
+   return CLSID_XBeamRatePierAgent;
 }
 
-STDMETHODIMP CPierAgentImp::GetClassID(CLSID* pCLSID)
+bool CPierAgentImp::ShutDown()
 {
-   *pCLSID = CLSID_PierAgent;
-   return S_OK;
-}
+   EAF_AGENT_SHUTDOWN;
 
-STDMETHODIMP CPierAgentImp::ShutDown()
-{
    //
    // Detach to connection points
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   UNREGISTER_EVENT_SINK(IXBRProjectEventSink, m_dwProjectCookie);
 
-   hr = pBrokerInit->FindConnectionPoint(IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Unadvise( m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the connection point
-
-   EAF_AGENT_CLEAR_INTERFACE_CACHE;
-
-   return S_OK;
+   return true;
 }
 
 //////////////////////////////////////////

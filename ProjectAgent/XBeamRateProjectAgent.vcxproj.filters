@@ -4,9 +4,6 @@
     <ClCompile Include="AASHTOConcretePage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AgentCmdTarget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AnalysisOptionsPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -85,9 +82,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AASHTOConcretePage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AgentCmdTarget.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AnalysisOptionsPage.h">
@@ -217,15 +211,7 @@
     <None Include="res\PierLayout.emf">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="ProjectAgent.def">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="ProjectAgent.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="ProjectAgentModule.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
+    <None Include="ProjectAgent.def" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

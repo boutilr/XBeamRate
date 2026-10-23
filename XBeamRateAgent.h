@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -25,12 +25,13 @@
 // This agent is a PGSuper/PGSplice extension agent.
 
 #pragma once
-#include "resource.h"       // main symbols
+#include <EAF\Agent.h>
 #include "CLSID.h"
 #include "ReinforcementPageParent.h"
 
-#include <EAF\EAFInterfaceCache.h>
+
 #include <EAF\EAFUIIntegration.h>
+#include <EAF\ComponentObject.h>
 
 #include <IFace\XBeamRateAgent.h>
 #include <IFace\Project.h>
@@ -41,175 +42,112 @@
 #include <IFace\ViewEvents.h>
 #include <IFace\VersionInfo.h>
 
-#if defined(_WIN32_WCE) && !defined(_CE_DCOM) && !defined(_CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA)
-#error "Single-threaded COM objects are not properly supported on Windows CE platform, such as the Windows Mobile platforms that do not include full DCOM support. Define _CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA to force ATL to support creating single-thread COM object's and allow use of it's single-threaded COM object implementations. The threading model in your rgs file was set to 'Free' as that is the only threading model supported in non DCOM Windows CE platforms."
-#endif
-
-class CXBeamRateAgent;
-
-class CMyCommandTarget : public CCmdTarget, public IBridgePlanViewEventCallback
+class CXBeamRateAgent : public CCmdTarget, // it's very important CCmdTarget is the first parent for inheritance, see Warning C4407
+   public WBFL::EAF::Agent,
+   public IXBeamRateAgent,
+   public WBFL::EAF::IAgentUIIntegration,
+   public WBFL::EAF::IAgentDocumentationIntegration,
+   public IEditPierCallback,
+   public IEditLoadRatingOptionsCallback,
+   public IProjectPropertiesEventSink,
+   public IXBRProjectEventSink,
+   public IXBRVersionInfo,
+   public IEAFProcessCommandLine,
+   public IBridgePlanViewEventCallback,
+   public WBFL::EAF::ICommandCallback
 {
 public:
-   CMyCommandTarget(CXBeamRateAgent* pMyAgent) {m_pMyAgent = pMyAgent;}
+   CXBeamRateAgent() = default;
+
+// Agent
+public:
+   bool SetBroker(std::shared_ptr<WBFL::EAF::Broker> broker) override;
+   std::_tstring GetName() const override { return _T("XBeamRate Agent"); }
+   bool RegisterInterfaces() override;
+   bool Init() override;
+   bool Reset() override;
+   bool ShutDown() override;
+   CLSID GetCLSID() const override;
+
+
+// IXBeamRateAgent
+public:
+   bool IsExtendingPGSuper() override;
+
+// IXBRVersionInfo
+public:
+   CString GetVersionString(bool bIncludeBuildNumber=false) override;
+   CString GetVersion(bool bIncludeBuildNumber=false) override;
+
+// IAgentUIIntegration
+public:
+   bool IntegrateWithUI(bool bIntegrate) override;
+
+// IAgentDocumentationIntegration
+public:
+   CString GetDocumentationSetName() const override;
+   bool LoadDocumentationMap() override;
+   std::pair<WBFL::EAF::HelpResult,CString> GetDocumentLocation(UINT nHID) const override;
+
+// IEditPierCallback
+public:
+   CPropertyPage* CreatePropertyPage(IEditPierData* pEditPierData) override;
+   CPropertyPage* CreatePropertyPage(IEditPierData* pEditPierData,CPropertyPage* pBridgePropertyPage) override;
+   std::unique_ptr<WBFL::EAF::Transaction> OnOK(CPropertyPage* pPage,IEditPierData* pEditPierData) override;
+   IDType GetEditBridgeCallbackID() override;
+
+// IEditLoadRatingOptionsCallback
+public:
+   CPropertyPage* CreatePropertyPage(IEditLoadRatingOptions* pLoadRatingOptions) override;
+   std::unique_ptr<WBFL::EAF::Transaction> OnOK(CPropertyPage* pPage,IEditLoadRatingOptions* pLoadRatingOptions) override;
+
+// IProjectPropertiesEventSink
+public:
+   HRESULT OnProjectPropertiesChanged() override;
+
+// IXBRProjectEventSink
+public:
+   HRESULT OnProjectChanged() override;
+
+// IEAFProcessCommandLine
+public:
+   BOOL ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo) override;
+
+// IBridgePlanViewEventCallback
+public:
+   void OnBackgroundContextMenu(std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnPierContextMenu(PierIndexType pierIdx, std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnSpanContextMenu(SpanIndexType spanIdx, std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnDeckContextMenu(std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnAlignmentContextMenu(std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnSectionCutContextMenu(std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnGirderContextMenu(const CGirderKey& girderKey, std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnTemporarySupportContextMenu(SupportIDType tsID, std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnGirderSegmentContextMenu(const CSegmentKey& segmentKey, std::shared_ptr<WBFL::EAF::Menu> menu) override;
+   void OnClosureJointContextMenu(const CSegmentKey& closureKey, std::shared_ptr<WBFL::EAF::Menu> menu) override;
+
+// ICommandCallback
+public:
+   BOOL OnCommandMessage(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo) override;
+   BOOL GetStatusBarMessageString(UINT nID, CString& rMessage) const override;
+   BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
 
    afx_msg void OnViewPier();
    afx_msg void OnExportPier();
    afx_msg void OnPierCommandUpdate(CCmdUI* pCmdUI);
-
-
-   // IBridgePlanViewEventCallback
-   virtual void OnBackgroundContextMenu(CEAFMenu* pMenu) override;
-   virtual void OnPierContextMenu(PierIndexType pierIdx,CEAFMenu* pMenu) override;
-   virtual void OnSpanContextMenu(SpanIndexType spanIdx,CEAFMenu* pMenu) override;
-   virtual void OnDeckContextMenu(CEAFMenu* pMenu) override;
-   virtual void OnAlignmentContextMenu(CEAFMenu* pMenu) override;
-   virtual void OnSectionCutContextMenu(CEAFMenu* pMenu) override;
-   virtual void OnGirderContextMenu(const CGirderKey& girderKey,CEAFMenu* pMenu) override;
-   virtual void OnTemporarySupportContextMenu(SupportIDType tsID,CEAFMenu* pMenu) override;
-   virtual void OnGirderSegmentContextMenu(const CSegmentKey& segmentKey,CEAFMenu* pMenu) override;
-   virtual void OnClosureJointContextMenu(const CSegmentKey& closureKey,CEAFMenu* pMenu) override;
-
-   CXBeamRateAgent* m_pMyAgent;
-
    DECLARE_MESSAGE_MAP()
-};
-
-// CXBeamRateAgent
-
-class ATL_NO_VTABLE CXBeamRateAgent :
-	public CComObjectRootEx<CComSingleThreadModel>,
-	public CComCoClass<CXBeamRateAgent, &CLSID_XBeamRateAgent>,
-	public IAgentEx,
-   //public IAgentPersist,
-   public IXBeamRateAgent,
-   public IAgentUIIntegration,
-   public IAgentDocumentationIntegration,
-   public IEditPierCallback, // not a COM interface
-   public IEditLoadRatingOptionsCallback, // not a COM interface
-   public IProjectPropertiesEventSink,
-   public IXBRProjectEventSink,
-   public IXBeamRate,
-   public IXBRVersionInfo,
-   public IEAFCommandCallback,
-   public IEAFProcessCommandLine
-{
-public:
-   CXBeamRateAgent() :
-      m_CommandTarget(this)
-	{
-      m_PierViewKey = -1;
-	}
-
-DECLARE_REGISTRY_RESOURCEID(IDR_XBEAMRATEAGENT)
-
-DECLARE_NOT_AGGREGATABLE(CXBeamRateAgent)
-
-BEGIN_COM_MAP(CXBeamRateAgent)
-	COM_INTERFACE_ENTRY(IAgent)
-	COM_INTERFACE_ENTRY(IAgentEx)
-	//COM_INTERFACE_ENTRY(IAgentPersist)
-   COM_INTERFACE_ENTRY(IXBeamRateAgent)
-   COM_INTERFACE_ENTRY(IAgentUIIntegration)
-   COM_INTERFACE_ENTRY(IAgentDocumentationIntegration)
-   //COM_INTERFACE_ENTRY(IExtendUIEventSink)
-   COM_INTERFACE_ENTRY(IProjectPropertiesEventSink)
-   COM_INTERFACE_ENTRY(IXBRProjectEventSink)
-   COM_INTERFACE_ENTRY(IXBeamRate)
-   COM_INTERFACE_ENTRY(IXBRVersionInfo)
-   COM_INTERFACE_ENTRY(IEAFCommandCallback)
-   COM_INTERFACE_ENTRY(IEAFProcessCommandLine)
-END_COM_MAP()
-
-	DECLARE_PROTECT_FINAL_CONSTRUCT()
-   DECLARE_EAF_AGENT_DATA;
-
-	HRESULT FinalConstruct();
-	void FinalRelease()
-	{
-	}
-
-   void RegisterReports();
-   void RegisterGraphs();
-
-// IAgentEx
-public:
-   STDMETHOD(SetBroker)(IBroker* pBroker) override;
-   STDMETHOD(RegInterfaces)() override;
-   STDMETHOD(Init)() override;
-   STDMETHOD(Init2)() override;
-   STDMETHOD(Reset)() override;
-   STDMETHOD(ShutDown)() override;
-   STDMETHOD(GetClassID)(CLSID* pCLSID) override;
-
-//// IAgentPersist
-//public:
-//   STDMETHOD(Load)(/*[in]*/ IStructuredLoad* pStrLoad) override;
-//   STDMETHOD(Save)(/*[in]*/ IStructuredSave* pStrSave) override;
-
-// IXBeamRateAgent
-public:
-   virtual bool IsExtendingPGSuper() override;
-
-// IXBeamRate
-public:
-   virtual void GetUnitServer(IUnitServer** ppUnitServer) override;
-
-// IXBRVersionInfo
-public:
-   virtual CString GetVersionString(bool bIncludeBuildNumber=false) override;
-   virtual CString GetVersion(bool bIncludeBuildNumber=false) override;
-
-// IAgentUIIntegration
-public:
-   STDMETHOD(IntegrateWithUI)(BOOL bIntegrate) override;
-
-// IAgentDocumentationIntegration
-public:
-   STDMETHOD(GetDocumentationSetName)(BSTR* pbstrName) override;
-   STDMETHOD(LoadDocumentationMap)() override;
-   STDMETHOD(GetDocumentLocation)(UINT nHID,BSTR* pbstrURL) override;
-
-// IEditPierCallback
-public:
-   virtual CPropertyPage* CreatePropertyPage(IEditPierData* pEditPierData) override;
-   virtual CPropertyPage* CreatePropertyPage(IEditPierData* pEditPierData,CPropertyPage* pBridgePropertyPage) override;
-   virtual std::unique_ptr<CEAFTransaction> OnOK(CPropertyPage* pPage,IEditPierData* pEditPierData) override;
-   virtual IDType GetEditBridgeCallbackID() override;
-
-// IEditLoadRatingOptionsCallback
-public:
-   virtual CPropertyPage* CreatePropertyPage(IEditLoadRatingOptions* pLoadRatingOptions) override;
-   virtual std::unique_ptr<CEAFTransaction> OnOK(CPropertyPage* pPage,IEditLoadRatingOptions* pLoadRatingOptions) override;
-
-// IProjectPropertiesEventSink
-public:
-   virtual HRESULT OnProjectPropertiesChanged() override;
-
-// IXBRProjectEventSink
-public:
-   virtual HRESULT OnProjectChanged() override;
-
-// IEAFCommandCallback
-public:
-   virtual BOOL OnCommandMessage(UINT nID,int nCode,void* pExtra,AFX_CMDHANDLERINFO* pHandlerInfo) override;
-   virtual BOOL GetStatusBarMessageString(UINT nID, CString& rMessage) const override;
-   virtual BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
-
-// IEAFProcessCommandLine
-public:
-   virtual BOOL ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo) override;
 
 private:
-   DWORD m_dwProjectPropertiesCookie;
-   DWORD m_dwProjectCookie;
+   EAF_DECLARE_AGENT_DATA;
+
+   IDType m_dwProjectPropertiesCookie;
+   IDType m_dwProjectCookie;
 
    CReinforcementPageParent m_ReinforcementPageParent;
 
-   CMyCommandTarget m_CommandTarget;
-   friend CMyCommandTarget;
    IDType m_BridgePlanViewCallbackID;
 
-   CString GetDocumentationURL();
+   CString GetDocumentationURL() const;
    std::map<UINT,CString> m_HelpTopics;
 
    void CreateMenus();
@@ -221,12 +159,10 @@ private:
    void RegisterViews();
    void UnregisterViews();
    void CreatePierView();
-   long m_PierViewKey;
+   long m_PierViewKey = -1;
 
    void RegisterUIExtensions();
    void UnregisterUIExtensions();
    IDType m_EditPierCallbackID;
    IDType m_EditLoadRatingOptionsCallbackID;
 };
-
-OBJECT_ENTRY_AUTO(__uuidof(XBeamRateAgent), CXBeamRateAgent)

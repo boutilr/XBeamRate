@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,11 +21,3 @@
 ///////////////////////////////////////////////////////////////////////
 
 // dllmain.h : Declaration of module class.
-
-class CGraphingAgentModule : public CAtlDllModuleT< CGraphingAgentModule >
-{
-public :
-	DECLARE_REGISTRY_APPID_RESOURCEID(IDR_GRAPHINGAGENTMODULE, "{658B4580-6281-4490-A3C9-AF69A6C2596D}")
-};
-
-extern class CGraphingAgentModule _AtlModule;

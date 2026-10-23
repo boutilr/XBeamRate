@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -33,12 +33,12 @@
 #include <Units\System.h>
 #include <MFCTools\Format.h>
 
-#include <EAF\EAFAutoProgress.h>
+#include <EAF/AutoProgress.h>
 #include <XBeamRateExt\XBeamRateUtilities.h>
 #include <XBeamRateExt\StatusItem.h>
-#include <XBeamRateExt\XBeamAnalysisResult.h>
 
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\GirderLabel.h>
+#include <psgLib/RatingLibraryEntry.h>
 
 #include <numeric>
 #include <algorithm>
@@ -46,11 +46,9 @@
 #include <System\Flags.h>
 #include <LRFD\Utility.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
+#include <System\FileStream.h>
+#include <System\StructuredSaveXml.h>
+
 
 #define MAX_CASES 10
 
@@ -59,135 +57,69 @@ static char THIS_FILE[] = __FILE__;
 // apply the multiple presence factor.
 /////////////////////////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////////////////////////
-// CAnalysisAgentImp
-CAnalysisAgentImp::CAnalysisAgentImp()
-{
-   m_pBroker = 0;
-}
-
-CAnalysisAgentImp::~CAnalysisAgentImp()
-{
-}
-
-HRESULT CAnalysisAgentImp::FinalConstruct()
-{
-   m_pModelData = std::make_unique<std::map<PierIDType,ModelData>>();
-   m_pUnitLiveLoadResults = std::make_unique<std::map<PierIDType,std::set<UnitLiveLoadResult> > >();
-   return S_OK;
-}
-
-void CAnalysisAgentImp::FinalRelease()
-{
-   Invalidate(false);
-}
-
-#if defined _DEBUG
-bool CAnalysisAgentImp::AssertValid() const
-{
-   return true;
-}
-#endif // _DEBUG
-
 //////////////////////////////////////////////////////////////////////
 // IAgent
-STDMETHODIMP CAnalysisAgentImp::SetBroker(IBroker* pBroker)
-{
-   EAF_AGENT_SET_BROKER(pBroker);
-   return S_OK;
-}
 
-STDMETHODIMP CAnalysisAgentImp::RegInterfaces()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-
-   pBrokerInit->RegInterface( IID_IXBRProductForces, this);
-   pBrokerInit->RegInterface( IID_IXBRAnalysisResults,    this );
-
-   return S_OK;
-};
-
-STDMETHODIMP CAnalysisAgentImp::Init()
+bool CAnalysisAgentImp::Init()
 {
    EAF_AGENT_INIT; // this macro defines pStatusCenter
+
+   m_pModelData = std::make_unique<std::map<PierIDType, ModelData>>();
+   m_pUnitLiveLoadResults = std::make_unique<std::map<PierIDType, std::set<UnitLiveLoadResult> > >();
+
+   GET_IFACE(IEAFStatusCenter, pStatusCenter);
    m_StatusGroupID = pStatusCenter->CreateStatusGroupID();
 
    // Register status callbacks that we want to use
-   m_scidBridgeWarning = pStatusCenter->RegisterCallback(new xbrBridgeStatusCallback(eafTypes::statusWarning));
-   m_scidBridgeError = pStatusCenter->RegisterCallback(new xbrBridgeStatusCallback(eafTypes::statusError));
+   m_scidBridgeWarning = pStatusCenter->RegisterCallback(std::make_shared<xbrBridgeStatusCallback>(WBFL::EAF::StatusSeverityType::Warning));
+   m_scidBridgeError = pStatusCenter->RegisterCallback(std::make_shared<xbrBridgeStatusCallback>(WBFL::EAF::StatusSeverityType::Error));
 
-   return AGENT_S_SECONDPASSINIT;
-}
-
-STDMETHODIMP CAnalysisAgentImp::Init2()
-{
    //
    // Attach to connection points
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   m_dwProjectCookie = REGISTER_EVENT_SINK(IXBRProjectEventSink);
+   m_dwBridgeDescCookie = REGISTER_EVENT_SINK(IBridgeDescriptionEventSink);
 
-   // Connection point for the bridge description
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Advise( GetUnknown(), &m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-
-   // Connection point for the bridge description
-   hr = pBrokerInit->FindConnectionPoint( IID_IBridgeDescriptionEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Advise( GetUnknown(), &m_dwBridgeDescCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-   }
-
-   return S_OK;
+   return true;
 }
 
-STDMETHODIMP CAnalysisAgentImp::Reset()
+bool CAnalysisAgentImp::RegisterInterfaces()
 {
-   return S_OK;
+   EAF_AGENT_REGISTER_INTERFACES;
+   REGISTER_INTERFACE(IXBRProductForces);
+   REGISTER_INTERFACE(IXBRAnalysisResults);
+
+   return true;
+};
+
+bool CAnalysisAgentImp::Reset()
+{
+   EAF_AGENT_RESET;
+   Invalidate(false);
+   return true;
 }
 
-STDMETHODIMP CAnalysisAgentImp::GetClassID(CLSID* pCLSID)
+bool CAnalysisAgentImp::ShutDown()
 {
-   *pCLSID = CLSID_AnalysisAgent;
-   return S_OK;
-}
+   EAF_AGENT_SHUTDOWN;
 
-IndexType CAnalysisAgentImp::GetPriority()
-{
-   return 0;
-}
-
-STDMETHODIMP CAnalysisAgentImp::ShutDown()
-{
    //
    // Detach to connection points
    //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
+   UNREGISTER_EVENT_SINK(IXBRProjectEventSink, m_dwProjectCookie);
+   UNREGISTER_EVENT_SINK(IBridgeDescriptionEventSink, m_dwBridgeDescCookie);
 
-   hr = pBrokerInit->FindConnectionPoint(IID_IXBRProjectEventSink, &pCP );
-   ATLASSERT( SUCCEEDED(hr) );
-   hr = pCP->Unadvise( m_dwProjectCookie );
-   ATLASSERT( SUCCEEDED(hr) );
-   pCP.Release(); // Recycle the connection point
-
-   hr = pBrokerInit->FindConnectionPoint(IID_IBridgeDescriptionEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Unadvise( m_dwBridgeDescCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the connection point
-   }
-
-   EAF_AGENT_CLEAR_INTERFACE_CACHE;
    return S_OK;
+}
+
+CLSID CAnalysisAgentImp::GetCLSID() const
+{
+   return CLSID_XBeamRateAnalysisAgent;
+}
+
+IndexType CAnalysisAgentImp::GetPriority() const
+{
+   return 0;
 }
 
 CAnalysisAgentImp::ModelData* CAnalysisAgentImp::GetModelData(PierIDType pierID,int level) const
@@ -219,7 +151,7 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
    if ( found == m_pModelData->end() )
    {
       ModelData model_data;
-      m_pModelData->insert( std::make_pair(pierID,model_data) );
+      m_pModelData->insert( std::make_pair(pierID,std::move(model_data)) );
       found = m_pModelData->find(pierID);
    }
 
@@ -230,13 +162,13 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
       return;
    }
 
-   GET_IFACE(IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE(IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
 
    if ( MODEL_INIT_TOPOLOGY <= level && pModelData->m_InitLevel < MODEL_INIT_TOPOLOGY )
    {
-      pModelData->m_Model.CoCreateInstance(CLSID_Fem2dModel);
-      pModelData->m_Model->put_Name(CComBSTR(_T("XBeamRate")));
+      pModelData->m_Model = std::make_unique<WBFL::FEA2D::Model>();
+      pModelData->m_Model->SetName(_T("XBeamRate"));
 
       // Build the frame model
       GET_IFACE(IXBRProject,pProject);
@@ -326,11 +258,8 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
       Float64 EIb = Exb*Ixb;
 
       // build the model
-      CComPtr<IFem2dJointCollection> joints;
-      pModelData->m_Model->get_Joints(&joints);
+      WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
 
-      CComPtr<IFem2dMemberCollection> members;
-      pModelData->m_Model->get_Members(&members);
 
       JointIDType jntID = 0;
       MemberIDType xbeamMbrID = 0;
@@ -342,8 +271,7 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
       XBeamNode* pPrevNode = &(*iter);;
       JointIDType prevJointID = jntID++;
       pPrevNode->jntID = prevJointID;
-      CComPtr<IFem2dJoint> joint;
-      joints->Create(prevJointID,pPrevNode->X,0,&joint);
+      femModel.CreateJoint(prevJointID,pPrevNode->X,0);
       ColumnIndexType colIdx = 0;
 
       iter++;
@@ -353,11 +281,9 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
          JointIDType thisJointID = jntID++;
          pThisNode->jntID = thisJointID;
 
-         joint.Release();
-         joints->Create(thisJointID,pThisNode->X,0,&joint);
-         
-         CComPtr<IFem2dMember> mbr;
-         members->Create(xbeamMbrID++,prevJointID,thisJointID,EAb,EIb,&mbr);
+         femModel.CreateJoint(thisJointID,pThisNode->X,0);
+
+         femModel.CreateMember(xbeamMbrID++,prevJointID,thisJointID,EAb,EIb);
          BeamMember capMbr;
          capMbr.Xs = pPrevNode->X;
          capMbr.Xe = pThisNode->X;
@@ -369,27 +295,27 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
             Float64 columnHeight = pPier->GetColumnHeight(pierID,colIdx);
 
             // create joint at bottom of column
-            joint.Release();
-            joints->Create(jntID++,pThisNode->X,-columnHeight,&joint);
+            WBFL::FEA2D::Joint& joint = femModel.CreateJoint(jntID++,pThisNode->X,-columnHeight);
+
 
             pgsTypes::ColumnTransverseFixityType columnFixity = pPier->GetColumnFixity(pierID,colIdx);
-            joint->Support(); // fully fixed
+            joint.Support(); // fully fixed
             if ( columnFixity == pgsTypes::ctftTopFixedBottomPinned )
             {
-               joint->ReleaseDof(jrtMz);
+               joint.ReleaseDof(WBFL::FEA2D::JointReleaseType::Mz);
             }
 
             // create column member
             Float64 Ecol = pMaterial->GetColumnEc(pierID,colIdx);
             Float64 Acol = pSectProp->GetArea(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,colIdx,0.0));
             Float64 Icol = pSectProp->GetIyy(pierID,xbrTypes::Stage2,xbrPointOfInterest(INVALID_ID,colIdx,0.0));
-            mbr.Release();
-            members->Create(columnMbrID--,thisJointID,jntID-1,Ecol*Acol,Ecol*Icol,&mbr);
+            WBFL::FEA2D::Member& mbr = femModel.CreateMember(columnMbrID--,thisJointID,jntID-1,Ecol*Acol,Ecol*Icol);
+
 
             // Release top end of member, if specified
             if (columnFixity == pgsTypes::ctftTopPinnedBottomFixed)
             {
-               mbr->ReleaseEnd(metStart, mbrReleaseMz);
+               mbr.ReleaseEnd(WBFL::FEA2D::MemberEndType::Start, WBFL::FEA2D::MemberReleaseType::Mz);
             }
 
             colIdx++;
@@ -437,8 +363,7 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
 
          XBeamNode* pPrevNode = &(*iter);
          JointIDType prevJointID = jntID++;
-         CComPtr<IFem2dJoint> joint;
-         joints->Create(prevJointID,pPrevNode->X,Y,&joint);
+         femModel.CreateJoint(prevJointID,pPrevNode->X,Y);
 
          iter++;
          for ( ; iter != end; iter++ )
@@ -446,11 +371,9 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
             XBeamNode* pThisNode = &(*iter);
             JointIDType thisJointID = jntID++;
 
-            joint.Release();
-            joints->Create(thisJointID,pThisNode->X,Y,&joint);
-            
-            CComPtr<IFem2dMember> mbr;
-            members->Create(xbeamMbrID++,prevJointID,thisJointID,EAb,EIb,&mbr);
+            femModel.CreateJoint(thisJointID,pThisNode->X,Y);
+
+            femModel.CreateMember(xbeamMbrID++,prevJointID,thisJointID,EAb,EIb);
             BeamMember ssMbr;
             ssMbr.Xs = pPrevNode->X;
             ssMbr.Xe = pThisNode->X;
@@ -459,10 +382,10 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
 
             if ( WBFL::System::Flags<Int32>::IsSet(pThisNode->Type,BEARING) )
             {
-               mbr.Release();
-               members->Create(columnMbrID--,thisJointID,pThisNode->jntID,EA,EI,&mbr);
+               WBFL::FEA2D::Member& mbr = femModel.CreateMember(columnMbrID--,thisJointID,pThisNode->jntID,EA,EI);
 
-               mbr->ReleaseEnd(metEnd,mbrReleaseMz);
+
+               mbr.ReleaseEnd(WBFL::FEA2D::MemberEndType::End, WBFL::FEA2D::MemberReleaseType::Mz);
             }
 
             pPrevNode = pThisNode;
@@ -477,12 +400,13 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
 
    if ( MODEL_INIT_LOADS <= level && pModelData->m_InitLevel < MODEL_INIT_LOADS )
    {
+      WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
+
       ApplyWheelLineLoadsToFemModel(pModelData);
       ApplyDeadLoad(pierID,pModelData);
 
       // Assign POIs
-      CComPtr<IFem2dPOICollection> femPois;
-      pModelData->m_Model->get_POIs(&femPois);
       PoiIDType femPoiID = 0;
 
       GET_IFACE(IXBRPointOfInterest,pPoi);
@@ -493,8 +417,7 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
          Float64 mbrLocation;
          GetFemModelLocation(pModelData,poi,&mbrID,&mbrLocation);
 
-         CComPtr<IFem2dPOI> femPoi;
-         femPois->Create(femPoiID,mbrID,mbrLocation,&femPoi);
+         femModel.CreatePOI(femPoiID,mbrID,mbrLocation);
          pModelData->m_PoiMap.insert(std::make_pair(poi.GetID(),femPoiID));
          femPoiID++;
       }
@@ -502,14 +425,12 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
       pModelData->m_InitLevel = MODEL_INIT_LOADS;
 
 #if defined _DEBUG || defined _BETA_VERSION
-      CComQIPtr<IStructuredStorage2> ss(pModelData->m_Model);
-      CComPtr<IStructuredSave2> save;
-      save.CoCreateInstance(CLSID_StructuredSave2);
-      save->Open(CComBSTR(_T("XBeamRate_Fem2d.xml")));
-      ss->Save(save);
-      save->Close();
-      save.Release();
-      ss.Release();
+      WBFL::System::FileStream file;
+      file.open(_T("XBeamRate_Fem2d.xml"), /*read=*/false);
+      WBFL::System::StructuredSaveXml save;
+      save.BeginSave(&file);
+      femModel.Save(&save);
+      save.EndSave();
 #endif // _DEBUG
    }
 }
@@ -525,15 +446,12 @@ void CAnalysisAgentImp::ApplyLowerXBeamDeadLoad(PierIDType pierID,ModelData* pMo
 {
    ValidateLowerXBeamDeadLoad(pierID,pModelData);
 
-   CComPtr<IFem2dLoadingCollection> loadings;
-   pModelData->m_Model->get_Loadings(&loadings);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
 
    LoadCaseIDType loadCaseID = GetLoadCaseID(xbrTypes::pftLowerXBeam);
-   CComPtr<IFem2dLoading> loading;
-   loadings->Create(loadCaseID,&loading);
+   WBFL::FEA2D::Loading& loading = femModel.CreateLoading(loadCaseID);
 
-   CComPtr<IFem2dDistributedLoadCollection> distLoads;
-   loading->get_DistributedLoads(&distLoads);
 
    LoadIDType loadID = 0;
    std::vector<LowerXBeamLoad>::iterator iter(pModelData->m_LowerXBeamLoads.begin());
@@ -549,39 +467,25 @@ void CAnalysisAgentImp::ApplyLowerXBeamDeadLoad(PierIDType pierID,ModelData* pMo
 
       if ( startMbrID == endMbrID )
       {
-         CComPtr<IFem2dDistributedLoad> distLoad;
-         distLoads->Create(loadID++,startMbrID,loadDirFy,startMbrLocation,endMbrLocation,-load.Ws,-load.We,lotMember,&distLoad);
+         loading.CreateDistributedLoad(loadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startMbrLocation,endMbrLocation,-load.Ws,-load.We);
       }
       else
       {
-         CComPtr<IFem2dMemberCollection> members;
-         pModelData->m_Model->get_Members(&members);
-
-         CComPtr<IFem2dJointCollection> joints;
-         pModelData->m_Model->get_Joints(&joints);
-
          // load from start to end of first member
-         CComPtr<IFem2dMember> mbr;
-         members->Find(startMbrID,&mbr);
+         WBFL::FEA2D::Member* mbr = femModel.FindMember(startMbrID);
 
-         Float64 L;
-         mbr->get_Length(&L);
+         Float64 L = mbr->GetLength();
 
-         JointIDType jntID;
-         mbr->get_EndJoint(&jntID);
-         CComPtr<IFem2dJoint> joint;
-         joints->Find(jntID,&joint);
-         Float64 X;
-         joint->get_X(&X);
+         JointIDType jntID = mbr->GetEndJoint();
+         WBFL::FEA2D::Joint* joint = femModel.FindJoint(jntID);
+         Float64 X = joint->GetX();
 
          Float64 Ws = load.Ws;
          Float64 We = ::LinInterp(X - load.Xs,load.Ws,load.We,load.Xe - load.Xs);
 
-         CComPtr<IFem2dDistributedLoad> distLoad;
-
          if ( !IsEqual(startMbrLocation,L) )
          {
-            distLoads->Create(loadID++,startMbrID,loadDirFy,startMbrLocation,L,-Ws,-We,lotMember,&distLoad);
+            loading.CreateDistributedLoad(loadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startMbrLocation,L,-Ws,-We);
          }
 
          Ws = We;
@@ -589,28 +493,24 @@ void CAnalysisAgentImp::ApplyLowerXBeamDeadLoad(PierIDType pierID,ModelData* pMo
          // load all intermediate members
          for ( MemberIDType mbrID = startMbrID+1; mbrID < endMbrID; mbrID++ )
          {
-            mbr.Release();
-            members->Find(mbrID,&mbr);
-            mbr->get_EndJoint(&jntID);
-            joint.Release();
-            joints->Find(jntID,&joint);
-            joint->get_X(&X);
+            mbr = femModel.FindMember(mbrID);
+            jntID = mbr->GetEndJoint();
+            joint = femModel.FindJoint(jntID);
+            X = joint->GetX();
 
-            mbr->get_Length(&L);
+            L = mbr->GetLength();
 
             We = ::LinInterp(X - load.Xs,load.Ws,load.We,load.Xe - load.Xs);
 
-            distLoad.Release();
-            distLoads->Create(loadID++,mbrID,loadDirFy,0,L,-Ws,-We,lotMember,&distLoad);
+            loading.CreateDistributedLoad(loadID++,mbrID,WBFL::FEA2D::LoadDirection::Fy,0,L,-Ws,-We);
 
             Ws = We;
          }
 
          // load start of last member to the end of the loading
-         distLoad.Release();
          if ( !IsZero(endMbrLocation) )
          {
-            distLoads->Create(loadID++,endMbrID,loadDirFy,0.0,endMbrLocation,-Ws,-load.We,lotMember,&distLoad);
+            loading.CreateDistributedLoad(loadID++,endMbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,endMbrLocation,-Ws,-load.We);
          }
       }
    }
@@ -618,23 +518,19 @@ void CAnalysisAgentImp::ApplyLowerXBeamDeadLoad(PierIDType pierID,ModelData* pMo
 
 void CAnalysisAgentImp::ApplyUpperXBeamDeadLoad(PierIDType pierID,ModelData* pModelData) const
 {
-   CComPtr<IFem2dLoadingCollection> loadings;
-   pModelData->m_Model->get_Loadings(&loadings);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
 
    LoadCaseIDType loadCaseID = GetLoadCaseID(xbrTypes::pftUpperXBeam);
-   CComPtr<IFem2dLoading> loading;
-   loadings->Create(loadCaseID,&loading);
+   WBFL::FEA2D::Loading& loading = femModel.CreateLoading(loadCaseID);
 
-   CComPtr<IFem2dDistributedLoadCollection> distLoads;
-   loading->get_DistributedLoads(&distLoads);
 
    LoadIDType loadID = 0;
 
    Float64 w = GetUpperCrossBeamLoading(pierID);
    for (const auto& capMbr : pModelData->m_XBeamMembers)
    {
-      CComPtr<IFem2dDistributedLoad> distLoad;
-      distLoads->Create(loadID++,capMbr.mbrID,loadDirFy,0,-1,-w,-w,lotMember,&distLoad);
+      loading.CreateDistributedLoad(loadID++,capMbr.mbrID,WBFL::FEA2D::LoadDirection::Fy,0,-1,-w,-w);
    }
 }
 
@@ -657,64 +553,21 @@ void CAnalysisAgentImp::ApplySuperstructureDeadLoadReactions(PierIDType pierID,M
    LoadIDType psLoadID = 0;
    LoadIDType reLoadID = 0;
 
-   CComPtr<IFem2dLoadingCollection> loadings;
-   pModelData->m_Model->get_Loadings(&loadings);
-
-   CComPtr<IFem2dLoading> dcLoading;
-   loadings->Create(dcLoadCaseID,&dcLoading);
-
-   CComPtr<IFem2dLoading> dwLoading;
-   loadings->Create(dwLoadCaseID,&dwLoading);
-
-   CComPtr<IFem2dLoading> shLoading;
-   loadings->Create(shLoadCaseID,&shLoading);
-
-   CComPtr<IFem2dLoading> crLoading;
-   loadings->Create(crLoadCaseID,&crLoading);
-
-   CComPtr<IFem2dLoading> psLoading;
-   loadings->Create(psLoadCaseID,&psLoading);
-
-   CComPtr<IFem2dLoading> reLoading;
-   loadings->Create(reLoadCaseID,&reLoading);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
 
 
-   CComPtr<IFem2dPointLoadCollection> dcPointLoads;
-   dcLoading->get_PointLoads(&dcPointLoads);
+   WBFL::FEA2D::Loading& dcLoading = femModel.CreateLoading(dcLoadCaseID);
 
-   CComPtr<IFem2dPointLoadCollection> dwPointLoads;
-   dwLoading->get_PointLoads(&dwPointLoads);
+   WBFL::FEA2D::Loading& dwLoading = femModel.CreateLoading(dwLoadCaseID);
 
-   CComPtr<IFem2dPointLoadCollection> shPointLoads;
-   shLoading->get_PointLoads(&shPointLoads);
+   WBFL::FEA2D::Loading& shLoading = femModel.CreateLoading(shLoadCaseID);
 
-   CComPtr<IFem2dPointLoadCollection> crPointLoads;
-   crLoading->get_PointLoads(&crPointLoads);
+   WBFL::FEA2D::Loading& crLoading = femModel.CreateLoading(crLoadCaseID);
 
-   CComPtr<IFem2dPointLoadCollection> psPointLoads;
-   psLoading->get_PointLoads(&psPointLoads);
+   WBFL::FEA2D::Loading& psLoading = femModel.CreateLoading(psLoadCaseID);
 
-   CComPtr<IFem2dPointLoadCollection> rePointLoads;
-   reLoading->get_PointLoads(&rePointLoads);
+   WBFL::FEA2D::Loading& reLoading = femModel.CreateLoading(reLoadCaseID);
 
-
-   CComPtr<IFem2dDistributedLoadCollection> dcDistLoads;
-   dcLoading->get_DistributedLoads(&dcDistLoads);
-
-   CComPtr<IFem2dDistributedLoadCollection> dwDistLoads;
-   dwLoading->get_DistributedLoads(&dwDistLoads);
-
-   CComPtr<IFem2dDistributedLoadCollection> shDistLoads;
-   shLoading->get_DistributedLoads(&shDistLoads);
-
-   CComPtr<IFem2dDistributedLoadCollection> crDistLoads;
-   crLoading->get_DistributedLoads(&crDistLoads);
-
-   CComPtr<IFem2dDistributedLoadCollection> psDistLoads;
-   psLoading->get_DistributedLoads(&psDistLoads);
-
-   CComPtr<IFem2dDistributedLoadCollection> reDistLoads;
-   reLoading->get_DistributedLoads(&reDistLoads);
 
    Float64 Lxb = pPier->GetXBeamLength(xbrTypes::xblBottomXBeam, pierID);
 
@@ -742,10 +595,8 @@ void CAnalysisAgentImp::ApplySuperstructureDeadLoadReactions(PierIDType pierID,M
             }
             strMsg += _T(" Permanent load reactions at this bearing have been ignored.");
 
-            xbrBridgeStatusItem* pStatusItem = new xbrBridgeStatusItem(m_StatusGroupID, m_scidBridgeWarning, strMsg);
-
             GET_IFACE(IEAFStatusCenter, pStatusCenter);
-            pStatusCenter->Add(pStatusItem);
+            pStatusCenter->Add(std::make_shared<xbrBridgeStatusItem>(m_StatusGroupID, m_scidBridgeWarning, strMsg));
 
             continue;
          }
@@ -762,38 +613,32 @@ void CAnalysisAgentImp::ApplySuperstructureDeadLoadReactions(PierIDType pierID,M
 
             if ( !IsZero(DC) )
             {
-               CComPtr<IFem2dPointLoad> dcLoad;
-               dcPointLoads->Create(dcLoadID++,mbrID,mbrLocation,0.0,-DC,0.0,lotGlobal,&dcLoad);
+               dcLoading.CreatePointLoad(dcLoadID++,mbrID,mbrLocation,0.0,-DC,0.0,WBFL::FEA2D::LoadOrientation::Global);
             }
 
             if ( !IsZero(DW) )
             {
-               CComPtr<IFem2dPointLoad> dwLoad;
-               dwPointLoads->Create(dwLoadID++,mbrID,mbrLocation,0.0,-DW,0.0,lotGlobal,&dwLoad);
+               dwLoading.CreatePointLoad(dwLoadID++,mbrID,mbrLocation,0.0,-DW,0.0,WBFL::FEA2D::LoadOrientation::Global);
             }
 
             if ( !IsZero(SH) )
             {
-               CComPtr<IFem2dPointLoad> shLoad;
-               shPointLoads->Create(shLoadID++,mbrID,mbrLocation,0.0,-SH,0.0,lotGlobal,&shLoad);
+               shLoading.CreatePointLoad(shLoadID++,mbrID,mbrLocation,0.0,-SH,0.0,WBFL::FEA2D::LoadOrientation::Global);
             }
 
             if ( !IsZero(CR) )
             {
-               CComPtr<IFem2dPointLoad> crLoad;
-               crPointLoads->Create(crLoadID++,mbrID,mbrLocation,0.0,-CR,0.0,lotGlobal,&crLoad);
+               crLoading.CreatePointLoad(crLoadID++,mbrID,mbrLocation,0.0,-CR,0.0,WBFL::FEA2D::LoadOrientation::Global);
             }
 
             if ( !IsZero(PS) )
             {
-               CComPtr<IFem2dPointLoad> psLoad;
-               psPointLoads->Create(psLoadID++,mbrID,mbrLocation,0.0,-PS,0.0,lotGlobal,&psLoad);
+               psLoading.CreatePointLoad(psLoadID++,mbrID,mbrLocation,0.0,-PS,0.0,WBFL::FEA2D::LoadOrientation::Global);
             }
 
             if ( !IsZero(RE) )
             {
-               CComPtr<IFem2dPointLoad> reLoad;
-               rePointLoads->Create(reLoadID++,mbrID,mbrLocation,0.0,-RE,0.0,lotGlobal,&reLoad);
+               reLoading.CreatePointLoad(reLoadID++,mbrID,mbrLocation,0.0,-RE,0.0,WBFL::FEA2D::LoadOrientation::Global);
             }
          }
          else
@@ -809,38 +654,32 @@ void CAnalysisAgentImp::ApplySuperstructureDeadLoadReactions(PierIDType pierID,M
                // distributed load is contained within a single FEM member
                if ( !IsZero(DC) )
                {
-                  CComPtr<IFem2dDistributedLoad> dcLoad;
-                  dcDistLoads->Create(dcLoadID++,startMbrID,loadDirFy,startLocation,endLocation,-DC,-DC,lotGlobalProjected,&dcLoad);
+                  dcLoading.CreateDistributedLoad(dcLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,endLocation,-DC,-DC,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(DW) )
                {
-                  CComPtr<IFem2dDistributedLoad> dwLoad;
-                  dwDistLoads->Create(dwLoadID++,startMbrID,loadDirFy,startLocation,endLocation,-DW,-DW,lotGlobalProjected,&dwLoad);
+                  dwLoading.CreateDistributedLoad(dwLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,endLocation,-DW,-DW,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(SH) )
                {
-                  CComPtr<IFem2dDistributedLoad> shLoad;
-                  shDistLoads->Create(shLoadID++,startMbrID,loadDirFy,startLocation,endLocation,-SH,-SH,lotGlobalProjected,&shLoad);
+                  shLoading.CreateDistributedLoad(shLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,endLocation,-SH,-SH,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(CR) )
                {
-                  CComPtr<IFem2dDistributedLoad> crLoad;
-                  crDistLoads->Create(crLoadID++,startMbrID,loadDirFy,startLocation,endLocation,-CR,-CR,lotGlobalProjected,&crLoad);
+                  crLoading.CreateDistributedLoad(crLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,endLocation,-CR,-CR,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(PS) )
                {
-                  CComPtr<IFem2dDistributedLoad> psLoad;
-                  psDistLoads->Create(psLoadID++,startMbrID,loadDirFy,startLocation,endLocation,-PS,-PS,lotGlobalProjected,&psLoad);
+                  psLoading.CreateDistributedLoad(psLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,endLocation,-PS,-PS,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(RE) )
                {
-                  CComPtr<IFem2dDistributedLoad> reLoad;
-                  reDistLoads->Create(reLoadID++,startMbrID,loadDirFy,startLocation,endLocation,-RE,-RE,lotGlobalProjected,&reLoad);
+                  reLoading.CreateDistributedLoad(reLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,endLocation,-RE,-RE,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
             }
             else
@@ -848,119 +687,99 @@ void CAnalysisAgentImp::ApplySuperstructureDeadLoadReactions(PierIDType pierID,M
                // distributed loads span over multiple FEM members
 
                // apply loads to first member
-               CComPtr<IFem2dDistributedLoad> dcLoad;
                if ( !IsZero(DC) )
                {
-                  dcDistLoads->Create(dcLoadID++,startMbrID,loadDirFy,startLocation,-1.0,-DC,-DC,lotGlobalProjected,&dcLoad);
+                  dcLoading.CreateDistributedLoad(dcLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,-1.0,-DC,-DC,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
-               CComPtr<IFem2dDistributedLoad> dwLoad;
                if ( !IsZero(DW) )
                {
-                  dwDistLoads->Create(dwLoadID++,startMbrID,loadDirFy,startLocation,-1.0,-DW,-DW,lotGlobalProjected,&dwLoad);
+                  dwLoading.CreateDistributedLoad(dwLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,-1.0,-DW,-DW,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
-               CComPtr<IFem2dDistributedLoad> shLoad;
                if ( !IsZero(SH) )
                {
-                  shDistLoads->Create(shLoadID++,startMbrID,loadDirFy,startLocation,-1.0,-SH,-SH,lotGlobalProjected,&shLoad);
+                  shLoading.CreateDistributedLoad(shLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,-1.0,-SH,-SH,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
-               CComPtr<IFem2dDistributedLoad> crLoad;
                if ( !IsZero(CR) )
                {
-                  crDistLoads->Create(crLoadID++,startMbrID,loadDirFy,startLocation,-1.0,-CR,-CR,lotGlobalProjected,&crLoad);
+                  crLoading.CreateDistributedLoad(crLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,-1.0,-CR,-CR,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
-               CComPtr<IFem2dDistributedLoad> psLoad;
                if ( !IsZero(PS) )
                {
-                  psDistLoads->Create(psLoadID++,startMbrID,loadDirFy,startLocation,-1.0,-PS,-PS,lotGlobalProjected,&psLoad);
+                  psLoading.CreateDistributedLoad(psLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,-1.0,-PS,-PS,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
-               CComPtr<IFem2dDistributedLoad> reLoad;
                if ( !IsZero(RE) )
                {
-                  reDistLoads->Create(reLoadID++,startMbrID,loadDirFy,startLocation,-1.0,-RE,-RE,lotGlobalProjected,&reLoad);
+                  reLoading.CreateDistributedLoad(reLoadID++,startMbrID,WBFL::FEA2D::LoadDirection::Fy,startLocation,-1.0,-RE,-RE,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                // apply loads to intermediate members
                for ( MemberIDType mbrID = startMbrID+1; mbrID < endMbrID-1; mbrID++ )
                {
-                  dcLoad.Release();
-                  dwLoad.Release();
-                  shLoad.Release();
-                  crLoad.Release();
-                  psLoad.Release();
-                  reLoad.Release();
-
                   if ( !IsZero(DC) )
                   {
-                     dcDistLoads->Create(dcLoadID++,mbrID,loadDirFy,0.0,-1.0,-DC,-DC,lotGlobalProjected,&dcLoad);
+                     dcLoading.CreateDistributedLoad(dcLoadID++,mbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,-1.0,-DC,-DC,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                   }
 
                   if ( !IsZero(DW) )
                   {
-                     dwDistLoads->Create(dwLoadID++,mbrID,loadDirFy,0.0,-1.0,-DW,-DW,lotGlobalProjected,&dwLoad);
+                     dwLoading.CreateDistributedLoad(dwLoadID++,mbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,-1.0,-DW,-DW,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                   }
 
                   if ( !IsZero(SH) )
                   {
-                     shDistLoads->Create(shLoadID++,mbrID,loadDirFy,0.0,-1.0,-SH,-SH,lotGlobalProjected,&shLoad);
+                     shLoading.CreateDistributedLoad(shLoadID++,mbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,-1.0,-SH,-SH,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                   }
 
                   if ( !IsZero(CR) )
                   {
-                     crDistLoads->Create(crLoadID++,mbrID,loadDirFy,0.0,-1.0,-CR,-CR,lotGlobalProjected,&crLoad);
+                     crLoading.CreateDistributedLoad(crLoadID++,mbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,-1.0,-CR,-CR,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                   }
 
                   if ( !IsZero(PS) )
                   {
-                     psDistLoads->Create(psLoadID++,mbrID,loadDirFy,0.0,-1.0,-PS,-PS,lotGlobalProjected,&psLoad);
+                     psLoading.CreateDistributedLoad(psLoadID++,mbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,-1.0,-PS,-PS,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                   }
 
                   if ( !IsZero(RE) )
                   {
-                     reDistLoads->Create(reLoadID++,mbrID,loadDirFy,0.0,-1.0,-RE,-RE,lotGlobalProjected,&reLoad);
+                     reLoading.CreateDistributedLoad(reLoadID++,mbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,-1.0,-RE,-RE,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                   }
                }
 
                // apply loads to last member
-               dcLoad.Release();
-               dwLoad.Release();
-               shLoad.Release();
-               crLoad.Release();
-               psLoad.Release();
-               reLoad.Release();
-
                if ( !IsZero(DC) )
                {
-                  dcDistLoads->Create(dcLoadID++,endMbrID,loadDirFy,0.0,endLocation,-DC,-DC,lotGlobalProjected,&dcLoad);
+                  dcLoading.CreateDistributedLoad(dcLoadID++,endMbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,endLocation,-DC,-DC,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(DW) )
                {
-                  dwDistLoads->Create(dwLoadID++,endMbrID,loadDirFy,0.0,endLocation,-DW,-DW,lotGlobalProjected,&dwLoad);
+                  dwLoading.CreateDistributedLoad(dwLoadID++,endMbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,endLocation,-DW,-DW,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(SH) )
                {
-                  shDistLoads->Create(shLoadID++,endMbrID,loadDirFy,0.0,endLocation,-SH,-SH,lotGlobalProjected,&shLoad);
+                  shLoading.CreateDistributedLoad(shLoadID++,endMbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,endLocation,-SH,-SH,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(CR) )
                {
-                  crDistLoads->Create(crLoadID++,endMbrID,loadDirFy,0.0,endLocation,-CR,-CR,lotGlobalProjected,&crLoad);
+                  crLoading.CreateDistributedLoad(crLoadID++,endMbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,endLocation,-CR,-CR,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(PS) )
                {
-                  psDistLoads->Create(psLoadID++,endMbrID,loadDirFy,0.0,endLocation,-PS,-PS,lotGlobalProjected,&psLoad);
+                  psLoading.CreateDistributedLoad(psLoadID++,endMbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,endLocation,-PS,-PS,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
 
                if ( !IsZero(RE) )
                {
-                  reDistLoads->Create(reLoadID++,endMbrID,loadDirFy,0.0,endLocation,-RE,-RE,lotGlobalProjected,&reLoad);
+                  reLoading.CreateDistributedLoad(reLoadID++,endMbrID,WBFL::FEA2D::LoadDirection::Fy,0.0,endLocation,-RE,-RE,WBFL::FEA2D::LoadOrientation::GlobalProjected);
                }
             }
          }
@@ -1324,14 +1143,14 @@ Float64 CAnalysisAgentImp::GetMoment(PierIDType pierID,xbrTypes::ProductForceTyp
    ATLASSERT(found != pModelData->m_PoiMap.end());
    PoiIDType femPoiID = found->second;
 
-   CComQIPtr<IFem2dModelResults> results(pModelData->m_Model);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
 
    LoadCaseIDType lcid = GetLoadCaseID(pfType);
 
    Float64 FxL, FxR, FyL, FyR, MzL, MzR;
-   CXBeamAnalysisResult ar(_T(__FILE__),__LINE__);
-   ar = results->ComputePOIForces(lcid,femPoiID,mftLeft,lotGlobalProjected,&FxL,&FyL,&MzL);
-   ar = results->ComputePOIForces(lcid,femPoiID,mftRight,lotGlobalProjected,&FxR,&FyR,&MzR);
+   femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Left,WBFL::FEA2D::LoadOrientation::GlobalProjected,&FxL,&FyL,&MzL);
+   femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Right,WBFL::FEA2D::LoadOrientation::GlobalProjected,&FxR,&FyR,&MzR);
 
    Float64 Mz;
    if ( IsZero(poi.GetDistFromStart()) )
@@ -1354,14 +1173,14 @@ WBFL::System::SectionValue CAnalysisAgentImp::GetShear(PierIDType pierID,xbrType
    ATLASSERT(found != pModelData->m_PoiMap.end());
    PoiIDType femPoiID = found->second;
 
-   CComQIPtr<IFem2dModelResults> results(pModelData->m_Model);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
 
    LoadCaseIDType lcid = GetLoadCaseID(pfType);
 
    Float64 FxL, FxR, FyL, FyR, MzL, MzR;
-   CXBeamAnalysisResult ar(_T(__FILE__),__LINE__);
-   ar = results->ComputePOIForces(lcid,femPoiID,mftLeft,lotGlobalProjected,&FxL,&FyL,&MzL);
-   ar = results->ComputePOIForces(lcid,femPoiID,mftRight,lotGlobalProjected,&FxR,&FyR,&MzR);
+   femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Left,WBFL::FEA2D::LoadOrientation::GlobalProjected,&FxL,&FyL,&MzL);
+   femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Right,WBFL::FEA2D::LoadOrientation::GlobalProjected,&FxR,&FyR,&MzR);
 
    FyL = IsZero(FyL) ? 0 : FyL;
    FyR = IsZero(FyR) ? 0 : FyR;
@@ -1450,7 +1269,8 @@ Float64 CAnalysisAgentImp::GetMoment(PierIDType pierID,pgsTypes::LoadRatingType 
 {
    ModelData* pModelData = GetModelData(pierID);
 
-   CComQIPtr<IFem2dModelResults> results(pModelData->m_Model);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
 
    std::map<PoiIDType,PoiIDType>::iterator found = pModelData->m_PoiMap.find(poi.GetID());
    ATLASSERT(found != pModelData->m_PoiMap.end());
@@ -1465,12 +1285,10 @@ Float64 CAnalysisAgentImp::GetMoment(PierIDType pierID,pgsTypes::LoadRatingType 
    for (const auto& lcid : llConfig.m_LoadCases)
    {
       Float64 fxLeft, fyLeft, mzLeft;
-      CXBeamAnalysisResult ar(_T(__FILE__),__LINE__);
-      ar = results->ComputePOIForces(lcid,femPoiID,mftLeft,lotMember,&fxLeft,&fyLeft,&mzLeft);
+      femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Left,WBFL::FEA2D::LoadOrientation::Member,&fxLeft,&fyLeft,&mzLeft);
 
       Float64 fxRight, fyRight, mzRight;
-      CXBeamAnalysisResult ar2(_T(__FILE__),__LINE__);
-      ar2 = results->ComputePOIForces(lcid,femPoiID,mftRight,lotMember,&fxRight,&fyRight,&mzRight);
+      femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Right,WBFL::FEA2D::LoadOrientation::Member,&fxRight,&fyRight,&mzRight);
 
       FxLeft += fxLeft;
       FyLeft += fyLeft;
@@ -1517,7 +1335,8 @@ WBFL::System::SectionValue CAnalysisAgentImp::GetShear(PierIDType pierID,pgsType
    ATLASSERT(found != pModelData->m_PoiMap.end());
    PoiIDType femPoiID = found->second;
 
-   CComQIPtr<IFem2dModelResults> results(pModelData->m_Model);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
    LiveLoadConfiguration& llConfig = pModelData->m_LiveLoadConfigurations[llConfigIdx];
 
    Float64 FxLeft(0), FxRight(0);
@@ -1527,12 +1346,10 @@ WBFL::System::SectionValue CAnalysisAgentImp::GetShear(PierIDType pierID,pgsType
    for (const auto& lcid : llConfig.m_LoadCases)
    {
       Float64 fxLeft, fyLeft, mzLeft;
-      CXBeamAnalysisResult ar(_T(__FILE__),__LINE__);
-      ar = results->ComputePOIForces(lcid,femPoiID,mftLeft,lotMember,&fxLeft,&fyLeft,&mzLeft);
+      femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Left,WBFL::FEA2D::LoadOrientation::Member,&fxLeft,&fyLeft,&mzLeft);
 
       Float64 fxRight, fyRight, mzRight;
-      CXBeamAnalysisResult ar2(_T(__FILE__),__LINE__);
-      ar2 = results->ComputePOIForces(lcid,femPoiID,mftRight,lotMember,&fxRight,&fyRight,&mzRight);
+      femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Right,WBFL::FEA2D::LoadOrientation::Member,&fxRight,&fyRight,&mzRight);
 
       FxLeft += fxLeft;
       FyLeft += fyLeft;
@@ -1617,7 +1434,8 @@ void CAnalysisAgentImp::GetMoment(PierIDType pierID,pgsTypes::LoadRatingType rat
    ATLASSERT(found != pModelData->m_PoiMap.end());
    PoiIDType femPoiID = found->second;
 
-   CComQIPtr<IFem2dModelResults> results(pModelData->m_Model);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
 
    // Get the results for all loaded lanes having the same vehicle reaction
    LiveLoadConfiguration& llConfig = pModelData->m_LiveLoadConfigurations[llConfigIdx];
@@ -1631,20 +1449,15 @@ void CAnalysisAgentImp::GetMoment(PierIDType pierID,pgsTypes::LoadRatingType rat
    Float64 FyLeftPermit(0), FyRightPermit(0);
    Float64 MzLeftPermit(0), MzRightPermit(0);
 
-   HRESULT hr = S_OK;
-
    for ( IndexType laneIdx = 0; laneIdx < nLoadedLanes; laneIdx++ )
    {
       // get unit lane load forces
       LoadCaseIDType lcid = llConfig.m_LoadCases[laneIdx];
       Float64 fxLeft, fyLeft, mzLeft;
-      CXBeamAnalysisResult ar(_T(__FILE__),__LINE__);
-      ar = results->ComputePOIForces(lcid,femPoiID,mftLeft,lotMember,&fxLeft,&fyLeft,&mzLeft);
+      femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Left,WBFL::FEA2D::LoadOrientation::Member,&fxLeft,&fyLeft,&mzLeft);
 
       Float64 fxRight, fyRight, mzRight;
-      CXBeamAnalysisResult ar2(_T(__FILE__),__LINE__);
-      ar2 = results->ComputePOIForces(lcid,femPoiID,mftRight,lotMember,&fxRight,&fyRight,&mzRight);
-      ATLASSERT(SUCCEEDED(hr));
+      femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Right,WBFL::FEA2D::LoadOrientation::Member,&fxRight,&fyRight,&mzRight);
 
       if ( laneIdx == permitLaneIdx )
       {
@@ -1750,7 +1563,8 @@ void CAnalysisAgentImp::GetShear(PierIDType pierID,pgsTypes::LoadRatingType rati
    ATLASSERT(found != pModelData->m_PoiMap.end());
    PoiIDType femPoiID = found->second;
 
-   CComQIPtr<IFem2dModelResults> results(pModelData->m_Model);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
 
    // Get the results for all loaded lanes having the same vehicle reaction
    LiveLoadConfiguration& llConfig = pModelData->m_LiveLoadConfigurations[llConfigIdx];
@@ -1764,19 +1578,15 @@ void CAnalysisAgentImp::GetShear(PierIDType pierID,pgsTypes::LoadRatingType rati
    Float64 FyLeftPermit(0), FyRightPermit(0);
    Float64 MzLeftPermit(0), MzRightPermit(0);
 
-   HRESULT hr = S_OK;
-
    for ( IndexType laneIdx = 0; laneIdx < nLoadedLanes; laneIdx++ )
    {
       // get unit lane load forces
       LoadCaseIDType lcid = llConfig.m_LoadCases[laneIdx];
       Float64 fxLeft, fyLeft, mzLeft;
-      CXBeamAnalysisResult ar(_T(__FILE__),__LINE__);
-      ar = results->ComputePOIForces(lcid,femPoiID,mftLeft,lotMember,&fxLeft,&fyLeft,&mzLeft);
+      femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Left,WBFL::FEA2D::LoadOrientation::Member,&fxLeft,&fyLeft,&mzLeft);
 
       Float64 fxRight, fyRight, mzRight;
-      CXBeamAnalysisResult ar2(_T(__FILE__),__LINE__);
-      ar2 = results->ComputePOIForces(lcid,femPoiID,mftRight,lotMember,&fxRight,&fyRight,&mzRight);
+      femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Right,WBFL::FEA2D::LoadOrientation::Member,&fxRight,&fyRight,&mzRight);
 
       if ( laneIdx == permitLaneIdx )
       {
@@ -1854,8 +1664,8 @@ void CAnalysisAgentImp::GetMoment(PierIDType pierID,pgsTypes::LoadRatingType rat
 {
    GET_IFACE(IXBRProject,pProject);
    GET_IFACE(IEAFDisplayUnits,pDisplayUnits);
-   GET_IFACE(IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE(IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
 
    CString strProgressMsg;
    strProgressMsg.Format(_T("Getting live load moment for %s, %s, at %s"),
@@ -1904,8 +1714,8 @@ void CAnalysisAgentImp::GetShear(PierIDType pierID,pgsTypes::LoadRatingType rati
 {
    GET_IFACE(IXBRProject,pProject);
    GET_IFACE(IEAFDisplayUnits,pDisplayUnits);
-   GET_IFACE(IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE(IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
 
    CString strProgressMsg;
    strProgressMsg.Format(_T("Getting live load shear for %s, %s, at %s"),
@@ -2468,8 +2278,8 @@ std::vector<xbrTypes::ProductForceType> CAnalysisAgentImp::GetLoads(xbrTypes::Co
 
 void CAnalysisAgentImp::ComputeLiveLoadLocations(PierIDType pierID,ModelData* pModelData) const
 {
-   GET_IFACE(IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE(IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
 
    GET_IFACE(IXBRPier,pPier);
    Float64 Wcc = pPier->GetCurbToCurbWidth(pierID); // normal to alignment
@@ -2710,14 +2520,14 @@ std::vector<LoadCaseIDType> CAnalysisAgentImp::InitializeWheelLineLoads(ModelDat
 
 void CAnalysisAgentImp::ApplyWheelLineLoadsToFemModel(ModelData* pModelData) const
 {
-   GET_IFACE(IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE(IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
    CString strProgressMsg;
 
    IndexType nLaneConfigurations = pModelData->m_LaneConfigurations.size();
 
-   CComPtr<IFem2dLoadingCollection> loadings;
-   pModelData->m_Model->get_Loadings(&loadings);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
 
    std::map<LoadCaseIDType,LaneConfiguration>::iterator begin(pModelData->m_LaneConfigurations.begin());
    std::map<LoadCaseIDType,LaneConfiguration>::iterator iter(begin);
@@ -2731,11 +2541,8 @@ void CAnalysisAgentImp::ApplyWheelLineLoadsToFemModel(ModelData* pModelData) con
       LaneConfiguration& laneConfig = iter->second;
 
       // create the load case
-      CComPtr<IFem2dLoading> loading;
-      loadings->Create(lcid,&loading);
+      WBFL::FEA2D::Loading& loading = femModel.CreateLoading(lcid);
 
-      CComPtr<IFem2dPointLoadCollection> pointLoads;
-      loading->get_PointLoads(&pointLoads);
 
       // create the loading for each wheel line
       LoadIDType loadID = 0;
@@ -2747,14 +2554,12 @@ void CAnalysisAgentImp::ApplyWheelLineLoadsToFemModel(ModelData* pModelData) con
       // left wheel line load
       GetSuperstructureFemModelLocation(pModelData,laneConfig.Xleft,&mbrID,&mbrLocation);
 
-      CComPtr<IFem2dPointLoad> pointLoad;
-      pointLoads->Create(loadID++,mbrID,mbrLocation,0.0,P,0.0,lotGlobal,&pointLoad);
+      loading.CreatePointLoad(loadID++,mbrID,mbrLocation,0.0,P,0.0,WBFL::FEA2D::LoadOrientation::Global);
 
       // right wheel line load
       GetSuperstructureFemModelLocation(pModelData,laneConfig.Xright,&mbrID,&mbrLocation);
 
-      pointLoad.Release();
-      pointLoads->Create(loadID++,mbrID,mbrLocation,0.0,P,0.0,lotGlobal,&pointLoad);
+      loading.CreatePointLoad(loadID++,mbrID,mbrLocation,0.0,P,0.0,WBFL::FEA2D::LoadOrientation::Global);
    }
 }
 
@@ -2784,8 +2589,8 @@ struct Result
 void CAnalysisAgentImp::ComputeUnitLiveLoadResult(PierIDType pierID,const xbrPointOfInterest& poi) const
 {
    GET_IFACE_NOCHECK(IEAFDisplayUnits,pDisplayUnits); // this interface is not used in the rare case that the superstructure width is smaller than a lane, there are no lanes so there aren't any live load results
-   GET_IFACE(IProgress,pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE(IEAFProgress,pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
    CString strProgressMsg;
 
    Float64 MzMin = DBL_MAX;
@@ -2821,7 +2626,8 @@ void CAnalysisAgentImp::ComputeUnitLiveLoadResult(PierIDType pierID,const xbrPoi
    std::set<Result> moments;
    std::set<Result> shears;
 
-   CComQIPtr<IFem2dModelResults> results(pModelData->m_Model);
+   WBFL::FEA2D::Model& femModel = *pModelData->m_Model;
+
    IndexType nLiveLoadConfigs = pModelData->m_LiveLoadConfigurations.size();
 
    IndexType progressMsgIdx = Min((IndexType)100,nLiveLoadConfigs/10); // we don't want to update the progress message on every loop... the progress window flickers
@@ -2850,12 +2656,10 @@ void CAnalysisAgentImp::ComputeUnitLiveLoadResult(PierIDType pierID,const xbrPoi
          LoadCaseIDType lcid = llConfig.m_LoadCases[laneIdx];
 
          Float64 fxLeft, fyLeft, mzLeft;
-         CXBeamAnalysisResult ar(_T(__FILE__),__LINE__);
-         ar = results->ComputePOIForces(lcid,femPoiID,mftLeft,lotMember,&fxLeft,&fyLeft,&mzLeft);
+         femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Left,WBFL::FEA2D::LoadOrientation::Member,&fxLeft,&fyLeft,&mzLeft);
 
          Float64 fxRight, fyRight, mzRight;
-         CXBeamAnalysisResult ar2(_T(__FILE__),__LINE__);
-         ar2 = results->ComputePOIForces(lcid,femPoiID,mftRight,lotMember,&fxRight,&fyRight,&mzRight);
+         femModel.ComputePOIForces(lcid,femPoiID,WBFL::FEA2D::MemberFaceType::Right,WBFL::FEA2D::LoadOrientation::Member,&fxRight,&fyRight,&mzRight);
 
          FxLeft += fxLeft;
          FyLeft += fyLeft;
@@ -3076,17 +2880,20 @@ std::vector<Float64> CAnalysisAgentImp::GetWheelLineLocations(ModelData* pModelD
 
 void CAnalysisAgentImp::InvalidateModels(bool bCreateNewDataStructures)
 {
-   std::map<PierIDType,ModelData>* pOldModelData = m_pModelData.release();
-   if ( bCreateNewDataStructures )
+   if (m_pModelData)
    {
-      m_pModelData = std::make_unique<std::map<PierIDType,ModelData>>();
-   }
+      std::map<PierIDType, ModelData>* pOldModelData = m_pModelData.release();
+      if (bCreateNewDataStructures)
+      {
+         m_pModelData = std::make_unique<std::map<PierIDType, ModelData>>();
+      }
 
 #if defined _USE_MULTITHREADING
-   m_ThreadManager.CreateThread(CAnalysisAgentImp::DeleteModels,(LPVOID)(pOldModelData));
+      m_ThreadManager.CreateThread(CAnalysisAgentImp::DeleteModels, (LPVOID)(pOldModelData));
 #else
-   CAnalysisAgentImp::DeleteModels((LPVOID)(pOldModelData));
+      CAnalysisAgentImp::DeleteModels((LPVOID)(pOldModelData));
 #endif
+   }
 }
 
 UINT CAnalysisAgentImp::DeleteModels(LPVOID pParam)
@@ -3094,8 +2901,11 @@ UINT CAnalysisAgentImp::DeleteModels(LPVOID pParam)
    WATCH(_T("Begin: DeleteModels"));
    
    std::map<PierIDType,ModelData>* pModelData = (std::map<PierIDType,ModelData>*)pParam;
-   pModelData->clear();
-   delete pModelData;
+   if (pModelData)
+   {
+      pModelData->clear();
+      delete pModelData;
+   }
 
    WATCH(_T("End: DeleteModels"));
 
@@ -3104,17 +2914,20 @@ UINT CAnalysisAgentImp::DeleteModels(LPVOID pParam)
 
 void CAnalysisAgentImp::InvalidateResults(bool bCreateNewDataStructures)
 {
-   std::map<PierIDType,std::set<UnitLiveLoadResult>>* pOldResults = m_pUnitLiveLoadResults.release();
-   if ( bCreateNewDataStructures )
+   if (m_pUnitLiveLoadResults)
    {
-      m_pUnitLiveLoadResults = std::make_unique<std::map<PierIDType,std::set<UnitLiveLoadResult>>>();
-   }
+      std::map<PierIDType, std::set<UnitLiveLoadResult>>* pOldResults = m_pUnitLiveLoadResults.release();
+      if (bCreateNewDataStructures)
+      {
+         m_pUnitLiveLoadResults = std::make_unique<std::map<PierIDType, std::set<UnitLiveLoadResult>>>();
+      }
 
 #if defined _USE_MULTITHREADING
-   m_ThreadManager.CreateThread(CAnalysisAgentImp::DeleteResults,(LPVOID)(pOldResults));
+      m_ThreadManager.CreateThread(CAnalysisAgentImp::DeleteResults, (LPVOID)(pOldResults));
 #else
-   CAnalysisAgentImp::DeleteResults((LPVOID)(pOldResults));
+      CAnalysisAgentImp::DeleteResults((LPVOID)(pOldResults));
 #endif
+   }
 }
 
 UINT CAnalysisAgentImp::DeleteResults(LPVOID pParam)
@@ -3122,8 +2935,11 @@ UINT CAnalysisAgentImp::DeleteResults(LPVOID pParam)
    WATCH(_T("Begin: DeleteResults"));
    
    std::map<PierIDType,std::set<UnitLiveLoadResult>>* pResults = (std::map<PierIDType,std::set<UnitLiveLoadResult>>*)pParam;
-   pResults->clear();
-   delete pResults;
+   if (pResults)
+   {
+      pResults->clear();
+      delete pResults;
+   }
 
    WATCH(_T("End: DeleteResults"));
 

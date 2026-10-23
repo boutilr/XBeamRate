@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,6 @@
 
 #pragma once
 
-struct IBroker;
-
 #include <MFCTools\WsdotCalculationSheet.h>
 
 /*****************************************************************************
@@ -36,18 +34,5 @@ CLASS
 class XBRateCalculationSheet : public WsdotCalculationSheet
 {
 public:
-   XBRateCalculationSheet(IBroker* pBroker);
-   XBRateCalculationSheet(const XBRateCalculationSheet& rOther);
-   virtual ~XBRateCalculationSheet();
-
-   XBRateCalculationSheet& operator = (const XBRateCalculationSheet& rOther);
-
-protected:
-   void MakeCopy(const XBRateCalculationSheet& rOther);
-   void MakeAssignment(const XBRateCalculationSheet& rOther);
-
-private:
-   IBroker* m_pBroker;
-
    XBRateCalculationSheet();
 };

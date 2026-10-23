@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 //
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "resource.h"
 #include <XBeamRateExt\ReinforcementPage.h>
 #include <XBeamRateExt\XBeamRateUtilities.h>
@@ -33,24 +34,19 @@
 #include <IFace\ExtendUI.h>
 #include <IFace\XBeamRateAgent.h>
 
-#include <PgsExt\PierData2.h>
+#include <PsgLib\PierData2.h>
 #include <XBeamRateExt\PierData.h>
 
 #include <PGSuperUnits.h> // for FormatDimension
 
 
 #include <PgsExt\ConcreteDetailsDlg.h>
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\GirderLabel.h>
 
 #include <EAF\EAFDisplayUnits.h>
 #include <EAF\EAFDocument.h>
 #include <MFCTools\CustomDDX.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
 
 
@@ -189,8 +185,8 @@ void CReinforcementPage::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EC_LABEL,     m_ctrlEcCheck);
 	DDX_Control(pDX, IDC_FC,           m_ctrlFc);
 
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
+    auto pBroker = EAFGetBroker();
+
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
    DDX_UnitValueAndTag(pDX,IDC_FC,IDC_FC_UNIT,m_pParent->GetConcrete().Fc,pDisplayUnits->GetStressUnit());
@@ -398,6 +394,7 @@ void CReinforcementPage::OnMoreProperties()
 {
    UpdateData(TRUE);
    CConcreteDetailsDlg dlg(true  /*properties are based on f'c*/,
+                           false /*don't include UHPC*/,
                            false /*don't enable Compute Time Parameters option*/,
                            false /*hide the CopyFromLibrary buton*/);
 
@@ -480,8 +477,8 @@ void CReinforcementPage::UpdateEc()
       CString strFc, strDensity, strK1, strK2;
       m_ctrlFc.GetWindowText(strFc);
 
-      CComPtr<IBroker> pBroker;
-      EAFGetBroker(&pBroker);
+      auto pBroker = EAFGetBroker();
+
       GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
 
       strDensity.Format(_T("%s"),FormatDimension(m_pParent->GetConcrete().StrengthDensity,pDisplayUnits->GetDensityUnit(),false));

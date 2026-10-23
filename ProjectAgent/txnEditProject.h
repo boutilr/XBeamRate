@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include <WBFLCore.h>
-#include <EAF\EAFTransaction.h>
 
-class txnEditProjectProperties : public CEAFTransaction
+#include <EAF\Transaction.h>
+
+class txnEditProjectProperties : public WBFL::EAF::Transaction
 {
 public:
    txnEditProjectProperties(const std::_tstring& oldBridgeName,const std::_tstring& newBridgeName,
@@ -39,7 +39,7 @@ public:
 
    virtual bool Execute();
    virtual void Undo();
-   virtual std::unique_ptr<CEAFTransaction>CreateClone() const;
+   virtual std::unique_ptr<WBFL::EAF::Transaction>CreateClone() const;
    virtual std::_tstring Name() const;
    virtual bool IsUndoable() const;
    virtual bool IsRepeatable() const;

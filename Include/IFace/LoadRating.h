@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -126,8 +126,9 @@ DESCRIPTION
 // {15281829-5F1E-4a78-9A9C-E619A7B1E0F6}
 DEFINE_GUID(IID_IXBRMomentCapacity, 
 0x15281829, 0x5f1e, 0x4a78, 0x9a, 0x9c, 0xe6, 0x19, 0xa7, 0xb1, 0xe0, 0xf6);
-interface IXBRMomentCapacity : IUnknown
+class IXBRMomentCapacity
 {
+public:
    virtual Float64 GetMomentCapacity(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const = 0;
    virtual const MomentCapacityDetails& GetMomentCapacityDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment) const = 0;
 
@@ -151,8 +152,9 @@ DESCRIPTION
 // {BD0D6DBC-2127-4413-BB1D-16BBD33B054D}
 DEFINE_GUID(IID_IXBRShearCapacity, 
 0xbd0d6dbc, 0x2127, 0x4413, 0xbb, 0x1d, 0x16, 0xbb, 0xd3, 0x3b, 0x5, 0x4d);
-interface IXBRShearCapacity : IUnknown
+class IXBRShearCapacity
 {
+public:
    virtual Float64 GetShearCapacity(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
    virtual const ShearCapacityDetails& GetShearCapacityDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi) const = 0;
 
@@ -172,15 +174,16 @@ DESCRIPTION
 // {20128EE2-B293-49dc-A335-DA01574AC2A8}
 DEFINE_GUID(IID_IXBRCrackedSection, 
 0x20128ee2, 0xb293, 0x49dc, 0xa3, 0x35, 0xda, 0x1, 0x57, 0x4a, 0xc2, 0xa8);
-interface IXBRCrackedSection : IUnknown
+class IXBRCrackedSection
 {
+public:
    virtual Float64 GetIcrack(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const = 0;
    virtual const CrackedSectionDetails& GetCrackedSectionDetails(PierIDType pierID,xbrTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const = 0;
 };
 
 /*****************************************************************************
 INTERFACE
-   IXBRArtiract
+   IXBRArtifact
 
 DESCRIPTION
    Interface for getting analysis artifacts
@@ -188,7 +191,8 @@ DESCRIPTION
 // {E7B694B8-1B81-4b53-A737-F2153CCCB5CA}
 DEFINE_GUID(IID_IXBRArtifact, 
 0xe7b694b8, 0x1b81, 0x4b53, 0xa7, 0x37, 0xf2, 0x15, 0x3c, 0xcc, 0xb5, 0xca);
-interface IXBRArtifact : IUnknown
+class IXBRArtifact
 {
+public:
    virtual const xbrRatingArtifact* GetXBeamRatingArtifact(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx) const = 0;
 };

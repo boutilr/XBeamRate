@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,24 +22,19 @@
 
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "XBRateCalculationSheet.h"
 #include <IFace\Project.h>
 #include <IFace\VersionInfo.h>
 
 #include <EAF\EAFDocument.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
-XBRateCalculationSheet::XBRateCalculationSheet(IBroker* pBroker) :
+XBRateCalculationSheet::XBRateCalculationSheet() :
 WsdotCalculationSheet()
 {
-   ATLASSERT(pBroker!=0);
-   m_pBroker = pBroker;
-   GET_IFACE(IXBRProjectProperties,pProj);
+   auto pBroker = EAFGetBroker();
+   GET_IFACE2(pBroker, IXBRProjectProperties,pProj);
 
    // set pgsuper-specific properties
    SetBridgeName(pProj->GetBridgeName());
@@ -49,49 +44,17 @@ WsdotCalculationSheet()
    SetCompany(pProj->GetCompany());
 
    // set the bottom title
-   GET_IFACE(IXBRVersionInfo,pVerInfo);
+   GET_IFACE2(pBroker, IXBRVersionInfo,pVerInfo);
 
    CEAFDocument* pDoc = EAFGetDocument();
    CEAFDocTemplate* pDocTemplate = (CEAFDocTemplate*)pDoc->GetDocTemplate();
-   CComPtr<IEAFAppPlugin> appPlugin;
-   pDocTemplate->GetPlugin(&appPlugin);
+   auto pluginApp = pDocTemplate->GetPluginApp();
    CString strBottomTitle;
-   strBottomTitle.Format(_T("%s™ Version %s, Copyright © %4d, WSDOT, All rights reserved"),appPlugin->GetName(),pVerInfo->GetVersion(true),WBFL::System::Date().Year());
+   strBottomTitle.Format(_T("%s™ Version %s, Copyright © %4d, WSDOT, All rights reserved"),pluginApp->GetName(),pVerInfo->GetVersion(true),WBFL::System::Date().Year());
 
    SetTitle(strBottomTitle);
 
    // set the document name
    CString path = pDoc->GetPathName();
    SetFileName(path);
-}
-
-XBRateCalculationSheet::XBRateCalculationSheet(const XBRateCalculationSheet& rOther) :
-WsdotCalculationSheet(rOther)
-{
-   MakeCopy(rOther);
-}
-
-XBRateCalculationSheet::~XBRateCalculationSheet()
-{
-}
-
-XBRateCalculationSheet& XBRateCalculationSheet::operator= (const XBRateCalculationSheet& rOther)
-{
-   if( this != &rOther )
-   {
-      MakeAssignment(rOther);
-   }
-
-   return *this;
-}
-
-void XBRateCalculationSheet::MakeCopy(const XBRateCalculationSheet& rOther)
-{
-   m_pBroker = rOther.m_pBroker;
-}
-
-void XBRateCalculationSheet::MakeAssignment(const XBRateCalculationSheet& rOther)
-{
-   WsdotCalculationSheet::MakeAssignment( rOther );
-   MakeCopy( rOther );
 }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -27,15 +27,15 @@
 
 #pragma once
 
-#include "resource.h"       // main symbols
+#include <EAF\Agent.h>
 #include <AnalysisAgent.h>
 #include "AnalysisAgentCLSID.h"
 
-#include <EAF\EAFInterfaceCache.h>
+#include <IFace/AnalysisResults.h>
 
 #include <IFace\Project.h>
 
-#include <WBFLFem2d.h>
+#include <FEA2D/Model.h>
 
 #include <..\..\PGSuper\Include\IFace\Project.h>
 
@@ -52,108 +52,77 @@
 
 /////////////////////////////////////////////////////////////////////////////
 // CAnalysisAgentImp
-class ATL_NO_VTABLE CAnalysisAgentImp : 
-	public CComObjectRootEx<CComSingleThreadModel>,
-   //public CComRefCountTracer<CAnalysisAgentImp,CComObjectRootEx<CComSingleThreadModel> >,
-	public CComCoClass<CAnalysisAgentImp, &CLSID_AnalysisAgent>,
-	//public IConnectionPointContainerImpl<CAnalysisAgentImp>, // needed if we implement a connection point
-   //public CProxyIProjectEventSink<CAnalysisAgentImp>,// needed if we implement a connection point
-   public IAgentEx,
-   public IAgentPriority,
+class CAnalysisAgentImp : public WBFL::EAF::Agent,
+   public WBFL::EAF::IAgentPriority,
    public IXBRProductForces,
    public IXBRAnalysisResults,
    public IXBRProjectEventSink,
    public IBridgeDescriptionEventSink
 {  
 public:
-	CAnalysisAgentImp(); 
-   virtual ~CAnalysisAgentImp();
+   CAnalysisAgentImp() = default;
 
-   DECLARE_PROTECT_FINAL_CONSTRUCT();
-
-   HRESULT FinalConstruct();
-   void FinalRelease();
-
-DECLARE_REGISTRY_RESOURCEID(IDR_ANALYSISAGENT)
-
-BEGIN_COM_MAP(CAnalysisAgentImp)
-	COM_INTERFACE_ENTRY(IAgent)
-   COM_INTERFACE_ENTRY(IAgentEx)
-   COM_INTERFACE_ENTRY(IAgentPriority)
-   COM_INTERFACE_ENTRY(IXBRProductForces)
-	COM_INTERFACE_ENTRY(IXBRAnalysisResults)
-   COM_INTERFACE_ENTRY(IXBRProjectEventSink)
-   COM_INTERFACE_ENTRY(IBridgeDescriptionEventSink)
-	//COM_INTERFACE_ENTRY_IMPL(IConnectionPointContainer)// needed if we implement a connection point
-END_COM_MAP()
-
-// needed if we implement a connection point
-//BEGIN_CONNECTION_POINT_MAP(CAnalysisAgentImp)
-   //CONNECTION_POINT_ENTRY( IID_IXBRProjectEventSink )
-//END_CONNECTION_POINT_MAP()
-
-// IAgentEx
+// Agent
 public:
-	STDMETHOD(SetBroker)(/*[in]*/ IBroker* pBroker) override;
-   STDMETHOD(RegInterfaces)() override;
-	STDMETHOD(Init)() override;
-	STDMETHOD(Reset)() override;
-	STDMETHOD(ShutDown)() override;
-   STDMETHOD(Init2)() override;
-   STDMETHOD(GetClassID)(CLSID* pCLSID) override;
+   std::_tstring GetName() const override { return _T("XBeam Rate Analysis Agent"); }
+   bool RegisterInterfaces() override;
+   bool Init() override;
+   bool Reset() override;
+   bool ShutDown() override;
+   CLSID GetCLSID() const override;
 
    // IAgentPriority
 public:
-   IndexType GetPriority() override;
+   IndexType GetPriority() const override;
 
 // IXBRProductForces
 public:
-   virtual const std::vector<LowerXBeamLoad>& GetLowerCrossBeamLoading(PierIDType pierID) const override;
-   virtual Float64 GetUpperCrossBeamLoading(PierIDType pierID) const override;
+   const std::vector<LowerXBeamLoad>& GetLowerCrossBeamLoading(PierIDType pierID) const override;
+   Float64 GetUpperCrossBeamLoading(PierIDType pierID) const override;
 
-   virtual IndexType GetLiveLoadConfigurationCount(PierIDType pierID,pgsTypes::LoadRatingType ratingType) const override;
-   virtual IndexType GetLoadedLaneCount(PierIDType pierID,IndexType liveLoadConfigIdx) const override;
-   virtual std::vector<Float64> GetWheelLineLocations(PierIDType pierID) const override;
-   virtual WheelLineConfiguration GetLiveLoadConfiguration(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType liveLoadConfigIdx,IndexType permitLaneIdx) const override;
-   virtual void GetGoverningMomentLiveLoadConfigurations(PierIDType pierID,const xbrPointOfInterest& poi,std::vector<IndexType>* pvMin,std::vector<IndexType>* pvMax) const override;
-   virtual void GetGoverningShearLiveLoadConfigurations(PierIDType pierID,const xbrPointOfInterest& poi,std::vector<IndexType>* pvLLConfig) const override;
+   IndexType GetLiveLoadConfigurationCount(PierIDType pierID,pgsTypes::LoadRatingType ratingType) const override;
+   IndexType GetLoadedLaneCount(PierIDType pierID,IndexType liveLoadConfigIdx) const override;
+   std::vector<Float64> GetWheelLineLocations(PierIDType pierID) const override;
+   WheelLineConfiguration GetLiveLoadConfiguration(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType liveLoadConfigIdx,IndexType permitLaneIdx) const override;
+   void GetGoverningMomentLiveLoadConfigurations(PierIDType pierID,const xbrPointOfInterest& poi,std::vector<IndexType>* pvMin,std::vector<IndexType>* pvMax) const override;
+   void GetGoverningShearLiveLoadConfigurations(PierIDType pierID,const xbrPointOfInterest& poi,std::vector<IndexType>* pvLLConfig) const override;
 
 // IXBRAnalysisResults
 public:
-   virtual Float64 GetMoment(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const override;
-   virtual WBFL::System::SectionValue GetShear(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const override;
-   virtual std::vector<Float64> GetMoment(PierIDType pierID,xbrTypes::ProductForceType pfType,const std::vector<xbrPointOfInterest>& vPoi) const override;
-   virtual std::vector<WBFL::System::SectionValue> GetShear(PierIDType pierID,xbrTypes::ProductForceType pfType,const std::vector<xbrPointOfInterest>& vPoi) const override;
+   Float64 GetMoment(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const override;
+   WBFL::System::SectionValue GetShear(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const override;
+   std::vector<Float64> GetMoment(PierIDType pierID,xbrTypes::ProductForceType pfType,const std::vector<xbrPointOfInterest>& vPoi) const override;
+   std::vector<WBFL::System::SectionValue> GetShear(PierIDType pierID,xbrTypes::ProductForceType pfType,const std::vector<xbrPointOfInterest>& vPoi) const override;
 
-   virtual Float64 GetMoment(PierIDType pierID,xbrTypes::CombinedForceType lcType,const xbrPointOfInterest& poi) const override;
-   virtual WBFL::System::SectionValue GetShear(PierIDType pierID,xbrTypes::CombinedForceType lcType,const xbrPointOfInterest& poi) const override;
-   virtual std::vector<Float64> GetMoment(PierIDType pierID,xbrTypes::CombinedForceType lcType,const std::vector<xbrPointOfInterest>& vPoi) const override;
-   virtual std::vector<WBFL::System::SectionValue> GetShear(PierIDType pierID,xbrTypes::CombinedForceType lcType,const std::vector<xbrPointOfInterest>& vPoi) const override;
+   Float64 GetMoment(PierIDType pierID,xbrTypes::CombinedForceType lcType,const xbrPointOfInterest& poi) const override;
+   WBFL::System::SectionValue GetShear(PierIDType pierID,xbrTypes::CombinedForceType lcType,const xbrPointOfInterest& poi) const override;
+   std::vector<Float64> GetMoment(PierIDType pierID,xbrTypes::CombinedForceType lcType,const std::vector<xbrPointOfInterest>& vPoi) const override;
+   std::vector<WBFL::System::SectionValue> GetShear(PierIDType pierID,xbrTypes::CombinedForceType lcType,const std::vector<xbrPointOfInterest>& vPoi) const override;
 
-   virtual Float64 GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const xbrPointOfInterest& poi) const override;
-   virtual WBFL::System::SectionValue GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const xbrPointOfInterest& poi) const override;
-   virtual std::vector<Float64> GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const std::vector<xbrPointOfInterest>& vPoi) const override;
-   virtual std::vector<WBFL::System::SectionValue> GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const std::vector<xbrPointOfInterest>& vPoi) const override;
+   Float64 GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const xbrPointOfInterest& poi) const override;
+   WBFL::System::SectionValue GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const xbrPointOfInterest& poi) const override;
+   std::vector<Float64> GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const std::vector<xbrPointOfInterest>& vPoi) const override;
+   std::vector<WBFL::System::SectionValue> GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,const std::vector<xbrPointOfInterest>& vPoi) const override;
 
-   virtual void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const xbrPointOfInterest& poi,Float64* pMpermit,Float64* pMlegal) const override;
-   virtual void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMpermit,std::vector<Float64>* pvMlegal) const override;
-   virtual void GetShear(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pVpermit,WBFL::System::SectionValue* pVlegal) const override;
-   virtual void GetShear(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvVpermit,std::vector<WBFL::System::SectionValue>* pvVlegal) const override;
+   void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const xbrPointOfInterest& poi,Float64* pMpermit,Float64* pMlegal) const override;
+   void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMpermit,std::vector<Float64>* pvMlegal) const override;
+   void GetShear(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pVpermit,WBFL::System::SectionValue* pVlegal) const override;
+   void GetShear(PierIDType pierID,pgsTypes::LoadRatingType permitRatingType,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvVpermit,std::vector<WBFL::System::SectionValue>* pvVlegal) const override;
 
-   virtual void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,const xbrPointOfInterest& poi,Float64* pMin,Float64* pMax,IndexType* pMinLLConfigIdx,IndexType* pMaxLLConfigIdx/*WheelLineConfiguration* pMinConfiguration,WheelLineConfiguration* pMaxConfiguration*/) const override;
-   virtual void GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pMin,WBFL::System::SectionValue* pMax,IndexType* pMinLLConfigIdx,IndexType* pMaxLLConfigIdx/*,WheelLineConfiguration* pMinLeftConfiguration,WheelLineConfiguration* pMinRightConfiguration,WheelLineConfiguration* pMaxLeftConfiguration,WheelLineConfiguration* pMaxRightConfiguration*/) const override;
-   virtual void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMin,std::vector<Float64>* pvMax,std::vector<IndexType>* pvMinLLConfigIdx,std::vector<IndexType>* pvMaxLLConfigIdx/*std::vector<WheelLineConfiguration>* pvMinConfiguration,std::vector<WheelLineConfiguration>* pvMaxConfiguration*/) const override;
-   virtual void GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvMin,std::vector<WBFL::System::SectionValue>* pvMax,std::vector<IndexType>* pvMinLLConfigIdx,std::vector<IndexType>* pvMaxLLConfigIdx/*std::vector<WheelLineConfiguration>* pvMinLeftConfiguration,std::vector<WheelLineConfiguration>* pvMinRightConfiguration,std::vector<WheelLineConfiguration>* pvMaxLeftConfiguration,std::vector<WheelLineConfiguration>* pvMaxRightConfiguration*/) const override;
+   void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,const xbrPointOfInterest& poi,Float64* pMin,Float64* pMax,IndexType* pMinLLConfigIdx,IndexType* pMaxLLConfigIdx/*WheelLineConfiguration* pMinConfiguration,WheelLineConfiguration* pMaxConfiguration*/) const override;
+   void GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pMin,WBFL::System::SectionValue* pMax,IndexType* pMinLLConfigIdx,IndexType* pMaxLLConfigIdx/*,WheelLineConfiguration* pMinLeftConfiguration,WheelLineConfiguration* pMinRightConfiguration,WheelLineConfiguration* pMaxLeftConfiguration,WheelLineConfiguration* pMaxRightConfiguration*/) const override;
+   void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMin,std::vector<Float64>* pvMax,std::vector<IndexType>* pvMinLLConfigIdx,std::vector<IndexType>* pvMaxLLConfigIdx/*std::vector<WheelLineConfiguration>* pvMinConfiguration,std::vector<WheelLineConfiguration>* pvMaxConfiguration*/) const override;
+   void GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvMin,std::vector<WBFL::System::SectionValue>* pvMax,std::vector<IndexType>* pvMinLLConfigIdx,std::vector<IndexType>* pvMaxLLConfigIdx/*std::vector<WheelLineConfiguration>* pvMinLeftConfiguration,std::vector<WheelLineConfiguration>* pvMinRightConfiguration,std::vector<WheelLineConfiguration>* pvMaxLeftConfiguration,std::vector<WheelLineConfiguration>* pvMaxRightConfiguration*/) const override;
 
-   virtual void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,const xbrPointOfInterest& poi,Float64* pMin,Float64* pMax,VehicleIndexType* pMinVehicleIdx,VehicleIndexType* pMaxVehicleIdx) const override;
-   virtual void GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pMin,WBFL::System::SectionValue* pMax,VehicleIndexType* pMinLeftVehicleIdx,VehicleIndexType* pMinRightVehicleIdx,VehicleIndexType* pMaxLeftVehicleIdx,VehicleIndexType* pMaxRightVehicleIdx) const override;
-   virtual void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMin,std::vector<Float64>* pvMax,std::vector<VehicleIndexType>* pvMinVehicleIdx,std::vector<VehicleIndexType>* pvMaxVehicleIdx) const override;
-   virtual void GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvMin,std::vector<WBFL::System::SectionValue>* pvMax,std::vector<VehicleIndexType>* pvMinLeftVehicleIdx,std::vector<VehicleIndexType>* pvMinRightVehicleIdx,std::vector<VehicleIndexType>* pvMaxLeftVehicleIdx,std::vector<VehicleIndexType>* pvMaxRightVehicleIdx) const override;
+   void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,const xbrPointOfInterest& poi,Float64* pMin,Float64* pMax,VehicleIndexType* pMinVehicleIdx,VehicleIndexType* pMaxVehicleIdx) const override;
+   void GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pMin,WBFL::System::SectionValue* pMax,VehicleIndexType* pMinLeftVehicleIdx,VehicleIndexType* pMinRightVehicleIdx,VehicleIndexType* pMaxLeftVehicleIdx,VehicleIndexType* pMaxRightVehicleIdx) const override;
+   void GetMoment(PierIDType pierID,pgsTypes::LoadRatingType ratingType,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMin,std::vector<Float64>* pvMax,std::vector<VehicleIndexType>* pvMinVehicleIdx,std::vector<VehicleIndexType>* pvMaxVehicleIdx) const override;
+   void GetShear(PierIDType pierID,pgsTypes::LoadRatingType ratingType,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvMin,std::vector<WBFL::System::SectionValue>* pvMax,std::vector<VehicleIndexType>* pvMinLeftVehicleIdx,std::vector<VehicleIndexType>* pvMinRightVehicleIdx,std::vector<VehicleIndexType>* pvMaxLeftVehicleIdx,std::vector<VehicleIndexType>* pvMaxRightVehicleIdx) const override;
 
-   virtual void GetMoment(PierIDType pierID,pgsTypes::LimitState limitState,const xbrPointOfInterest& poi,Float64* pMin,Float64* pMax) const override;
-   virtual void GetShear(PierIDType pierID,pgsTypes::LimitState limitState,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pMin,WBFL::System::SectionValue* pMax) const override;
-   virtual void GetMoment(PierIDType pierID,pgsTypes::LimitState limitState,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMin,std::vector<Float64>* pvMax) const override;
-   virtual void GetShear(PierIDType pierID,pgsTypes::LimitState limitState,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvMin,std::vector<WBFL::System::SectionValue>* pvMax) const override;
+   void GetMoment(PierIDType pierID,pgsTypes::LimitState limitState,const xbrPointOfInterest& poi,Float64* pMin,Float64* pMax) const override;
+   void GetShear(PierIDType pierID,pgsTypes::LimitState limitState,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pMin,WBFL::System::SectionValue* pMax) const override;
+   void GetMoment(PierIDType pierID,pgsTypes::LimitState limitState,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMin,std::vector<Float64>* pvMax) const override;
+   void GetShear(PierIDType pierID,pgsTypes::LimitState limitState,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvMin,std::vector<WBFL::System::SectionValue>* pvMax) const override;
 
 // IXBRProjectEventSink
 public:
@@ -161,19 +130,19 @@ public:
 
 // IBridgeDescriptionEventSink
 public:
-   virtual HRESULT OnBridgeChanged(CBridgeChangedHint* pHint) override;
-   virtual HRESULT OnGirderFamilyChanged() override;
-   virtual HRESULT OnGirderChanged(const CGirderKey& girderKey,Uint32 lHint) override;
-   virtual HRESULT OnLiveLoadChanged() override;
-   virtual HRESULT OnLiveLoadNameChanged(LPCTSTR strOldName,LPCTSTR strNewName) override;
-   virtual HRESULT OnConstructionLoadChanged() override;
+   HRESULT OnBridgeChanged(CBridgeChangedHint* pHint) override;
+   HRESULT OnGirderFamilyChanged() override;
+   HRESULT OnGirderChanged(const CGirderKey& girderKey,Uint32 lHint) override;
+   HRESULT OnLiveLoadChanged() override;
+   HRESULT OnLiveLoadNameChanged(LPCTSTR strOldName,LPCTSTR strNewName) override;
+   HRESULT OnConstructionLoadChanged() override;
 
 #ifdef _DEBUG
    bool AssertValid() const;
 #endif//
 
 private:
-   DECLARE_EAF_AGENT_DATA;
+   EAF_DECLARE_AGENT_DATA;
    StatusCallbackIDType m_scidBridgeWarning;
    StatusCallbackIDType m_scidBridgeError;
 
@@ -182,8 +151,8 @@ private:
    LoadCaseIDType GetLoadCaseID(xbrTypes::ProductForceType pfType) const;
    std::vector<xbrTypes::ProductForceType> GetLoads(xbrTypes::CombinedForceType lcType) const;
 
-   DWORD m_dwProjectCookie;
-   DWORD m_dwBridgeDescCookie;
+   IDType m_dwProjectCookie;
+   IDType m_dwBridgeDescCookie;
 
    struct BeamMember
    {
@@ -209,7 +178,7 @@ private:
 
    typedef struct ModelData
    {
-      CComPtr<IFem2dModel> m_Model;
+      std::unique_ptr<WBFL::FEA2D::Model> m_Model;
       
       std::vector<BeamMember> m_XBeamMembers; // these members make up the cap beam
       std::vector<BeamMember> m_SuperstructureMembers; // these are the members where the live load is applied
@@ -342,6 +311,4 @@ private:
    static UINT DeleteResults(LPVOID pParam);
 
 };
-
-OBJECT_ENTRY_AUTO(CLSID_AnalysisAgent, CAnalysisAgentImp)
 

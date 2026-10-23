@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include <EAF\EAFInterfaceCache.h>
+#include <EAF\Agent.h>
+
 #include <IFace\Project.h>
 #include <IFace\XBeamRateAgent.h>
 #include <IFace\RatingSpecification.h>
@@ -30,7 +31,6 @@
 #include <EAF\EAFDisplayUnits.h>
 
 class CXBeamRateDoc;
-struct IBroker;
 
 // {0AA45B23-96C9-431c-BBC9-1D8CCC2BE5FC}
 DEFINE_GUID(CLSID_XBeamRateDocProxyAgent, 
@@ -46,15 +46,9 @@ CLASS
    Agent-Broker architecture.
 *****************************************************************************/
 
-class CXBeamRateDocProxyAgent :
-   public CComObjectRootEx<CComSingleThreadModel>,
-   public CComCoClass<CXBeamRateDocProxyAgent,&CLSID_XBeamRateDocProxyAgent>,
-	public IConnectionPointContainerImpl<CXBeamRateDocProxyAgent>,
-   //public CProxyIExtendUIEventSink<CXBeamRateDocProxyAgent>,
-   public IAgentEx,
-   public IAgentPriority,
-   public IAgentUIIntegration,
-   public IXBeamRate,
+class CXBeamRateDocProxyAgent : public WBFL::EAF::Agent,
+   public WBFL::EAF::IAgentPriority,
+   public WBFL::EAF::IAgentUIIntegration,
    public IXBRUIEvents,
    public IXBRProjectEventSink,
    public IEAFDisplayUnitsEventSink,
@@ -63,93 +57,68 @@ class CXBeamRateDocProxyAgent :
    public IXBREditByUI
 {
 public:
-   CXBeamRateDocProxyAgent();
+   CXBeamRateDocProxyAgent(CXBeamRateDoc* pDoc);
    ~CXBeamRateDocProxyAgent();
 
-BEGIN_COM_MAP(CXBeamRateDocProxyAgent)
-	COM_INTERFACE_ENTRY_IMPL(IConnectionPointContainer)
-   COM_INTERFACE_ENTRY(IAgent)
-   COM_INTERFACE_ENTRY(IAgentEx)
-   COM_INTERFACE_ENTRY(IAgentPriority)
-   COM_INTERFACE_ENTRY(IAgentUIIntegration)
-   COM_INTERFACE_ENTRY(IXBeamRate)
-   COM_INTERFACE_ENTRY(IXBRUIEvents)
-   COM_INTERFACE_ENTRY(IXBRProjectEventSink)
-   COM_INTERFACE_ENTRY(IEAFDisplayUnitsEventSink)
-   COM_INTERFACE_ENTRY(IXBRVersionInfo)
-   COM_INTERFACE_ENTRY(IXBRViews)
-   COM_INTERFACE_ENTRY(IXBREditByUI)
-END_COM_MAP()
-
-BEGIN_CONNECTION_POINT_MAP(CXBeamRateDocProxyAgent)
-   //CONNECTION_POINT_ENTRY( IID_IExtendUIEventSink )
-END_CONNECTION_POINT_MAP()
-
 public:
-   void SetDocument(CXBeamRateDoc* pDoc);
    void OnStatusChanged();
    void OnUIHintsReset();
 
-// IAgentEx
+// Agent
 public:
-   STDMETHOD(SetBroker)(/*[in]*/ IBroker* pBroker) override;
-	STDMETHOD(RegInterfaces)() override;
-	STDMETHOD(Init)() override;
-	STDMETHOD(Init2)() override;
-	STDMETHOD(Reset)() override;
-	STDMETHOD(ShutDown)() override;
-   STDMETHOD(GetClassID)(CLSID* pCLSID) override;
+   std::_tstring GetName() const override { return _T("XBeamRate Doc Proxy Agent"); }
+   bool RegisterInterfaces() override;
+   bool Init() override;
+   bool Reset() override;
+   bool ShutDown() override;
+   CLSID GetCLSID() const override;
 
    // IAgentPriority
 public:
-   IndexType GetPriority() override;
+   IndexType GetPriority() const override;
 
 // IAgentUIIntegration
 public:
-   STDMETHOD(IntegrateWithUI)(BOOL bIntegrate) override;
-
-// IXBeamRate
-public:
-   virtual void GetUnitServer(IUnitServer** ppUnitServer) override;
+   bool IntegrateWithUI(bool bIntegrate) override;
 
 // IXBRProjectEventSink
 public:
-   virtual HRESULT OnProjectChanged() override;
+   HRESULT OnProjectChanged() override;
 
 // IEAFDisplayUnitsEventSink
 public:
-   virtual HRESULT OnUnitsChanging() override;
-   virtual HRESULT OnUnitsChanged(eafTypes::UnitMode newUnitsMode) override;
+   HRESULT OnUnitsChanging() override;
+   HRESULT OnUnitsChanged(WBFL::EAF::UnitMode newUnitsMode) override;
 
 // IXBRUIEvents
 public:
-   virtual void HoldEvents(bool bHold=true) override;
-   virtual void FirePendingEvents() override;
-   virtual void CancelPendingEvents() override;
-   virtual void FireEvent(CView* pSender = nullptr,LPARAM lHint = 0,std::shared_ptr<CObject> pHint = nullptr) override;
+   void HoldEvents(bool bHold=true) override;
+   void FirePendingEvents() override;
+   void CancelPendingEvents() override;
+   void FireEvent(CView* pSender = nullptr,LPARAM lHint = 0,std::shared_ptr<CObject> pHint = nullptr) override;
 
 // IXBRVersionInfo
 public:
-   virtual CString GetVersionString(bool bIncludeBuildNumber=false) override;
-   virtual CString GetVersion(bool bIncludeBuildNumber=false) override;
+   CString GetVersionString(bool bIncludeBuildNumber=false) override;
+   CString GetVersion(bool bIncludeBuildNumber=false) override;
 
 // IXBRViews
 public:
-   virtual void CreateReportView(IndexType rptIdx,BOOL bPromptForSpec=TRUE) override;
-   virtual void CreateGraphView(IndexType graphIdx) override;
-   virtual void CreatePierView() override;
+   void CreateReportView(IndexType rptIdx,BOOL bPromptForSpec=TRUE) override;
+   void CreateGraphView(IndexType graphIdx) override;
+   void CreatePierView() override;
 
 // IXBREditByUI
 public:
-   virtual UINT GetStdToolBarID() override;
+   UINT GetStdToolBarID() override;
 
 private:
-   DECLARE_EAF_AGENT_DATA;
+   EAF_DECLARE_AGENT_DATA;
 
    void AdviseEventSinks();
    void UnadviseEventSinks();
-   DWORD m_dwProjectCookie;
-   DWORD m_dwDisplayUnitsCookie;
+   IDType m_dwProjectCookie;
+   IDType m_dwDisplayUnitsCookie;
 
    void CreateToolBars();
    void RemoveToolBars();

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include "ReportAgent.h"
 #include "LoadingDetailsChapterBuilder.h"
 #include <EAF\EAFDisplayUnits.h>
 
@@ -32,45 +33,33 @@
 #include <XBeamRateExt\LongitudinalRebarData.h>
 #include <XBeamRateExt\StirrupData.h>
 
-#include <PgsExt\GirderLabel.h>
+#include <PsgLib\GirderLabel.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 
-void write_limit_state_details(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_dead_load_details(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_bearing_layout_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
-void write_live_load_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_limit_state_details(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_dead_load_details(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_bearing_layout_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
+void write_live_load_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID);
 
-/****************************************************************************
-CLASS
-   CLoadingDetailsChapterBuilder
-****************************************************************************/
 CLoadingDetailsChapterBuilder::CLoadingDetailsChapterBuilder()
 {
 }
 
-//======================== OPERATORS  =======================================
-//======================== OPERATIONS =======================================
 LPCTSTR CLoadingDetailsChapterBuilder::GetName() const
 {
    return TEXT("Loading Details");
 }
 
-rptChapter* CLoadingDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::Reporting::ReportSpecification>& pRptSpec,Uint16 level) const
+rptChapter* CLoadingDetailsChapterBuilder::Build(const std::shared_ptr<const WBFL::ReportMgr::ReportSpecification>& pRptSpec,Uint16 level) const
 {
    USES_CONVERSION;
 
    auto pXBRRptSpec = std::dynamic_pointer_cast<const CXBeamRateReportSpecification>(pRptSpec);
 
-   // This report does not use the passd span and girder parameters
+   // This report does not use the passed span and girder parameters
    rptChapter* pChapter = CXBeamRateChapterBuilder::Build(pRptSpec,level);
 
-   CComPtr<IBroker> pBroker;
-   pXBRRptSpec->GetBroker(&pBroker);
+   auto pBroker = pXBRRptSpec->GetBroker();
 
    PierIDType pierID = pXBRRptSpec->GetPierID();
 
@@ -84,13 +73,7 @@ rptChapter* CLoadingDetailsChapterBuilder::Build(const std::shared_ptr<const WBF
    return pChapter;
 }
 
-
-std::unique_ptr<WBFL::Reporting::ChapterBuilder> CLoadingDetailsChapterBuilder::Clone() const
-{
-   return std::make_unique<CLoadingDetailsChapterBuilder>();
-}
-
-void write_limit_state_details(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_limit_state_details(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    GET_IFACE2(pBroker,IXBRProject,pProject);
    rptParagraph* pPara = new rptParagraph(rptStyleManager::GetHeadingStyle());
@@ -158,7 +141,7 @@ void write_limit_state_details(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,
    }
 }
 
-void write_dead_load_details(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_dead_load_details(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    rptParagraph* pPara = new rptParagraph(rptStyleManager::GetHeadingStyle());
    *pChapter << pPara;
@@ -200,7 +183,7 @@ void write_dead_load_details(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rp
    *pPara << _T("Upper Cross Beam Diaphragm, w = ") << fpl.SetValue(pProductForces->GetUpperCrossBeamLoading(pierID));
 }
 
-void write_bearing_layout_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_bearing_layout_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    rptParagraph* pPara = new rptParagraph(rptStyleManager::GetHeadingStyle());
    *pChapter << pPara;
@@ -324,7 +307,7 @@ void write_bearing_layout_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,
    }
 }
 
-void write_live_load_data(IBroker* pBroker,IEAFDisplayUnits* pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
+void write_live_load_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::shared_ptr<IEAFDisplayUnits> pDisplayUnits,rptChapter* pChapter,PierIDType pierID)
 {
    rptParagraph* pPara = new rptParagraph(rptStyleManager::GetHeadingStyle());
    *pChapter << pPara;

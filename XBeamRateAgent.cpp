@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,20 +21,21 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include <AgentTools.h>
 #include "resource.h"
 #include "XBeamRateAgent.h"
 #include <XBeamRateCatCom.h>
 
 #include <IFace\Project.h>
 #include <IFace\RatingSpecification.h>
-#include <PgsExt\BridgeDescription2.h>
+#include <PsgLib\BridgeDescription2.h>
 
 #include <IFace\DocumentType.h>
 #include <IFace\Bridge.h>
 #include <IFace\Selection.h>
 #include <IFace\EditByUI.h>
 
-#include <EAF\EAFDocument.h>
+#include <EAF\EAFBrokerDocument.h>
 
 #include <MFCTools\VersionInfo.h>
 
@@ -51,159 +52,106 @@
 #include "XBeamRateVersionInfoImpl.h"
 #include "XBeamRateCommandLineProcessor.h"
 
-//
-//#include <IFace\Tools.h>
-//#include <IFace\EditByUI.h>
-//#include <EAF\EAFStatusCenter.h>
-//#include <EAF\EAFMenu.h>
-//#include <EAF\EAFDisplayUnits.h>
-//
-//// Includes for reporting
-//#include <IReportManager.h>
-//#include "MyReportSpecification.h"
-//#include "MyReportSpecificationBuilder.h"
-//#include "MyChapterBuilder.h"
-//#include <Reporting\PGSuperTitlePageBuilder.h>
-//
-//// Includes for graphing
-//#include <IGraphManager.h>
-//#include "TestGraphBuilder.h"
-//
-//#include <MFCTools\Prompts.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
-
-
-BEGIN_MESSAGE_MAP(CMyCommandTarget, CCmdTarget)
-	ON_COMMAND(ID_VIEW_PIER, OnViewPier)
+BEGIN_MESSAGE_MAP(CXBeamRateAgent, CCmdTarget)
+	ON_COMMAND(ID_VIEW_PIER, &CXBeamRateAgent::OnViewPier)
    //ON_UPDATE_COMMAND_UI(ID_VIEW_PIER,OnPierCommandUpdate)
-   ON_COMMAND(IDM_EXPORT_PIER,OnExportPier)
-   ON_UPDATE_COMMAND_UI(IDM_EXPORT_PIER,OnPierCommandUpdate)
+   ON_COMMAND(IDM_EXPORT_PIER, &CXBeamRateAgent::OnExportPier)
+   ON_UPDATE_COMMAND_UI(IDM_EXPORT_PIER, &CXBeamRateAgent::OnPierCommandUpdate)
 END_MESSAGE_MAP()
-
-void CMyCommandTarget::OnViewPier()
-{
-   m_pMyAgent->CreatePierView();
-}
-
-void CMyCommandTarget::OnExportPier()
-{
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
-
-   GET_IFACE2(pBroker,ISelection,pSelection);
-   PierIndexType selPierIdx = pSelection->GetSelectedPier();
-
-   GET_IFACE2(pBroker,IXBRExport,pExport);
-   pExport->Export(selPierIdx);
-}
-
-void CMyCommandTarget::OnPierCommandUpdate(CCmdUI* pCmdUI)
-{
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
-   GET_IFACE2(pBroker,IBridgeDescription,pIBridgeDesc);
-   PierIndexType nPiers = pIBridgeDesc->GetPierCount();
-
-   GET_IFACE2(pBroker,ISelection,pSelection);
-   PierIndexType selPierIdx = pSelection->GetSelectedPier();
-   const CPierData2* pPier = pIBridgeDesc->GetPier(selPierIdx);
-   if ( pPier == nullptr || pPier->GetPierModelType() == pgsTypes::pmtPhysical )
-   {
-      pCmdUI->Enable(TRUE);
-   }
-   else
-   {
-      pCmdUI->Enable(FALSE);
-   }
-}
-
-
-// IBridgePlanViewEventCallback
-void CMyCommandTarget::OnBackgroundContextMenu(CEAFMenu* pMenu)
-{
-}
-
-void CMyCommandTarget::OnPierContextMenu(PierIndexType pierIdx,CEAFMenu* pMenu)
-{
-   pMenu->AppendMenu(ID_VIEW_PIER,_T("View Pier"),m_pMyAgent);
-   pMenu->AppendMenu(IDM_EXPORT_PIER,_T("Export to XBRate"),m_pMyAgent);
-}
-
-void CMyCommandTarget::OnSpanContextMenu(SpanIndexType spanIdx,CEAFMenu* pMenu) {}
-void CMyCommandTarget::OnDeckContextMenu(CEAFMenu* pMenu) {}
-void CMyCommandTarget::OnAlignmentContextMenu(CEAFMenu* pMenu) {}
-void CMyCommandTarget::OnSectionCutContextMenu(CEAFMenu* pMenu) {}
-void CMyCommandTarget::OnGirderContextMenu(const CGirderKey& girderKey,CEAFMenu* pMenu) {}
-void CMyCommandTarget::OnTemporarySupportContextMenu(SupportIDType tsID,CEAFMenu* pMenu) {}
-void CMyCommandTarget::OnGirderSegmentContextMenu(const CSegmentKey& segmentKey,CEAFMenu* pMenu) {}
-void CMyCommandTarget::OnClosureJointContextMenu(const CSegmentKey& closureKey,CEAFMenu* pMenu) {}
 
 // CXBeamRateAgent
 
 
-HRESULT CXBeamRateAgent::FinalConstruct()
+/////////////////////////////////////////////////////////////////////////
+// Agent
+bool CXBeamRateAgent::SetBroker(std::shared_ptr<WBFL::EAF::Broker> broker)
 {
-   CComPtr<IBroker> pBroker;
-   EAFGetBroker(&pBroker);
-   CComQIPtr<IBrokerInitEx2> pBrokerInit(pBroker);
+   if (!__super::SetBroker(broker))
+      return false;
 
-   CComPtr<ICatRegister> pICatReg;
-   HRESULT hr;
-   hr = ::CoCreateInstance( CLSID_StdComponentCategoriesMgr,
-                            nullptr,
-                            CLSCTX_INPROC_SERVER,
-                            IID_ICatRegister,
-                            (void**)&pICatReg );
-
-   // deal with failure
-   if ( FAILED(hr) )
+   // The XBeamRate agent is created when it is a plug-in to PGSuper/PGSplice.
+   // In this use case, agents are being loaded based on the CATID for PGSuper/PGSplice.
+   // The other XBeamRate agents don't get loaded because they are not PGSuper/PGSplice agents.
+   // However, they must be loaded for XBeamRate to work properly.
+   //
+   // When the broker is being set, load the XBeamRateAgents manually.
+   // Agents must be loaded before the Broker calls Agent::Init(), otherwise
+   // the agents will not be initialized.
+   if (m_pBroker)
    {
-      return hr;
-   }
-
-   // get the necessary interfaces from the component category manager
-   CComQIPtr<ICatInformation> pICatInfo(pICatReg);
-
-   CComPtr<IEnumCLSID> pIEnumCLSID;
-
-   // get the agent category identifier
-   const int nID = 1;
-   CATID ID[nID];
-   ID[0] = CATID_XBeamRateAgent;
-
-   // enum agents
-   pICatInfo->EnumClassesOfCategories(nID,ID,0,nullptr,&pIEnumCLSID);
-
-   // load up to 10 agents at a time
-   const int nMaxAgents = 10;
-   CLSID clsid[nMaxAgents];
-
-   ULONG nAgentsLoaded = 0;
-   while (SUCCEEDED(pIEnumCLSID->Next(nMaxAgents,clsid,&nAgentsLoaded)) && 0 < nAgentsLoaded )
-   {
-      // load the agents... this method only gets called if we are an extenion agent to PGSuper/PGSplice
-      // since we are an extension, all of our sub-agents should also be considered extensions...
-      // that is why we use LoadExtensionAgents instead of LoadAgents
-      CComPtr<IIndexArray> lErrArray;
-      hr = pBrokerInit->LoadExtensionAgents( clsid, nAgentsLoaded, &lErrArray );
-      if ( FAILED(hr) )
+      auto errors = m_pBroker->LoadExtensionAgents(CATID_XBeamRateAgent);
+      if (errors.first == false)
       {
-         return E_FAIL;
+         for (auto& error : errors.second)
+         {
+            ((CEAFBrokerDocument*)EAFGetDocument())->LogAgentError(error);
+         }
+         return false;
       }
    }
 
-	return S_OK;
+   return true;
 }
+
+bool CXBeamRateAgent::RegisterInterfaces()
+{
+   EAF_AGENT_REGISTER_INTERFACES;
+
+   REGISTER_INTERFACE(IXBeamRateAgent);
+   REGISTER_INTERFACE(IXBRVersionInfo);
+
+   return true;
+}
+
+bool CXBeamRateAgent::Init()
+{
+   EAF_AGENT_INIT;
+   //CREATE_LOGFILE(_T("XBeamRateAgent"));
+
+
+   //AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   //VERIFY(m_bmpMenu.LoadBitmap(IDB_LOGO));
+
+   //
+   // Attach to connection points
+   //
+   m_dwProjectPropertiesCookie = REGISTER_EVENT_SINK(IProjectPropertiesEventSink);
+   m_dwProjectCookie = REGISTER_EVENT_SINK(IXBRProjectEventSink);
+
+   return true;
+}
+
+bool CXBeamRateAgent::Reset()
+{
+   EAF_AGENT_RESET;
+   //m_bmpMenu.DeleteObject();
+   return true;;
+}
+
+bool CXBeamRateAgent::ShutDown()
+{
+   EAF_AGENT_SHUTDOWN;
+   //
+   // Detach to connection points
+   //
+   UNREGISTER_EVENT_SINK(IProjectPropertiesEventSink, m_dwProjectPropertiesCookie);
+   UNREGISTER_EVENT_SINK(IXBRProjectEventSink, m_dwProjectCookie);
+
+   return true;
+}
+
+CLSID CXBeamRateAgent::GetCLSID() const
+{
+   return CLSID_XBeamRateAgent;
+}
+
 
 void CXBeamRateAgent::RegisterViews()
 {
    GET_IFACE(IEAFViewRegistrar,pViewRegistrar);
-   m_PierViewKey = pViewRegistrar->RegisterView(IDR_XBEAMRATE,this,RUNTIME_CLASS(CXBeamRateChildFrame),RUNTIME_CLASS(CXBeamRateView));
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+   m_PierViewKey = pViewRegistrar->RegisterView(IDR_XBEAMRATE, callback, RUNTIME_CLASS(CXBeamRateChildFrame),RUNTIME_CLASS(CXBeamRateView));
 }
 
 void CXBeamRateAgent::UnregisterViews()
@@ -223,21 +171,23 @@ void CXBeamRateAgent::CreateMenus()
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
    GET_IFACE(IEAFMainMenu,pMainMenu);
-   CEAFMenu* pMenu = pMainMenu->GetMainMenu();
+   auto pMenu = pMainMenu->GetMainMenu();
 
    UINT viewPos = pMenu->FindMenuItem(_T("View"));
-   CEAFMenu* pViewMenu = pMenu->GetSubMenu(viewPos);
+   auto pViewMenu = pMenu->GetSubMenu(viewPos);
    UINT graphsPos = pViewMenu->FindMenuItem(_T("Graphs"));
-   pViewMenu->InsertMenu(graphsPos,ID_VIEW_PIER,_T("&Pier View"),this);
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+   pViewMenu->InsertMenu(graphsPos,ID_VIEW_PIER,_T("&Pier View"), callback);
 }
 
 void CXBeamRateAgent::RemoveMenus()
 {
    GET_IFACE(IEAFMainMenu,pMainMenu);
-   CEAFMenu* pMenu = pMainMenu->GetMainMenu();
+   auto pMenu = pMainMenu->GetMainMenu();
    UINT viewPos = pMenu->FindMenuItem(_T("View"));
-   CEAFMenu* pViewMenu = pMenu->GetSubMenu(viewPos);
-   pViewMenu->RemoveMenu(ID_VIEW_PIER,MF_BYCOMMAND,this);
+   auto pViewMenu = pMenu->GetSubMenu(viewPos);
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+   pViewMenu->RemoveMenu(ID_VIEW_PIER,MF_BYCOMMAND, callback);
 }
 
 void CXBeamRateAgent::CreateToolbar()
@@ -247,13 +197,14 @@ void CXBeamRateAgent::CreateToolbar()
    GET_IFACE(IEAFToolbars,pToolBars);
    GET_IFACE(IEditByUI,pEditUI);
    UINT stdID = pEditUI->GetStdToolBarID();
-   CEAFToolBar* pStdToolBar = pToolBars->GetToolBar(stdID);
+   auto pStdToolBar = pToolBars->GetToolBar(stdID);
 
    // Put the button to the right of PGSuper/PGSplice view girder button
    // The IDs from PGSuper/PGSplice aren't available to plugins so we'll just
    // hard code the command ID.
    int idx = pStdToolBar->CommandToIndex(36896/*ID_VIEW_GIRDEREDITOR*/,nullptr); 
-   pStdToolBar->InsertButton(idx+1,ID_VIEW_PIER,IDB_VIEW_PIER,nullptr,this);
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+   pStdToolBar->InsertButton(idx+1,ID_VIEW_PIER,IDB_VIEW_PIER,nullptr, callback);
 }
 
 void CXBeamRateAgent::RemoveToolbar()
@@ -262,25 +213,26 @@ void CXBeamRateAgent::RemoveToolbar()
    GET_IFACE(IEAFToolbars,pToolBars);
    GET_IFACE(IEditByUI,pEditUI);
    UINT stdID = pEditUI->GetStdToolBarID();
-   CEAFToolBar* pStdToolBar = pToolBars->GetToolBar(stdID);
-   pStdToolBar->RemoveButtons(this);
+   auto pStdToolBar = pToolBars->GetToolBar(stdID);
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+   pStdToolBar->RemoveButtons(callback);
 }
 
 //void CXBeamRateAgent::RegisterReports()
 //{
 //   // Register our reports
-//   GET_IFACE(IReportManager,pRptMgr);
+//   GET_IFACE(IEAFReportManager,pRptMgr);
 //
 //   //
 //   // Create report spec builders
 //   //
 //
-//   std::shared_ptr<WBFL::Reporting::ReportSpecificationBuilder> pMyRptSpecBuilder( std::make_shared<CMyReportSpecificationBuilder>(m_pBroker) );
+//   std::shared_ptr<WBFL::ReportMgr::ReportSpecificationBuilder> pMyRptSpecBuilder( std::make_shared<CMyReportSpecificationBuilder>(m_pBroker) );
 //
 //   // My report
-//   std::unique_ptr<WBFL::Reporting::ReportBuilder> pRptBuilder(std::make_unique<WBFL::Reporting::ReportBuilder>(_T("Extension Agent Report"));
+//   std::unique_ptr<WBFL::ReportMgr::ReportBuilder> pRptBuilder(std::make_unique<WBFL::ReportMgr::ReportBuilder>(_T("Extension Agent Report"));
 //   pRptBuilder->SetMenuBitmap(&m_bmpMenu);
-//   pRptBuilder->AddTitlePageBuilder( std::make_shared<CPGSuperTitlePageBuilder>(m_pBroker,pRptBuilder->GetName(),false)) );
+//   pRptBuilder->SetTitlePageBuilder( std::make_shared<CPGSuperTitlePageBuilder>(m_pBroker,pRptBuilder->GetName(),false)) );
 //   pRptBuilder->SetReportSpecificationBuilder( pMyRptSpecBuilder );
 //   pRptBuilder->AddChapterBuilder( std::make_shared<CMyChapterBuilder>) );
 //   pRptMgr->AddReportBuilder( pRptBuilder.release() );
@@ -295,7 +247,7 @@ void CXBeamRateAgent::RegisterUIExtensions()
 
    // Add a command callback to the bridge view
    GET_IFACE(IRegisterViewEvents,pBridgeViewEvents);
-   m_BridgePlanViewCallbackID = pBridgeViewEvents->RegisterBridgePlanViewCallback(&m_CommandTarget);
+   m_BridgePlanViewCallbackID = pBridgeViewEvents->RegisterBridgePlanViewCallback(this);
 }
 
 void CXBeamRateAgent::UnregisterUIExtensions()
@@ -309,108 +261,6 @@ void CXBeamRateAgent::UnregisterUIExtensions()
    GET_IFACE(IRegisterViewEvents,pBridgeViewEvents);
    pBridgeViewEvents->UnregisterBridgePlanViewCallback(m_BridgePlanViewCallbackID);
 }
-
-/////////////////////////////////////////////////////////////////////////
-// IAgentEx
-
-STDMETHODIMP CXBeamRateAgent::SetBroker(IBroker *pBroker)
-{
-   EAF_AGENT_SET_BROKER(pBroker);
-   return S_OK;
-}
-
-STDMETHODIMP CXBeamRateAgent::RegInterfaces()
-{
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   
-   // Register interfaces here
-   pBrokerInit->RegInterface( IID_IXBeamRateAgent, this);
-   pBrokerInit->RegInterface( IID_IXBeamRate,      this);
-   pBrokerInit->RegInterface( IID_IXBRVersionInfo, this );
-
-   return S_OK;
-}
-
-STDMETHODIMP CXBeamRateAgent::Init()
-{
-   //CREATE_LOGFILE(_T("XBeamRateAgent"));
-   EAF_AGENT_INIT;
-
-   //AFX_MANAGE_STATE(AfxGetStaticModuleState());
-   //VERIFY(m_bmpMenu.LoadBitmap(IDB_LOGO));
-
-   //
-   // Attach to connection points
-   //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
-
-   // Connection point for the user interface extension events
-   hr = pBrokerInit->FindConnectionPoint( IID_IProjectPropertiesEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Advise( GetUnknown(), &m_dwProjectPropertiesCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-   }
-
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Advise( GetUnknown(), &m_dwProjectCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-   }
-
-   return AGENT_S_SECONDPASSINIT;
-}
-
-STDMETHODIMP CXBeamRateAgent::Init2()
-{
-   return S_OK;
-}
-
-STDMETHODIMP CXBeamRateAgent::Reset()
-{
-   //m_bmpMenu.DeleteObject();
-   return S_OK;
-}
-
-STDMETHODIMP CXBeamRateAgent::ShutDown()
-{
-   //
-   // Detach to connection points
-   //
-   CComQIPtr<IBrokerInitEx2,&IID_IBrokerInitEx2> pBrokerInit(m_pBroker);
-   CComPtr<IConnectionPoint> pCP;
-   HRESULT hr = S_OK;
-
-   hr = pBrokerInit->FindConnectionPoint(IID_IProjectPropertiesEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Unadvise( m_dwProjectPropertiesCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the connection point
-   }
-
-   hr = pBrokerInit->FindConnectionPoint( IID_IXBRProjectEventSink, &pCP );
-   if ( SUCCEEDED(hr) )
-   {
-      hr = pCP->Unadvise( m_dwProjectCookie );
-      ATLASSERT( SUCCEEDED(hr) );
-      pCP.Release(); // Recycle the IConnectionPoint smart pointer so we can use it again.
-   }
-
-   return S_OK;
-}
-
-STDMETHODIMP CXBeamRateAgent::GetClassID(CLSID* pCLSID)
-{
-   *pCLSID = CLSID_XBeamRateAgent;
-   return S_OK;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////
 // IXBRVersionInfo
@@ -468,16 +318,8 @@ bool CXBeamRateAgent::IsExtendingPGSuper()
 }
 
 ////////////////////////////////////////////////////////////////////
-// IXBeamRate
-void CXBeamRateAgent::GetUnitServer(IUnitServer** ppUnitServer)
-{
-   GET_IFACE(IDocumentUnitSystem,pDocUnits);
-   pDocUnits->GetUnitServer(ppUnitServer);
-}
-
-////////////////////////////////////////////////////////////////////
 // IAgentUIIntegration
-STDMETHODIMP CXBeamRateAgent::IntegrateWithUI(BOOL bIntegrate)
+bool CXBeamRateAgent::IntegrateWithUI(bool bIntegrate)
 {
    if ( bIntegrate )
    {
@@ -499,27 +341,22 @@ STDMETHODIMP CXBeamRateAgent::IntegrateWithUI(BOOL bIntegrate)
 
 ////////////////////////////////////////////////////////////////////
 // IAgentDocumentationIntegration
-STDMETHODIMP CXBeamRateAgent::GetDocumentationSetName(BSTR* pbstrName)
+CString CXBeamRateAgent::GetDocumentationSetName() const
 {
-   *pbstrName = CComBSTR(_T("XBRate"));
-   return S_OK;
+   return _T("XBRate");
 }
 
-CString CXBeamRateAgent::GetDocumentationURL()
+CString CXBeamRateAgent::GetDocumentationURL() const
 {
-   USES_CONVERSION;
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-   CComBSTR bstrDocSetName;
-   GetDocumentationSetName(&bstrDocSetName);
-   CString strDocSetName(OLE2T(bstrDocSetName));
+   auto strDocSetName = GetDocumentationSetName();
 
    CEAFApp* pApp = EAFGetApp();
    CString strDocumentationRootLocation = pApp->GetDocumentationRootLocation();
 
    CString strDocumentationURL;
    strDocumentationURL.Format(_T("%s%s/"),strDocumentationRootLocation,strDocSetName);
-
-   AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
    CVersionInfo verInfo;
    CString strAppName = AfxGetAppName(); // needs module state
@@ -544,38 +381,33 @@ CString CXBeamRateAgent::GetDocumentationURL()
    return strDocumentationURL;
 }
 
-STDMETHODIMP CXBeamRateAgent::LoadDocumentationMap()
+bool CXBeamRateAgent::LoadDocumentationMap()
 {
    USES_CONVERSION;
 
-   CComBSTR bstrDocSetName;
-   GetDocumentationSetName(&bstrDocSetName);
-
-   CString strDocSetName(OLE2T(bstrDocSetName));
+   auto strDocSetName = GetDocumentationSetName();
 
    CEAFApp* pApp = EAFGetApp();
 
    CString strDocumentationURL = GetDocumentationURL();
 
-   CString strDocMapFile = EAFGetDocumentationMapFile(strDocSetName,strDocumentationURL);
+   CString strDocMapFile = EAFGetDocumentationMapFile(strDocSetName, strDocumentationURL);
 
    VERIFY(EAFLoadDocumentationMap(strDocMapFile,m_HelpTopics));
    return S_OK;
 }
 
-STDMETHODIMP CXBeamRateAgent::GetDocumentLocation(UINT nHID,BSTR* pbstrURL)
+std::pair<WBFL::EAF::HelpResult,CString> CXBeamRateAgent::GetDocumentLocation(UINT nHID) const
 {
-   std::map<UINT,CString>::iterator found = m_HelpTopics.find(nHID);
+   auto found = m_HelpTopics.find(nHID);
    if ( found == m_HelpTopics.end() )
    {
-      return E_FAIL;
+      return { WBFL::EAF::HelpResult::TopicNotFound, CString()};
    }
 
    CString strURL;
    strURL.Format(_T("%s%s"),GetDocumentationURL(),found->second);
-   CComBSTR bstrURL(strURL);
-   bstrURL.CopyTo(pbstrURL);
-   return S_OK;
+   return { WBFL::EAF::HelpResult::OK, strURL };
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -596,7 +428,7 @@ CPropertyPage* CXBeamRateAgent::CreatePropertyPage(IEditPierData* pEditPierData,
    return nullptr;
 }
 
-std::unique_ptr<CEAFTransaction> CXBeamRateAgent::OnOK(CPropertyPage* pPage,IEditPierData* pEditPierData)
+std::unique_ptr<WBFL::EAF::Transaction> CXBeamRateAgent::OnOK(CPropertyPage* pPage,IEditPierData* pEditPierData)
 {
    if ( pPage == nullptr )
    {
@@ -657,7 +489,7 @@ CPropertyPage* CXBeamRateAgent::CreatePropertyPage(IEditLoadRatingOptions* pLoad
    return pPage;
 }
 
-std::unique_ptr<CEAFTransaction> CXBeamRateAgent::OnOK(CPropertyPage* pPage,IEditLoadRatingOptions* pLoadRatingOptions)
+std::unique_ptr<WBFL::EAF::Transaction> CXBeamRateAgent::OnOK(CPropertyPage* pPage,IEditLoadRatingOptions* pLoadRatingOptions)
 {
    CLoadRatingOptionsPage* pLROPage = (CLoadRatingOptionsPage*)pPage;
 
@@ -719,11 +551,75 @@ HRESULT CXBeamRateAgent::OnProjectChanged()
    return S_OK;
 }
 
-/////////////////////////////////////////////////////////////////////////////////
-// IEAFCommandCallback
-BOOL CXBeamRateAgent::OnCommandMessage(UINT nID,int nCode,void* pExtra,AFX_CMDHANDLERINFO* pHandlerInfo)
+/////////////////////////////////////////////////////////////////////////////
+// IEAFProcessCommandLine
+BOOL CXBeamRateAgent::ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo)
 {
-   return m_CommandTarget.OnCmdMsg(nID,nCode,pExtra,pHandlerInfo);
+   CXBRateCommandLineProcessor processor;
+   return processor.ProcessCommandLineOptions(cmdInfo);
+}
+
+
+void CXBeamRateAgent::OnViewPier()
+{
+   CreatePierView();
+}
+
+void CXBeamRateAgent::OnExportPier()
+{
+   GET_IFACE(ISelection, pSelection);
+   PierIndexType selPierIdx = pSelection->GetSelectedPier();
+
+   GET_IFACE(IXBRExport, pExport);
+   pExport->Export(selPierIdx);
+}
+
+void CXBeamRateAgent::OnPierCommandUpdate(CCmdUI* pCmdUI)
+{
+   GET_IFACE(IBridgeDescription, pIBridgeDesc);
+   PierIndexType nPiers = pIBridgeDesc->GetPierCount();
+
+   GET_IFACE(ISelection, pSelection);
+   PierIndexType selPierIdx = pSelection->GetSelectedPier();
+   const CPierData2* pPier = pIBridgeDesc->GetPier(selPierIdx);
+   if (pPier == nullptr || pPier->GetPierModelType() == pgsTypes::pmtPhysical)
+   {
+      pCmdUI->Enable(TRUE);
+   }
+   else
+   {
+      pCmdUI->Enable(FALSE);
+   }
+}
+
+
+// IBridgePlanViewEventCallback
+void CXBeamRateAgent::OnBackgroundContextMenu(std::shared_ptr<WBFL::EAF::Menu> menu)
+{
+}
+
+void CXBeamRateAgent::OnPierContextMenu(PierIndexType pierIdx, std::shared_ptr<WBFL::EAF::Menu> menu)
+{
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+   menu->AppendMenu(ID_VIEW_PIER, _T("View Pier"), callback);
+   menu->AppendMenu(IDM_EXPORT_PIER, _T("Export to XBRate"), callback);
+}
+
+void CXBeamRateAgent::OnSpanContextMenu(SpanIndexType spanIdx, std::shared_ptr<WBFL::EAF::Menu> menu) {}
+void CXBeamRateAgent::OnDeckContextMenu(std::shared_ptr<WBFL::EAF::Menu> menu) {}
+void CXBeamRateAgent::OnAlignmentContextMenu(std::shared_ptr<WBFL::EAF::Menu> menu) {}
+void CXBeamRateAgent::OnSectionCutContextMenu(std::shared_ptr<WBFL::EAF::Menu> menu) {}
+void CXBeamRateAgent::OnGirderContextMenu(const CGirderKey& girderKey, std::shared_ptr<WBFL::EAF::Menu> menu) {}
+void CXBeamRateAgent::OnTemporarySupportContextMenu(SupportIDType tsID, std::shared_ptr<WBFL::EAF::Menu> menu) {}
+void CXBeamRateAgent::OnGirderSegmentContextMenu(const CSegmentKey& segmentKey, std::shared_ptr<WBFL::EAF::Menu> menu) {}
+void CXBeamRateAgent::OnClosureJointContextMenu(const CSegmentKey& closureKey, std::shared_ptr<WBFL::EAF::Menu> menu) {}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+// ICommandCallback
+BOOL CXBeamRateAgent::OnCommandMessage(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+   return OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }
 
 BOOL CXBeamRateAgent::GetStatusBarMessageString(UINT nID, CString& rMessage) const
@@ -731,16 +627,16 @@ BOOL CXBeamRateAgent::GetStatusBarMessageString(UINT nID, CString& rMessage) con
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
    // load appropriate string
-	if ( rMessage.LoadString(nID) )
-	{
-		// first newline terminates actual string
-      rMessage.Replace('\n','\0');
-	}
-	else
-	{
-		// not found
-		TRACE1("Warning (CXBeamRateAgent): no message line prompt for ID %d.\n", nID);
-	}
+   if (rMessage.LoadString(nID))
+   {
+      // first newline terminates actual string
+      rMessage.Replace('\n', '\0');
+   }
+   else
+   {
+      // not found
+      TRACE1("Warning (CXBeamRateAgent): no message line prompt for ID %d.\n", nID);
+   }
 
    return TRUE;
 }
@@ -750,26 +646,18 @@ BOOL CXBeamRateAgent::GetToolTipMessageString(UINT nID, CString& rMessage) const
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    CString string;
    // load appropriate string
-	if ( string.LoadString(nID) )
-	{
-		// tip is after first newline 
+   if (string.LoadString(nID))
+   {
+      // tip is after first newline 
       int pos = string.Find('\n');
-      if ( 0 < pos )
-         rMessage = string.Mid(pos+1);
-	}
-	else
-	{
-		// not found
-		TRACE1("Warning (CXBeamRateAgent): no tool tip for ID %d.\n", nID);
-	}
+      if (0 < pos)
+         rMessage = string.Mid(pos + 1);
+   }
+   else
+   {
+      // not found
+      TRACE1("Warning (CXBeamRateAgent): no tool tip for ID %d.\n", nID);
+   }
 
    return TRUE;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// IEAFProcessCommandLine
-BOOL CXBeamRateAgent::ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo)
-{
-   CXBRateCommandLineProcessor processor;
-   return processor.ProcessCommandLineOptions(cmdInfo);
 }
