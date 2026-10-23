@@ -3582,6 +3582,12 @@ void CProjectAgentImp::OnEditPier()
       }
    }
 
+   if (nBearingLines == 1)
+   {
+      // Initialize the unused bearing line from the existing line's reaction type.
+      oldPierData.m_DeadLoadReactionType[1] = oldPierData.m_DeadLoadReactionType[0];
+   }
+
    ATLASSERT(IsStandAlone());
    oldPierData.m_gDC_StrengthI = pProject->GetDCLoadFactor(pgsTypes::StrengthI_Inventory);
    oldPierData.m_gDW_StrengthI = pProject->GetDWLoadFactor(pgsTypes::StrengthI_Inventory);

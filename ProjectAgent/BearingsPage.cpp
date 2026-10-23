@@ -97,26 +97,45 @@ void CBearingsPage::DoDataExchange(CDataExchange* pDX)
    IndexType nBearingLines = pParent->m_PierData.m_PierData.GetBearingLineCount();
    DDX_CBItemData(pDX,IDC_BEARING_LINE_COUNT,nBearingLines);
 
-   // Left side bearing offsets are < 0
-   // Adjust the sign
-   if ( !pDX->m_bSaveAndValidate )
+   // Initialize both sets of controls, including the hidden ahead line. Use a
+   // local default for a missing line so opening the page does not add a line.
+   const IndexType nExchangeLines = pDX->m_bSaveAndValidate ? nBearingLines : 2;
+   for ( IndexType brgLineIdx = 0; brgLineIdx < nExchangeLines; brgLineIdx++ )
    {
-      pParent->m_PierData.m_PierData.GetBearingLineData(0).GetBearingLineOffset() *= -1;
-   }
+      xbrBearingLineData brgLineData;
+      if ( brgLineIdx < pParent->m_PierData.m_PierData.GetBearingLineCount() )
+      {
+         brgLineData = pParent->m_PierData.m_PierData.GetBearingLineData(brgLineIdx);
+      }
 
-   for ( IndexType brgLineIdx = 0; brgLineIdx < nBearingLines; brgLineIdx++ )
-   {
+      // Display back-line offsets as positive without modifying the model
+      // during initialization or leaving its sign changed if validation fails.
+      if ( !pDX->m_bSaveAndValidate && brgLineIdx == 0 )
+      {
+         brgLineData.GetBearingLineOffset() *= -1;
+      }
+
       DDX_CBEnum(pDX,IDC_BACK_REACTION_TYPE+brgLineIdx,pParent->m_PierData.m_DeadLoadReactionType[brgLineIdx]);
-      DDX_BearingGrid(pDX,m_Grid[brgLineIdx],pParent->m_PierData.m_PierData.GetBearingLineData(brgLineIdx),pParent->m_PierData.m_DeadLoadReactions[brgLineIdx]);
-      DDX_CBIndex(pDX,IDC_BACK_REF_BEARING_LIST+brgLineIdx,pParent->m_PierData.m_PierData.GetBearingLineData(brgLineIdx).GetRefBearingIndex());
-      DDX_OffsetAndTag(pDX,IDC_BACK_REF_BEARING_LOCATION+brgLineIdx,IDC_BACK_REF_BEARING_LOCATION_UNIT+brgLineIdx,pParent->m_PierData.m_PierData.GetBearingLineData(brgLineIdx).GetRefBearingOffset(),pDisplayUnits->GetSpanLengthUnit());
-      DDX_CBEnum(pDX,IDC_BACK_REF_BEARING_DATUM+brgLineIdx,pParent->m_PierData.m_PierData.GetBearingLineData(brgLineIdx).GetRefBearingDatum());
-      DDX_UnitValueAndTag(pDX,IDC_BACK_BRG_OFFSET+brgLineIdx,IDC_BACK_BRG_OFFSET_UNIT+brgLineIdx,pParent->m_PierData.m_PierData.GetBearingLineData(brgLineIdx).GetBearingLineOffset(),pDisplayUnits->GetComponentDimUnit());
+      DDX_BearingGrid(pDX,m_Grid[brgLineIdx],brgLineData,pParent->m_PierData.m_DeadLoadReactions[brgLineIdx]);
+      DDX_CBIndex(pDX,IDC_BACK_REF_BEARING_LIST+brgLineIdx,brgLineData.GetRefBearingIndex());
+      DDX_OffsetAndTag(pDX,IDC_BACK_REF_BEARING_LOCATION+brgLineIdx,IDC_BACK_REF_BEARING_LOCATION_UNIT+brgLineIdx,brgLineData.GetRefBearingOffset(),pDisplayUnits->GetSpanLengthUnit());
+      DDX_CBEnum(pDX,IDC_BACK_REF_BEARING_DATUM+brgLineIdx,brgLineData.GetRefBearingDatum());
+      DDX_UnitValueAndTag(pDX,IDC_BACK_BRG_OFFSET+brgLineIdx,IDC_BACK_BRG_OFFSET_UNIT+brgLineIdx,brgLineData.GetBearingLineOffset(),pDisplayUnits->GetComponentDimUnit());
+
+      if ( pDX->m_bSaveAndValidate )
+      {
+         if ( brgLineIdx == 0 )
+         {
+            brgLineData.GetBearingLineOffset() *= -1;
+         }
+         pParent->m_PierData.m_PierData.SetBearingLineData(brgLineIdx,brgLineData);
+      }
    }
 
    if ( pDX->m_bSaveAndValidate )
    {
-      pParent->m_PierData.m_PierData.GetBearingLineData(0).GetBearingLineOffset() *= -1;
+      // Persist the selected count; in particular, remove a former ahead line.
+      pParent->m_PierData.m_PierData.SetBearingLineCount(nBearingLines);
    }
 
    // make sure the unit labels are set for both bearing lines (one bearing line could be missed in the loop above)
@@ -149,7 +168,7 @@ BOOL CBearingsPage::OnInitDialog()
    m_Grid[0].CustomInit(pParent->m_PierData.m_DeadLoadReactionType[0]);
 
    m_Grid[1].SubclassDlgItem(IDC_AHEAD_BEARING_GRID, this);
-   m_Grid[1].CustomInit(pParent->m_PierData.m_DeadLoadReactionType[0]);
+   m_Grid[1].CustomInit(pParent->m_PierData.m_DeadLoadReactionType[1]);
 
    CComboBox* pcb = (CComboBox*)GetDlgItem(IDC_BEARING_LINE_COUNT);
    for ( IndexType brgLineIdx = 0; brgLineIdx < 2; brgLineIdx++ )

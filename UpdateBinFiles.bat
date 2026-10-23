@@ -7,6 +7,7 @@ SET REGFREECOM=%ARPDIR%\BridgeLink\RegFreeCOM
 xcopy /Y /d %REGFREECOM%\x64\Release\XBeamRate*.dll		%BINTARGET%\x64\
 xcopy /Y /d %REGFREECOM%\x64\Release\Application.Manifest.XBeamRate		%BINTARGET%\x64\
 xcopy /Y /d %REGFREECOM%\x64\Release\XBeamRateExtensions.Manifest.PGSuper		%BINTARGET%\x64\
+xcopy /Y /d %REGFREECOM%\x64\Release\XBeamRate.Manifest.BridgeLink         %BINTARGET%\x64\
 xcopy /Y /d XBRate.tip 	 		                	%BINTARGET%\
 
 xcopy /Y /d Images\*.png					%BINTARGET%\Images\

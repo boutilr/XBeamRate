@@ -48,6 +48,8 @@ txnLiveLoadReactions::txnLiveLoadReactions()
 /////////////////////////////////////////////////////////////////
 txnEditPierData::txnEditPierData()
 {
+   m_DeadLoadReactionType[0] = xbrTypes::rltConcentrated;
+   m_DeadLoadReactionType[1] = xbrTypes::rltConcentrated;
 }
 
 /////////////////////////////////////////////////////////////////
