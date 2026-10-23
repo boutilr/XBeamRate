@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // XBeamRate - Cross Beam Load Rating
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -3580,6 +3580,12 @@ void CProjectAgentImp::OnEditPier()
          pProject->GetBearingReactions(pierID, brgLineIdx, brgIdx, &reaction.m_DC, &reaction.m_DW, &reaction.m_CR, &reaction.m_SH, &reaction.m_PS, &reaction.m_RE, &reaction.m_W);
          oldPierData.m_DeadLoadReactions[brgLineIdx].push_back(reaction);
       }
+   }
+
+   if (nBearingLines == 1)
+   {
+      // Initialize the unused bearing line from the existing line's reaction type.
+      oldPierData.m_DeadLoadReactionType[1] = oldPierData.m_DeadLoadReactionType[0];
    }
 
    ATLASSERT(IsStandAlone());
