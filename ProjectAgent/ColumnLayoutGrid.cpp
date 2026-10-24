@@ -154,10 +154,10 @@ void CColumnLayoutGrid::CustomInit()
 
    if (m_Scalloped)
    {
-      cv.Format(_T("Bay Radius\n(%s)"), pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
+      cv.Format(_T("Bay Radius (R)\n(%s)"), pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
       SetStyleRange(CGXRange(0, 7), CGXStyle().SetWrapText(TRUE).SetEnabled(FALSE)
          .SetHorizontalAlignment(DT_CENTER).SetVerticalAlignment(DT_VCENTER).SetValue(cv));
-      cv.Format(_T("Scallop Depth\n(%s)"), pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
+      cv.Format(_T("Scallop Depth (D)\n(%s)"), pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.UnitTag().c_str());
       SetStyleRange(CGXRange(0, 8), CGXStyle().SetWrapText(TRUE).SetEnabled(FALSE)
          .SetHorizontalAlignment(DT_CENTER).SetVerticalAlignment(DT_VCENTER).SetValue(cv));
    }
