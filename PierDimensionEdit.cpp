@@ -58,7 +58,20 @@ private:
    {
       auto pBroker = EAFGetBroker();
       GET_IFACE2(pBroker, IXBRProject, pProject);
-      pProject->SetPierData(data); // Fires the normal project-change notification.
+      GET_IFACE2(pBroker, IXBREvents, pEvents);
+      // Queue UI notifications until all project listeners have invalidated
+      // their cached models. Otherwise a view can redraw the previous geometry.
+      pEvents->HoldEvents();
+      try
+      {
+         pProject->SetPierData(data);
+      }
+      catch (...)
+      {
+         pEvents->CancelPendingEvents();
+         throw;
+      }
+      pEvents->FirePendingEvents();
    }
 
    xbrPierData m_Before, m_After;

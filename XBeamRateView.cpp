@@ -338,8 +338,13 @@ void CXBeamRateView::OnUpdate(CView* pSender,LPARAM lHint,CObject* pHint)
 
    CDManipClientDC dc2(this);
    UpdateDisplayObjects();
-   ScaleToFit();
+   // Geometry edits should not discard the user's zoom and scroll position.
+   // Initial display, unit changes and pier switches still fit the view.
+   if (!IsStandAlone() || lHint != HINT_PROJECTCHANGED)
+      ScaleToFit();
    Invalidate();
+   if (IsStandAlone() && lHint == HINT_PROJECTCHANGED)
+      UpdateWindow();
 }
 
 void CXBeamRateView::UpdateDisplayObjects()
@@ -363,18 +368,14 @@ void CXBeamRateView::UpdateDisplayObjects()
    }
 
 
-   // Capture the current selection before blasting all the 
-   // display objects
-   auto vCurSel = m_pDispMgr->GetSelectedObjects();
-   ATLASSERT(vCurSel.size() < 2);
-   IDType curSel = INVALID_ID;
-   IDType listID = INVALID_ID;
-   if ( vCurSel.size() == 1 )
+   // Only the section cut has a stable identity across rebuilds. Dimension
+   // IDs change with the layout and must not select a different object.
+   bool restoreSectionCut = false;
+   for (const auto& object : m_pDispMgr->GetSelectedObjects())
    {
-      auto pDO = vCurSel[0];
-      curSel = pDO->GetID();
-      auto pDL = pDO->GetDisplayList();
-      listID = pDL->GetID();
+      if (object->GetID() == SECTION_CUT_ID &&
+          object->GetDisplayList()->GetID() == SECTION_CUT_DISPLAY_LIST_ID)
+         restoreSectionCut = true;
    }
 
    m_pDispMgr->ClearDisplayObjects();
@@ -390,11 +391,12 @@ void CXBeamRateView::UpdateDisplayObjects()
    UpdateDimensionsDisplayObjects();
    UpdateSectionCutDisplayObjects();
 
-   // Re-instate the current selection
-   if ( curSel != INVALID_ID )
+   if (restoreSectionCut)
    {
-      auto doSel = m_pDispMgr->FindDisplayObject(curSel,listID,WBFL::DManip::AccessType::ByID);
-      m_pDispMgr->SelectObject(doSel,TRUE);
+      auto sectionCut = m_pDispMgr->FindDisplayObject(SECTION_CUT_ID,
+         SECTION_CUT_DISPLAY_LIST_ID, WBFL::DManip::AccessType::ByID);
+      if (sectionCut)
+         m_pDispMgr->SelectObject(sectionCut, TRUE);
    }
 }
 
@@ -1596,7 +1598,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
                editable->SetValue(radius);
                editable->EnableAutoUpdate(false);
                editable->SetSelectionType(WBFL::DManip::SelectionType::All);
-               editable->SetToolTipText(_T("Click to edit radius"));
+               editable->SetToolTipText(_T("Click to edit radius. Enter to apply; Esc to cancel."));
                const PierDimension dimension = arcIdx == 0 ? PierDimension::LeftRadius
                    : arcIdx == nColumns ? PierDimension::RightRadius : PierDimension::BayRadius;
                RegisterPierDimensionEditEvents(editable, pierID, dimension,
@@ -1925,9 +1927,8 @@ void CXBeamRateView::BuildEditableDimensionLine(std::shared_ptr<WBFL::DManip::iD
    text->EnableAutoUpdate(false); // Only a validated transaction updates the drawing.
    text->SetBkMode(TRANSPARENT);
    text->SetSelectionType(WBFL::DManip::SelectionType::All);
-   text->SetToolTipText(_T("Click to edit"));
+   text->SetToolTipText(_T("Click to edit. Enter to apply; Esc to cancel."));
    line->SetTextBlock(text);
-   line->SetSelectionType(WBFL::DManip::SelectionType::All);
    RegisterPierDimensionEditEvents(line, GetPierID(), dimension, index);
 }
 
