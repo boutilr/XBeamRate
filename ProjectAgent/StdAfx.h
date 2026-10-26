@@ -48,3 +48,7 @@
 #include <afxdlgs.h>
 
 #include <XBRate.hh>
+
+constexpr UINT WM_COLUMN_GRID_CELL_CHANGED = WM_USER + 100;
+constexpr UINT WM_PIERPOINT_GRID_CELL_CHANGED = WM_USER + 101;
+constexpr UINT WM_PIER_LAYOUT_CHANGED = WM_USER + 102;

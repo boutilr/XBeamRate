@@ -52,79 +52,29 @@ CCommonPierLayoutDlg::CCommonPierLayoutDlg(CWnd* pParent)
 
 // Add to message map
 BEGIN_MESSAGE_MAP(CCommonPierLayoutDlg, CDialog)
-    //ON_MESSAGE(WM_COLUMN_GRID_CELL_CHANGED, OnColumnGridCellChanged)
+    ON_MESSAGE(WM_COLUMN_GRID_CELL_CHANGED, OnColumnGridCellChanged)
+    ON_EN_KILLFOCUS(IDC_W, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_H1L, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_H1R, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_X1L, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_X1R, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_OHL, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_OHR, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_REFCOLUMN_OFFSET, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_H2L, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_H2R, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_X2L, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_X2R, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_CBN_SELCHANGE(IDC_REFCOLUMN, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_CBN_SELCHANGE(IDC_REFCOLUMN_MEASUREMENT, &CCommonPierLayoutDlg::OnPierLayoutChanged)
+    ON_CBN_SELCHANGE(IDC_FIXITY, &CCommonPierLayoutDlg::OnPierLayoutChanged)
 
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
     ON_BN_CLICKED(IDC_ADD_COLUMN, &CCommonPierLayoutDlg::OnAddColumn)
     ON_BN_CLICKED(IDC_REMOVE_COLUMN, &CCommonPierLayoutDlg::OnRemoveColumns)
 
-    ON_WM_LBUTTONDOWN()
-    ON_WM_LBUTTONUP()
-    ON_WM_MOUSEMOVE()
-    ON_WM_LBUTTONDBLCLK()
 
 END_MESSAGE_MAP()
-
-// Add these handler implementations at the end of the file
-void CCommonPierLayoutDlg::OnLButtonDown(UINT nFlags, CPoint point)
-{
-    CRect rcControl;
-    //m_ctrlDrawXBeam.GetWindowRect(&rcControl);
-    ScreenToClient(&rcControl);
-
-    if (rcControl.PtInRect(point))
-    {
-        //m_ctrlDrawXBeam.SendMessage(WM_LBUTTONDOWN, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
-        return;
-    }
-
-    CDialog::OnLButtonDown(nFlags, point);
-}
-
-void CCommonPierLayoutDlg::OnLButtonUp(UINT nFlags, CPoint point)
-{
-    CRect rcControl;
-    //m_ctrlDrawXBeam.GetWindowRect(&rcControl);
-    ScreenToClient(&rcControl);
-
-    if (rcControl.PtInRect(point))
-    {
-        //m_ctrlDrawXBeam.SendMessage(WM_LBUTTONUP, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
-        return;
-    }
-
-    CDialog::OnLButtonUp(nFlags, point);
-}
-
-void CCommonPierLayoutDlg::OnMouseMove(UINT nFlags, CPoint point)
-{
-    CRect rcControl;
-    //m_ctrlDrawXBeam.GetWindowRect(&rcControl);
-    ScreenToClient(&rcControl);
-
-    if (rcControl.PtInRect(point))
-    {
-        //m_ctrlDrawXBeam.SendMessage(WM_MOUSEMOVE, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
-        return;
-    }
-
-    CDialog::OnMouseMove(nFlags, point);
-}
-
-void CCommonPierLayoutDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
-{
-    CRect rcControl;
-    //m_ctrlDrawXBeam.GetWindowRect(&rcControl);
-    ScreenToClient(&rcControl);
-
-    if (rcControl.PtInRect(point))
-    {
-        //m_ctrlDrawXBeam.SendMessage(WM_LBUTTONDBLCLK, nFlags, MAKELPARAM(point.x - rcControl.left, point.y - rcControl.top));
-        return;
-    }
-
-    CDialog::OnLButtonDblClk(nFlags, point);
-}
 
 /////////////////////////////////////////////////////////////////////////////
 // CCommonPierLayoutDlg message handlers
@@ -156,6 +106,7 @@ BOOL CCommonPierLayoutDlg::OnInitDialog()
     CDialog::OnInitDialog();
 
     OnHeightMeasureChanged();
+    m_Initialized = true;
 
     return TRUE;
 }
@@ -342,16 +293,13 @@ void CCommonPierLayoutDlg::OnHeightMeasureChanged()
     int curSel = pcbHeightMeasure->GetCurSel();
     CColumnData::ColumnHeightMeasurementType measure = (CColumnData::ColumnHeightMeasurementType)(pcbHeightMeasure->GetItemData(curSel));
     m_ColumnLayoutGrid.SetHeightMeasurementType(measure);
+    OnPierLayoutChanged();
 }
 
-LRESULT CCommonPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam)
+LRESULT CCommonPierLayoutDlg::OnColumnGridCellChanged(WPARAM, LPARAM)
 {
-
     FillRefColumnComboBox();
-
-    // Update pier data with current column data
-    m_ColumnLayoutGrid.GetColumnData(m_Pier);
-
+    OnPierLayoutChanged();
     return 0;
 }
 
@@ -363,6 +311,7 @@ void CCommonPierLayoutDlg::OnAddColumn()
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
+    OnPierLayoutChanged();
 }
 
 void CCommonPierLayoutDlg::OnRemoveColumns()
@@ -378,6 +327,7 @@ void CCommonPierLayoutDlg::OnRemoveColumns()
         m_ColumnLayoutGrid.GetColumnData(m_Pier);
     }
 
+    OnPierLayoutChanged();
 }
 
 void CCommonPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
@@ -394,4 +344,30 @@ void CCommonPierLayoutDlg::SetPierData(const xbrPierData& pierData)
 const xbrPierData* CCommonPierLayoutDlg::GetPierData() const
 {
     return &m_Pier;
+}
+
+void CCommonPierLayoutDlg::OnPierLayoutChanged()
+{
+    if (!m_Initialized || m_UpdatingLayout)
+        return;
+    m_UpdatingLayout = true;
+    const xbrPierData previous = m_Pier;
+    if (UpdateData(TRUE))
+    {
+        m_Pier.SetRefColumnLocation(m_TransverseOffsetMeasurement, m_RefColumnIdx, m_TransverseOffset);
+        m_Pier.SetLowerXBeamDimensions(m_XBeamHeight[0], m_XBeamHeight[1],
+            m_XBeamTaperHeight[0], m_XBeamTaperHeight[1],
+            m_XBeamEndSlopeOffset[0], m_XBeamEndSlopeOffset[1],
+            m_XBeamTaperLength[0], m_XBeamTaperLength[1], m_XBeamWidth, m_Pier.GetPierPointData());
+        m_Pier.SetXBeamOverhangs(m_XBeamOverhang[0], m_XBeamOverhang[1]);
+        m_Pier.SetColumnFixity(m_ColumnFixity);
+        for (ColumnIndexType idx = 0; idx < m_Pier.GetColumnCount(); ++idx)
+            m_Pier.GetColumnData(idx).SetColumnHeightMeasurementType(m_ColumnHeightMeasurementType);
+        GetParent()->PostMessage(WM_PIER_LAYOUT_CHANGED);
+    }
+    else
+    {
+        m_Pier = previous;
+    }
+    m_UpdatingLayout = false;
 }

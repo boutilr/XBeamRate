@@ -54,6 +54,19 @@ CUserDefinedPierLayoutDlg::CUserDefinedPierLayoutDlg(CWnd* pParent)
 
 // Add to message map
 BEGIN_MESSAGE_MAP(CUserDefinedPierLayoutDlg, CDialog)
+    ON_MESSAGE(WM_COLUMN_GRID_CELL_CHANGED, OnColumnGridCellChanged)
+    ON_MESSAGE(WM_PIERPOINT_GRID_CELL_CHANGED, OnPierPointGridCellChanged)
+    ON_EN_KILLFOCUS(IDC_W, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_H1L, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_H1R, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_X1L, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_X1R, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_OHL, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_OHR, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_EN_KILLFOCUS(IDC_REFCOLUMN_OFFSET, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_CBN_SELCHANGE(IDC_REFCOLUMN, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_CBN_SELCHANGE(IDC_REFCOLUMN_MEASUREMENT, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
+    ON_CBN_SELCHANGE(IDC_FIXITY, &CUserDefinedPierLayoutDlg::OnPierLayoutChanged)
 
     ON_CBN_SELCHANGE(IDC_HEIGHT_MEASURE, OnHeightMeasureChanged)
     ON_BN_CLICKED(IDC_ADD_COLUMN, &CUserDefinedPierLayoutDlg::OnAddColumn)
@@ -62,33 +75,8 @@ BEGIN_MESSAGE_MAP(CUserDefinedPierLayoutDlg, CDialog)
     ON_BN_CLICKED(IDC_ADD_PIERPOINT, &CUserDefinedPierLayoutDlg::OnAddPierPoint)
     ON_BN_CLICKED(IDC_REMOVE_PIERPOINT, &CUserDefinedPierLayoutDlg::OnRemovePierPoints)
 
-    ON_WM_LBUTTONDOWN()
-    ON_WM_LBUTTONUP()
-    ON_WM_MOUSEMOVE()
-    ON_WM_LBUTTONDBLCLK()
 
 END_MESSAGE_MAP()
-
-// Add these handler implementations at the end of the file
-void CUserDefinedPierLayoutDlg::OnLButtonDown(UINT nFlags, CPoint point)
-{
-    CDialog::OnLButtonDown(nFlags, point);
-}
-
-void CUserDefinedPierLayoutDlg::OnLButtonUp(UINT nFlags, CPoint point)
-{
-    CDialog::OnLButtonUp(nFlags, point);
-}
-
-void CUserDefinedPierLayoutDlg::OnMouseMove(UINT nFlags, CPoint point)
-{
-    CDialog::OnMouseMove(nFlags, point);
-}
-
-void CUserDefinedPierLayoutDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
-{
-    CDialog::OnLButtonDblClk(nFlags, point);
-}
 
 /////////////////////////////////////////////////////////////////////////////
 // CUserDefinedPierLayoutDlg message handlers
@@ -120,6 +108,7 @@ BOOL CUserDefinedPierLayoutDlg::OnInitDialog()
     CDialog::OnInitDialog();
 
     OnHeightMeasureChanged();
+    m_Initialized = true;
 
     return TRUE;
 }
@@ -274,24 +263,19 @@ void CUserDefinedPierLayoutDlg::OnHeightMeasureChanged()
     int curSel = pcbHeightMeasure->GetCurSel();
     CColumnData::ColumnHeightMeasurementType measure = (CColumnData::ColumnHeightMeasurementType)(pcbHeightMeasure->GetItemData(curSel));
     m_ColumnLayoutGrid.SetHeightMeasurementType(measure);
+    OnPierLayoutChanged();
 }
 
-LRESULT CUserDefinedPierLayoutDlg::OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam)
+LRESULT CUserDefinedPierLayoutDlg::OnColumnGridCellChanged(WPARAM, LPARAM)
 {
-
     FillRefColumnComboBox();
-
-    // Update pier data with current column data
-    m_ColumnLayoutGrid.GetColumnData(m_Pier);
-
+    OnPierLayoutChanged();
     return 0;
 }
 
-LRESULT CUserDefinedPierLayoutDlg::OnPierPointGridCellChanged(WPARAM wParam, LPARAM lParam)
+LRESULT CUserDefinedPierLayoutDlg::OnPierPointGridCellChanged(WPARAM, LPARAM)
 {
-    // Update pier data with current pier point data
-    m_PierPointGrid.GetPierPointData(m_Pier);
-
+    OnPierLayoutChanged();
     return 0;
 }
 
@@ -303,6 +287,7 @@ void CUserDefinedPierLayoutDlg::OnAddColumn()
     // Update pier data with current column data
     m_ColumnLayoutGrid.GetColumnData(m_Pier);
 
+    OnPierLayoutChanged();
 }
 
 void CUserDefinedPierLayoutDlg::OnRemoveColumns()
@@ -317,6 +302,7 @@ void CUserDefinedPierLayoutDlg::OnRemoveColumns()
     {
         m_ColumnLayoutGrid.GetColumnData(m_Pier);
     }
+    OnPierLayoutChanged();
 }
 
 void CUserDefinedPierLayoutDlg::OnAddPierPoint()
@@ -325,6 +311,7 @@ void CUserDefinedPierLayoutDlg::OnAddPierPoint()
 
     // Update pier data with current pier point data
     m_PierPointGrid.GetPierPointData(m_Pier);
+    OnPierLayoutChanged();
 }
 
 void CUserDefinedPierLayoutDlg::OnRemovePierPoints()
@@ -333,6 +320,7 @@ void CUserDefinedPierLayoutDlg::OnRemovePierPoints()
 
     // Update pier data with current column data
     m_PierPointGrid.GetPierPointData(m_Pier);
+    OnPierLayoutChanged();
 }
 
 void CUserDefinedPierLayoutDlg::SetPierModelType(const pgsTypes::PierModelType& pierModelType)
@@ -349,4 +337,30 @@ void CUserDefinedPierLayoutDlg::SetPierData(const xbrPierData& pierData)
 const xbrPierData* CUserDefinedPierLayoutDlg::GetPierData() const
 {
     return &m_Pier;
+}
+
+void CUserDefinedPierLayoutDlg::OnPierLayoutChanged()
+{
+    if (!m_Initialized || m_UpdatingLayout)
+        return;
+    m_UpdatingLayout = true;
+    const xbrPierData previous = m_Pier;
+    if (UpdateData(TRUE))
+    {
+        m_Pier.SetRefColumnLocation(m_TransverseOffsetMeasurement, m_RefColumnIdx, m_TransverseOffset);
+        m_Pier.SetLowerXBeamDimensions(m_XBeamHeight[0], m_XBeamHeight[1],
+            m_XBeamTaperHeight[0], m_XBeamTaperHeight[1],
+            m_XBeamEndSlopeOffset[0], m_XBeamEndSlopeOffset[1],
+            m_XBeamTaperLength[0], m_XBeamTaperLength[1], m_XBeamWidth, m_Pier.GetPierPointData());
+        m_Pier.SetXBeamOverhangs(m_XBeamOverhang[0], m_XBeamOverhang[1]);
+        m_Pier.SetColumnFixity(m_ColumnFixity);
+        for (ColumnIndexType idx = 0; idx < m_Pier.GetColumnCount(); ++idx)
+            m_Pier.GetColumnData(idx).SetColumnHeightMeasurementType(m_ColumnHeightMeasurementType);
+        GetParent()->PostMessage(WM_PIER_LAYOUT_CHANGED);
+    }
+    else
+    {
+        m_Pier = previous;
+    }
+    m_UpdatingLayout = false;
 }

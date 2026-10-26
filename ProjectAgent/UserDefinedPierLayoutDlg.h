@@ -59,6 +59,10 @@ protected:
 
 	virtual BOOL OnInitDialog() override;
 
+	afx_msg void OnPierLayoutChanged();
+    bool m_Initialized = false;
+    bool m_UpdatingLayout = false;
+
 	afx_msg LRESULT OnColumnGridCellChanged(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPierPointGridCellChanged(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnHeightMeasureChanged();
@@ -66,10 +70,6 @@ protected:
 	afx_msg void OnRemoveColumns();
 	afx_msg void OnAddPierPoint();
 	afx_msg void OnRemovePierPoints();
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 
 	DECLARE_MESSAGE_MAP()
 

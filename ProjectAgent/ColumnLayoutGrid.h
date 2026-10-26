@@ -73,6 +73,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
    
    virtual void OnClickedButtonRowCol(ROWCOL nRow,ROWCOL nCol) override;
+   BOOL OnEndEditing(ROWCOL nRow, ROWCOL nCol) override;
    virtual void OnModifyCell(ROWCOL nRow,ROWCOL nCol) override;
 
 private:

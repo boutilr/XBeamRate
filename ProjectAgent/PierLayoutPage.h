@@ -26,6 +26,7 @@
 //
 
 #include "resource.h"
+#include "DrawPierLayoutControl.h"
 #include <PsgLib\ColumnData.h>
 #include "ColumnLayoutGrid.h"
 #include "CommonPierLayoutDlg.h"
@@ -64,6 +65,14 @@ protected:
 	//{{AFX_MSG(CPierLayoutPage)
 	virtual BOOL OnInitDialog() override;
    afx_msg void OnHelp();
+   afx_msg void OnShowLiveClicked();
+   afx_msg void OnDestroy();
+   afx_msg LRESULT OnPierLayoutChanged(WPARAM, LPARAM);
+   afx_msg LRESULT OnPierLayoutPopoutClosed(WPARAM, LPARAM);
+   void RefreshPierLayoutPopout(bool fit = false);
+   IPierLayoutDataSource* GetLayoutDataSource();
+   CDrawPierLayoutControl m_PierLayoutPopout;
+
    afx_msg void OnPierLayoutTypeChanged();
    afx_msg void OnConditionFactorTypeChanged();
 	//}}AFX_MSG

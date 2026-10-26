@@ -665,3 +665,13 @@ void CColumnLayoutGrid::DDV_ColumnGrid(CDataExchange* pDX, CColumnLayoutGrid& gr
         }
     }
 }
+
+BOOL CColumnLayoutGrid::OnEndEditing(ROWCOL nRow, ROWCOL nCol)
+{
+    CGXControl* control = GetControl(nRow, nCol);
+    const BOOL modified = control && control->GetModify();
+    const BOOL accepted = CGXGridWnd::OnEndEditing(nRow, nCol);
+    if (accepted && modified && GetParent())
+        GetParent()->PostMessage(WM_COLUMN_GRID_CELL_CHANGED, (WPARAM)nRow, (LPARAM)nCol);
+    return accepted;
+}

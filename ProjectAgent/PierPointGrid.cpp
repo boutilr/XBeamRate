@@ -334,3 +334,13 @@ void CPierPointGrid::OnModifyCell(ROWCOL nRow,ROWCOL nCol)
       __super::OnModifyCell(nRow, nCol);
    }
 }
+
+BOOL CPierPointGrid::OnEndEditing(ROWCOL nRow, ROWCOL nCol)
+{
+    CGXControl* control = GetControl(nRow, nCol);
+    const BOOL modified = control && control->GetModify();
+    const BOOL accepted = CGXGridWnd::OnEndEditing(nRow, nCol);
+    if (accepted && modified && GetParent())
+        GetParent()->PostMessage(WM_PIERPOINT_GRID_CELL_CHANGED, (WPARAM)nRow, (LPARAM)nCol);
+    return accepted;
+}

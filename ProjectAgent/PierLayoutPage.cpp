@@ -87,7 +87,10 @@ BEGIN_MESSAGE_MAP(CPierLayoutPage, CPropertyPage)
 	ON_COMMAND(ID_HELP, OnHelp)
    ON_CBN_SELCHANGE(IDC_CONDITION_FACTOR_TYPE, OnConditionFactorTypeChanged)
     ON_CBN_SELCHANGE(IDC_PIER_LAYOUT_TYPE, OnPierLayoutTypeChanged)
-    //ON_MESSAGE(WM_PIER_LAYOUT_CHANGED, OnPierLayoutChanged)
+    ON_MESSAGE(WM_PIER_LAYOUT_CHANGED, OnPierLayoutChanged)
+    ON_REGISTERED_MESSAGE(WM_PIER_LAYOUT_POPOUT_CLOSED, OnPierLayoutPopoutClosed)
+    ON_BN_CLICKED(IDC_LAYOUT_GRAPHIC, OnShowLiveClicked)
+    ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -215,6 +218,13 @@ void CPierLayoutPage::OnPierLayoutTypeChanged()
     }
 
     SwapDialogs();
+    switch (m_PierLayoutType)
+    {
+    case pgsTypes::pltCommon: m_CommonPierLayoutDlg.OnPierLayoutChanged(); break;
+    case pgsTypes::pltScalloped: m_ScallopedPierLayoutDlg.OnPierLayoutChanged(); break;
+    case pgsTypes::pltUserDefined: m_UserDefinedPierLayoutDlg.OnPierLayoutChanged(); break;
+    }
+    RefreshPierLayoutPopout(true);
 }
 
 bool CPierLayoutPage::SaveColumnLayout(CDialog& dialog, CColumnLayoutGrid& grid)
@@ -488,6 +498,8 @@ BOOL CPierLayoutPage::OnKillActive()
         }
     }
 
+    if (::IsWindow(m_PierLayoutPopout.GetSafeHwnd()))
+        m_PierLayoutPopout.DestroyWindow();
     return CPropertyPage::OnKillActive();
 }
 
@@ -522,4 +534,98 @@ BOOL CPierLayoutPage::OnApply()
 
     SetModified(FALSE);
     return CPropertyPage::OnApply();
+}
+
+IPierLayoutDataSource* CPierLayoutPage::GetLayoutDataSource()
+{
+    switch (m_PierLayoutType)
+    {
+    case pgsTypes::pltCommon: return &m_CommonPierLayoutDlg;
+    case pgsTypes::pltScalloped: return &m_ScallopedPierLayoutDlg;
+    case pgsTypes::pltUserDefined: return &m_UserDefinedPierLayoutDlg;
+    default: return nullptr;
+    }
+}
+
+void CPierLayoutPage::RefreshPierLayoutPopout(bool fit)
+{
+    if (!::IsWindow(m_PierLayoutPopout.GetSafeHwnd()))
+        return;
+    IPierLayoutDataSource* source = GetLayoutDataSource();
+    if (!source)
+        return;
+
+    // Superstructure edits belong to the property sheet's transaction. Overlay
+    // only this page's pending layout, leaving project data and caches untouched.
+    xbrPierData preview = *m_pPier;
+    const xbrPierData& layout = *source->GetPierData();
+    preview.SetPierLayoutType(m_PierLayoutType);
+    Float64 h1l, h1r, h2l, h2r, x1l, x1r, x2l, x2r, width;
+    std::vector<CPierPointData> points;
+    layout.GetLowerXBeamDimensions(&h1l, &h1r, &h2l, &h2r, &x1l, &x1r, &x2l, &x2r, &width, &points);
+    preview.SetLowerXBeamDimensions(h1l, h1r, h2l, h2r, x1l, x1r, x2l, x2r, width, points);
+    preview.SetColumnCount(layout.GetColumnCount());
+    for (ColumnIndexType idx = 0; idx < layout.GetColumnCount(); ++idx)
+    {
+        preview.SetColumnData(idx, layout.GetColumnData(idx));
+        preview.SetColumnScallopDepth(idx, layout.GetColumnScallopDepth(idx));
+        if (idx + 1 < layout.GetColumnCount())
+        {
+            preview.SetColumnSpacing(idx, layout.GetColumnSpacing(idx));
+            preview.SetColumnScallopRadius(idx, layout.GetColumnScallopRadius(idx));
+        }
+    }
+    pgsTypes::OffsetMeasurementType datum;
+    IndexType column;
+    Float64 offset, left, right;
+    layout.GetRefColumnLocation(&datum, &column, &offset);
+    preview.SetRefColumnLocation(datum, column, offset);
+    layout.GetXBeamOverhangs(&left, &right);
+    preview.SetXBeamOverhangs(left, right);
+    preview.SetXBeamOverhangRadius(pgsTypes::stLeft, layout.GetXBeamOverhangRadius(pgsTypes::stLeft));
+    preview.SetXBeamOverhangRadius(pgsTypes::stRight, layout.GetXBeamOverhangRadius(pgsTypes::stRight));
+    m_PierLayoutPopout.Refresh(preview, fit);
+}
+
+LRESULT CPierLayoutPage::OnPierLayoutChanged(WPARAM, LPARAM)
+{
+    RefreshPierLayoutPopout();
+    return 0;
+}
+
+LRESULT CPierLayoutPage::OnPierLayoutPopoutClosed(WPARAM, LPARAM)
+{
+    if (CWnd* button = GetDlgItem(IDC_LAYOUT_GRAPHIC))
+        button->SetWindowText(_T("Show Popout Window"));
+    return 0;
+}
+
+void CPierLayoutPage::OnShowLiveClicked()
+{
+    if (::IsWindow(m_PierLayoutPopout.GetSafeHwnd()))
+    {
+        m_PierLayoutPopout.DestroyWindow();
+        return;
+    }
+    IPierLayoutDataSource* source = GetLayoutDataSource();
+    if (!source)
+        return;
+    switch (m_PierLayoutType)
+    {
+    case pgsTypes::pltCommon: m_CommonPierLayoutDlg.OnPierLayoutChanged(); break;
+    case pgsTypes::pltScalloped: m_ScallopedPierLayoutDlg.OnPierLayoutChanged(); break;
+    case pgsTypes::pltUserDefined: m_UserDefinedPierLayoutDlg.OnPierLayoutChanged(); break;
+    }
+    if (m_PierLayoutPopout.CreatePopout(*source->GetPierData(), this))
+    {
+        RefreshPierLayoutPopout(true);
+        GetDlgItem(IDC_LAYOUT_GRAPHIC)->SetWindowText(_T("Hide Popout Window"));
+    }
+}
+
+void CPierLayoutPage::OnDestroy()
+{
+    if (::IsWindow(m_PierLayoutPopout.GetSafeHwnd()))
+        m_PierLayoutPopout.DestroyWindow();
+    CPropertyPage::OnDestroy();
 }

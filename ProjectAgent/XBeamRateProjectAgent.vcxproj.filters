@@ -82,6 +82,9 @@
     <ClCompile Include="PierPointGrid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DrawPierLayoutControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="CommonPierLayoutDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -187,6 +190,9 @@
       <Filter>IFace</Filter>
     </ClInclude>
     <ClInclude Include="PierPointGrid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawPierLayoutControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CommonPierLayoutDlg.h">

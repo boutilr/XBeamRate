@@ -282,6 +282,7 @@
 #define IDC_FIXITY                      1857
 #define IDC_CAP_GROUP                   1884
 #define IDC_COLUMN_GROUP                1885
+#define IDC_LAYOUT_GRAPHIC              2071
 #define IDC_STATIC_BOUNDS               2070
 #define OHR_LABEL                       12880
 #define ID_VIEW_PIER                    33030

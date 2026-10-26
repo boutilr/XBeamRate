@@ -32,6 +32,8 @@
 
 #include <WBFLGeometry.h>
 
+interface IPier;
+
 class XBREXTCLASS xbrPierData
 {
 public:
@@ -218,6 +220,9 @@ public:
    IndexType GetBearingCount(IndexType brgLineIdx) const;
 
    Float64 GetXBeamLength() const;
+
+   // Geometry shared by the analysis agent and pending layout preview.
+   void CreatePierModel(IPier** ppPier) const;
 
    HRESULT Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress> pProgress);
 	HRESULT Save(IStructuredSave* pStrSave,std::shared_ptr<IEAFProgress> pProgress);
