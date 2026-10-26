@@ -30,6 +30,7 @@
 #include "PierDlg.h"
 
 #include <EAF\EAFDisplayUnits.h>
+#include <IFace/Tools.h>
 #include <EAF\EAFDocument.h>
 #include <MFCTools\CustomDDX.h>
 
@@ -171,9 +172,135 @@ void CPierLayoutPage::OnPierLayoutTypeChanged()
 {
     CComboBox* pcbPierModel = (CComboBox*)GetDlgItem(IDC_PIER_LAYOUT_TYPE);
     int curSel = pcbPierModel->GetCurSel();
-    m_PierLayoutType = (pgsTypes::PierLayoutType)pcbPierModel->GetItemData(curSel);
+    if (curSel == CB_ERR)
+        return;
+
+    pgsTypes::PierLayoutType layoutType = (pgsTypes::PierLayoutType)pcbPierModel->GetItemData(curSel);
+    if (layoutType == m_PierLayoutType)
+        return;
+
+    bool saved = false;
+    switch (m_PierLayoutType)
+    {
+    case pgsTypes::pltCommon:
+        saved = SaveColumnLayout(m_CommonPierLayoutDlg, m_CommonPierLayoutDlg.m_ColumnLayoutGrid);
+        break;
+    case pgsTypes::pltScalloped:
+        saved = SaveColumnLayout(m_ScallopedPierLayoutDlg, m_ScallopedPierLayoutDlg.m_ColumnLayoutGrid);
+        break;
+    case pgsTypes::pltUserDefined:
+        saved = SaveColumnLayout(m_UserDefinedPierLayoutDlg, m_UserDefinedPierLayoutDlg.m_ColumnLayoutGrid);
+        break;
+    }
+
+    if (!saved)
+    {
+        CDataExchange dx(this, FALSE);
+        DDX_CBEnum(&dx, IDC_PIER_LAYOUT_TYPE, m_PierLayoutType);
+        return;
+    }
+
+    m_PierLayoutType = layoutType;
+    switch (m_PierLayoutType)
+    {
+    case pgsTypes::pltCommon:
+        LoadColumnLayout(m_CommonPierLayoutDlg, m_CommonPierLayoutDlg.m_ColumnLayoutGrid, m_CommonPierLayoutDlg.m_Pier);
+        break;
+    case pgsTypes::pltScalloped:
+        LoadColumnLayout(m_ScallopedPierLayoutDlg, m_ScallopedPierLayoutDlg.m_ColumnLayoutGrid, m_ScallopedPierLayoutDlg.m_Pier);
+        break;
+    case pgsTypes::pltUserDefined:
+        LoadColumnLayout(m_UserDefinedPierLayoutDlg, m_UserDefinedPierLayoutDlg.m_ColumnLayoutGrid, m_UserDefinedPierLayoutDlg.m_Pier);
+        break;
+    }
 
     SwapDialogs();
+}
+
+bool CPierLayoutPage::SaveColumnLayout(CDialog& dialog, CColumnLayoutGrid& grid)
+{
+    auto pBroker = EAFGetBroker();
+    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+
+    ColumnIndexType refColumnIdx;
+    Float64 offset;
+    pgsTypes::OffsetMeasurementType offsetType;
+    m_pPier->GetRefColumnLocation(&offsetType, &refColumnIdx, &offset);
+    pgsTypes::ColumnLongitudinalBaseFixityType fixity = m_pPier->GetColumnFixity();
+    CColumnData::ColumnHeightMeasurementType heightMeasure = m_pPier->GetColumnData(0).GetColumnHeightMeasurementType();
+
+    try
+    {
+        CDataExchange dx(&dialog, TRUE);
+        CColumnLayoutGrid::DDV_ColumnGrid(&dx, grid);
+        DDX_CBIndex(&dx, IDC_REFCOLUMN, refColumnIdx);
+        DDX_OffsetAndTag(&dx, IDC_REFCOLUMN_OFFSET, IDC_REFCOLUMN_OFFSET_UNIT, offset, pDisplayUnits->GetSpanLengthUnit());
+        DDX_CBItemData(&dx, IDC_REFCOLUMN_MEASUREMENT, offsetType);
+        DDX_CBItemData(&dx, IDC_FIXITY, fixity);
+        DDX_CBItemData(&dx, IDC_HEIGHT_MEASURE, heightMeasure);
+    }
+    catch (CUserException* pException)
+    {
+        pException->Delete();
+        return false;
+    }
+
+    // Save only the shared column layout; cap inputs belong to each layout dialog.
+    grid.GetColumnData(*m_pPier);
+    m_pPier->SetRefColumnLocation(offsetType, refColumnIdx, offset);
+    m_pPier->SetColumnFixity(fixity);
+    for (ColumnIndexType colIdx = 0; colIdx < m_pPier->GetColumnCount(); colIdx++)
+    {
+        CColumnData column = m_pPier->GetColumnData(colIdx);
+        column.SetColumnHeightMeasurementType(heightMeasure);
+        m_pPier->SetColumnData(colIdx, column);
+    }
+    return true;
+}
+
+void CPierLayoutPage::LoadColumnLayout(CDialog& dialog, CColumnLayoutGrid& grid, xbrPierData& pier)
+{
+    ColumnIndexType nColumns = m_pPier->GetColumnCount();
+    pier.SetColumnCount(nColumns);
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        pier.SetColumnData(colIdx, m_pPier->GetColumnData(colIdx));
+        pier.SetColumnScallopDepth(colIdx, m_pPier->GetColumnScallopDepth(colIdx));
+        if (colIdx + 1 < nColumns)
+        {
+            pier.SetColumnSpacing(colIdx, m_pPier->GetColumnSpacing(colIdx));
+            pier.SetColumnScallopRadius(colIdx, m_pPier->GetColumnScallopRadius(colIdx));
+        }
+    }
+
+    ColumnIndexType refColumnIdx;
+    Float64 offset;
+    pgsTypes::OffsetMeasurementType offsetType;
+    m_pPier->GetRefColumnLocation(&offsetType, &refColumnIdx, &offset);
+    pier.SetRefColumnLocation(offsetType, refColumnIdx, offset);
+    pgsTypes::ColumnLongitudinalBaseFixityType fixity = m_pPier->GetColumnFixity();
+    pier.SetColumnFixity(fixity);
+    CColumnData::ColumnHeightMeasurementType heightMeasure = pier.GetColumnData(0).GetColumnHeightMeasurementType();
+    grid.SetColumnData(pier);
+    grid.SetHeightMeasurementType(heightMeasure);
+
+    CComboBox* pcbRefColumn = (CComboBox*)dialog.GetDlgItem(IDC_REFCOLUMN);
+    pcbRefColumn->ResetContent();
+    for (ColumnIndexType colIdx = 0; colIdx < nColumns; colIdx++)
+    {
+        CString label;
+        label.Format(_T("Column %d"), LABEL_COLUMN(colIdx));
+        pcbRefColumn->AddString(label);
+    }
+
+    auto pBroker = EAFGetBroker();
+    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+    CDataExchange dx(&dialog, FALSE);
+    DDX_CBIndex(&dx, IDC_REFCOLUMN, refColumnIdx);
+    DDX_OffsetAndTag(&dx, IDC_REFCOLUMN_OFFSET, IDC_REFCOLUMN_OFFSET_UNIT, offset, pDisplayUnits->GetSpanLengthUnit());
+    DDX_CBItemData(&dx, IDC_REFCOLUMN_MEASUREMENT, offsetType);
+    DDX_CBItemData(&dx, IDC_FIXITY, fixity);
+    DDX_CBItemData(&dx, IDC_HEIGHT_MEASURE, heightMeasure);
 }
 
 void CPierLayoutPage::SwapDialogs() // call UpdateData(TRUE) on these?

@@ -83,6 +83,9 @@ protected:
    void SwapDialogs();
 
 
+   bool SaveColumnLayout(CDialog& dialog, CColumnLayoutGrid& grid);
+   void LoadColumnLayout(CDialog& dialog, CColumnLayoutGrid& grid, xbrPierData& pier);
+
    bool CommitCommonPierLayout();
    bool CommitScallopedPierLayout();
    bool CommitUserDefinedPierLayout();
