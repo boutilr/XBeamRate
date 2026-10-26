@@ -31,6 +31,7 @@
 #include "XBeamRateChildFrame.h"
 #include "SectionCut.h"
 #include "DisplayObjectFactory.h"
+#include <DManip/EditableUnitValueTextBlock.h>
 
 #include <AgentTools.h>
 #include <IFace\XBeamRateAgent.h>
@@ -1335,29 +1336,41 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    // Height of upper cross beam
    if (pierType != pgsTypes::pctExpansion)
    {
-      BuildDimensionLine(displayList, uxbBL, uxbTL);
-      BuildDimensionLine(displayList, uxbTR, uxbBR);
+      BuildEditableDimensionLine(displayList, uxbBL, uxbTL, PierDimension::UpperHeight);
+      BuildEditableDimensionLine(displayList, uxbTR, uxbBR, PierDimension::UpperHeight);
    }
 
+   xbrPierData pierData = pProject->GetPierData(pierID);
+   const auto& pierLayoutType = pierData.GetPierLayoutType();
+
    // Height of lower cross beam
-   BuildDimensionLine(displayList, lxbBL, uxbBL); // H1L Dimension
-   BuildDimensionLine(displayList, uxbBR, lxbBR); // H1R Dimension
+   if (pierLayoutType == pgsTypes::pltUserDefined)
+      BuildDimensionLine(displayList, lxbBL, uxbBL);
+   else
+      BuildEditableDimensionLine(displayList, lxbBL, uxbBL, PierDimension::H1L); // H1L Dimension
+   if (pierLayoutType == pgsTypes::pltUserDefined)
+      BuildDimensionLine(displayList, uxbBR, lxbBR);
+   else
+      BuildEditableDimensionLine(displayList, uxbBR, lxbBR, PierDimension::H1R); // H1R Dimension
 
    Float64 Ybot = lxbBL.Y();
    WBFL::Geometry::Point2d blc(lblc - X1L, Ybot);
    WBFL::Geometry::Point2d x1l(lblc, Ybot);
-   BuildDimensionLine(displayList, x1l, blc);
+   if (pierLayoutType == pgsTypes::pltUserDefined)
+      BuildDimensionLine(displayList, x1l, blc);
+   else
+      BuildEditableDimensionLine(displayList, x1l, blc, PierDimension::X1L);
    WBFL::Geometry::Point2d brc(lbrc + X1R, Ybot);
    WBFL::Geometry::Point2d x1r(lbrc, Ybot);
-   BuildDimensionLine(displayList, brc, x1r);
+   if (pierLayoutType == pgsTypes::pltUserDefined)
+      BuildDimensionLine(displayList, brc, x1r);
+   else
+      BuildEditableDimensionLine(displayList, brc, x1r, PierDimension::X1R);
 
    //Radius and depth of bottom scallop
 
     // Get the center points for the arcs at column centers
    ColumnIndexType nColumns = pPier->GetColumnCount(pierID);
-
-   xbrPierData pierData = pProject->GetPierData(pierID);
-   const auto& pierLayoutType = pierData.GetPierLayoutType();
 
    if (pierLayoutType == pgsTypes::pltCommon)
    {
@@ -1368,8 +1381,8 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
        lxbBRC.Move(lxbBR);
        lxbBRC.Offset(0, -H2R);
 
-       BuildDimensionLine(displayList, lxbBLC, lxbBL); // H2L Dimension
-       BuildDimensionLine(displayList, lxbBR, lxbBRC); // H2R Dimension
+       BuildEditableDimensionLine(displayList, lxbBLC, lxbBL, PierDimension::H2L); // H2L Dimension
+       BuildEditableDimensionLine(displayList, lxbBR, lxbBRC, PierDimension::H2R); // H2R Dimension
 
        // Lower cross beam bottom taper, horizontal dimensions
        pnt.Release();
@@ -1393,8 +1406,8 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
        lxbBR2.Move(Xr - X2R, y); // TRICKY: changing Xr to now be the x-location of right dimensions for the columns
 
        // Horizontal Cross Beam Dimensions
-       BuildDimensionLine(displayList, lxbBL2, lxbBL1); // X2L Dimension
-       BuildDimensionLine(displayList, lxbBR1, lxbBR2); // X2R Dimension
+       BuildEditableDimensionLine(displayList, lxbBL2, lxbBL1, PierDimension::X2L); // X2L Dimension
+       BuildEditableDimensionLine(displayList, lxbBR1, lxbBR2, PierDimension::X2R); // X2R Dimension
    }
    else if (pierLayoutType == pgsTypes::pltScalloped)
    {
@@ -1461,7 +1474,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
            WBFL::Geometry::Point2d top2(XpCol, Ytop2);
            WBFL::Geometry::Point2d bottom2(XpCol, Ybot2);
 
-           BuildDimensionLine(displayList, top2, bottom2);
+           BuildEditableDimensionLine(displayList, top2, bottom2, PierDimension::ScallopDepth, colIdx);
        }
 
        // Depth dimension at the last column 
@@ -1492,7 +1505,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
        WBFL::Geometry::Point2d topLast(XpLast, YtopLast);
        WBFL::Geometry::Point2d bottomLast(XpLast, YbotLast);
 
-       BuildDimensionLine(displayList, topLast, bottomLast);
+       BuildEditableDimensionLine(displayList, topLast, bottomLast, PierDimension::ScallopDepth, nColumns - 1);
 
 
        GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
@@ -1576,7 +1589,22 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
            else
                strRadiusLabel.Format(_T("R%d = %s"), arcIdx, strRadius.GetString());
 
-           auto doRadiusLabel = WBFL::DManip::TextBlock::Create();
+           std::shared_ptr<WBFL::DManip::iTextBlock> doRadiusLabel;
+           if (IsStandAlone())
+           {
+               auto editable = WBFL::DManip::EditableLengthUnitValueTextBlock::Create(pDisplayUnits->GetSpanLengthUnit());
+               editable->SetValue(radius);
+               editable->EnableAutoUpdate(false);
+               editable->SetSelectionType(WBFL::DManip::SelectionType::All);
+               editable->SetToolTipText(_T("Click to edit radius"));
+               const PierDimension dimension = arcIdx == 0 ? PierDimension::LeftRadius
+                   : arcIdx == nColumns ? PierDimension::RightRadius : PierDimension::BayRadius;
+               RegisterPierDimensionEditEvents(editable, pierID, dimension,
+                   arcIdx > 0 && arcIdx < nColumns ? arcIdx - 1 : INVALID_INDEX);
+               doRadiusLabel = editable;
+           }
+           else
+               doRadiusLabel = WBFL::DManip::TextBlock::Create();
            doRadiusLabel->SetText(strRadiusLabel);
            doRadiusLabel->SetBkMode(TRANSPARENT);
            doRadiusLabel->SetTextAlign(TA_TOP | TA_CENTER);
@@ -1663,7 +1691,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 
       WBFL::Geometry::Point2d pntTop(XpCol, YtopCol);
       WBFL::Geometry::Point2d pntBot(XpCol, YbotCol);
-      BuildDimensionLine(displayList,pntTop,pntBot); // Column Height
+      BuildEditableDimensionLine(displayList,pntTop,pntBot, PierDimension::ColumnHeight, colIdx); // Column Height
 
       YbotColMin = Min(YbotColMin,YbotCol);
    }
@@ -1680,14 +1708,16 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
 
       WBFL::Geometry::Point2d pntRight(XpCol,YbotColMin);
      
-      BuildDimensionLine(displayList,pntRight,pntLeft); // first time this is OHL, then S
+      BuildEditableDimensionLine(displayList,pntRight,pntLeft,
+         colIdx == 0 ? PierDimension::LeftOverhang : PierDimension::ColumnSpacing,
+         colIdx == 0 ? INVALID_INDEX : colIdx - 1); // first time this is OHL, then S
 
       pntLeft = pntRight;
    }
 
    // Right cross beam cantilever
    WBFL::Geometry::Point2d pntRight(ubrc,YbotColMin);
-   BuildDimensionLine(displayList,pntRight,pntLeft); // OHR Dimension
+   BuildEditableDimensionLine(displayList,pntRight,pntLeft, PierDimension::RightOverhang); // OHR Dimension
 
    // Reference column to alignment/bridge line dimension 
 
@@ -1754,7 +1784,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
       position->get_LocatorPoint(lpTopRight,&pnt_right);
       pnt_left->Offset(EndOffset+Lxb,0);
       pnt_right->Offset(EndOffset+Lxb,0);
-      BuildDimensionLine(displayList,geomUtil::GetPoint(pnt_left),geomUtil::GetPoint(pnt_right));
+      BuildEditableDimensionLine(displayList,geomUtil::GetPoint(pnt_left),geomUtil::GetPoint(pnt_right), PierDimension::UpperWidth);
    }
 
    // Lower Cross Beam (End View)
@@ -1767,7 +1797,7 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
    position->get_LocatorPoint(lpBottomRight,&pnt_right);
    pnt_left->Offset(EndOffset+Lxb,0);
    pnt_right->Offset(EndOffset+Lxb,0);
-   BuildDimensionLine(displayList,geomUtil::GetPoint(pnt_right),geomUtil::GetPoint(pnt_left));
+   BuildEditableDimensionLine(displayList,geomUtil::GetPoint(pnt_right),geomUtil::GetPoint(pnt_left), PierDimension::LowerWidth);
 
    // End View Height
    CComPtr<IShape> xbeamShape;
@@ -1820,7 +1850,7 @@ void CXBeamRateView::BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayLi
    }
 }
 
-void CXBeamRateView::BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint,Float64 dimension)
+std::shared_ptr<WBFL::DManip::DimensionLine> CXBeamRateView::BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint,Float64 dimension)
 {
    // put points at locations and make them sockets
    auto from_rep = WBFL::DManip::PointDisplayObject::Create(m_DisplayObjectID++);
@@ -1866,11 +1896,54 @@ void CXBeamRateView::BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayLi
 
 
    pDL->AddDisplayObject(dimLine);
+   return dimLine;
+}
+
+void CXBeamRateView::BuildEditableDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL,
+   const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint,
+   PierDimension dimension, IndexType index)
+{
+   const Float64 distance = toPoint.Distance(fromPoint);
+   if (IsZero(distance)) return; // Preserve the omission of collapsed dimensions.
+   auto line = BuildDimensionLine(pDL, fromPoint, toPoint, distance);
+   // Hosted geometry belongs to PGSuper; retain its Edit Pier command there.
+   if (!IsStandAlone()) return;
+   if (dimension == PierDimension::UpperHeight)
+   {
+      auto pBroker = EAFGetBroker();
+      GET_IFACE2(pBroker, IXBRProject, pProject);
+      xbrPierData pier = pProject->GetPierData(GetPierID());
+      // Tapered ends can shift upper and lower endpoints along the crown.
+      // That drawn distance is then calculated, rather than a direct HU input.
+      if (!IsZero(pier.GetX1L()) || !IsZero(pier.GetX1R())) return;
+   }
+
+   auto pBroker = EAFGetBroker();
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   auto text = WBFL::DManip::EditableLengthUnitValueTextBlock::Create(pDisplayUnits->GetSpanLengthUnit());
+   text->SetValue(distance);
+   text->EnableAutoUpdate(false); // Only a validated transaction updates the drawing.
+   text->SetBkMode(TRANSPARENT);
+   text->SetSelectionType(WBFL::DManip::SelectionType::All);
+   text->SetToolTipText(_T("Click to edit"));
+   line->SetTextBlock(text);
+   line->SetSelectionType(WBFL::DManip::SelectionType::All);
+   RegisterPierDimensionEditEvents(line, GetPierID(), dimension, index);
 }
 
 void CXBeamRateView::HandleLButtonDblClk(UINT nFlags, CPoint logPoint)
 {
    CDisplayView::HandleLButtonDblClk(nFlags,logPoint);
+   if (IsStandAlone())
+   {
+      auto dimensions = m_pDispMgr->FindDisplayList(DIMENSIONS_DISPLAY_LIST_ID);
+      for (auto object : dimensions->FindDisplayObjects(static_cast<POINT>(logPoint)))
+      {
+         auto line = std::dynamic_pointer_cast<WBFL::DManip::DimensionLine>(object);
+         auto text = std::dynamic_pointer_cast<WBFL::DManip::EditableLengthUnitValueTextBlock>(line ? line->GetTextBlock() : object);
+         if (text && text->HitTest(logPoint)) return;
+      }
+   }
    auto pBroker = EAFGetBroker();
 
 

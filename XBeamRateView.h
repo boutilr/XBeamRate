@@ -32,6 +32,7 @@
 #endif // _MSC_VER > 1000
 
 #include <DManip/DManip.h>
+#include "PierDimensionEdit.h"
 #include <XBeamRateExt\PointOfInterest.h>
 
 class CXBeamRateDoc;
@@ -99,7 +100,8 @@ protected:
 
    std::shared_ptr<WBFL::DManip::iLineDisplayObject> CreateLineDisplayObject(const WBFL::Geometry::Point2d& pntStart,const WBFL::Geometry::Point2d& pntEnd);
    void BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint,bool bOmitForZeroDistance = true);
-   void BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint,Float64 dimension);
+   std::shared_ptr<WBFL::DManip::DimensionLine> BuildDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint,Float64 dimension);
+   void BuildEditableDimensionLine(std::shared_ptr<WBFL::DManip::iDisplayList> pDL, const WBFL::Geometry::Point2d& fromPoint, const WBFL::Geometry::Point2d& toPoint, PierDimension dimension, IndexType index = INVALID_INDEX);
    void SkewGirderShape(Float64 skew,Float64 shear,IShape* pShape,IShape** ppSkewedShape);
 
 	virtual void HandleLButtonDblClk(UINT nFlags, CPoint logPoint) override;

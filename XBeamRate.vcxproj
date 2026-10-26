@@ -203,6 +203,7 @@
     </ClCompile>
     <ClCompile Include="txnEditLoadRatingOptions.cpp" />
     <ClCompile Include="txnEditReinforcement.cpp" />
+    <ClCompile Include="PierDimensionEdit.cpp" />
     <ClCompile Include="XBeamRateAgent.cpp" />
     <ClCompile Include="XBeamRatePluginApp.cpp" />
     <ClCompile Include="XBeamRateChildFrame.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="txnEditLoadRatingOptions.h" />
     <ClInclude Include="txnEditReinforcement.h" />
+    <ClInclude Include="PierDimensionEdit.h" />
     <ClInclude Include="XBeamRateAgent.h" />
     <ClInclude Include="XBeamRatePluginApp.h" />
     <ClInclude Include="XBeamRateChildFrame.h" />
