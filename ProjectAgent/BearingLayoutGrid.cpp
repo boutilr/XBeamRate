@@ -306,13 +306,16 @@ void CBearingLayoutGrid::SetBearingData(xbrBearingLineData& brgLineData,std::vec
       for ( IndexType brgIdx = 0; brgIdx < nBearings; brgIdx++ )
       {
          Float64 S = (brgIdx != nBearings-1 ? brgLineData.GetSpacing(brgIdx) : 0);
-         Float64 DC = deadLoadReactions[brgIdx].m_DC;
-         Float64 DW = deadLoadReactions[brgIdx].m_DW;
-         Float64 CR = deadLoadReactions[brgIdx].m_CR;
-         Float64 SH = deadLoadReactions[brgIdx].m_SH;
-         Float64 PS = deadLoadReactions[brgIdx].m_PS;
-         Float64 RE = deadLoadReactions[brgIdx].m_RE;
-         Float64 W  = deadLoadReactions[brgIdx].m_W;
+         // A newly initialized bearing line may not have reactions yet.
+         const txnDeadLoadReaction zeroReaction;
+         const txnDeadLoadReaction& reaction = (brgIdx < deadLoadReactions.size() ? deadLoadReactions[brgIdx] : zeroReaction);
+         Float64 DC = reaction.m_DC;
+         Float64 DW = reaction.m_DW;
+         Float64 CR = reaction.m_CR;
+         Float64 SH = reaction.m_SH;
+         Float64 PS = reaction.m_PS;
+         Float64 RE = reaction.m_RE;
+         Float64 W  = reaction.m_W;
          AddBearingRow(DC,DW,CR,SH,PS,RE,W,S);
       }
    }
