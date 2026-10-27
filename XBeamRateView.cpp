@@ -28,6 +28,7 @@
 
 #include "XBeamRateDoc.h"
 #include "XBeamRateView.h"
+#include <XBeamRateHints.h>
 #include "XBeamRateChildFrame.h"
 #include "SectionCut.h"
 #include "DisplayObjectFactory.h"
