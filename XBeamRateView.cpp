@@ -24,6 +24,7 @@
 //
 
 #include "stdafx.h"
+#include <PointDefinedArc.h>
 #include "resource.h"
 
 #include "XBeamRateDoc.h"
@@ -1650,8 +1651,9 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
        doBlcLabel->SetPosition(origin);
        displayList->AddDisplayObject(doBlcLabel);
 
-       for (const auto& pnt : vPoints)
+       for (IndexType pointIdx = 0; pointIdx < vPoints.size(); ++pointIdx)
        {
+            const auto& pnt = vPoints[pointIdx];
            Float64 Xxb = pnt.Get_X();
 
 		   Float64 Xp = pPier->ConvertCrossBeamToPierCoordinate(pierID, Xxb);
@@ -1677,6 +1679,27 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
            auto doPoint = WBFL::DManip::PointDisplayObject::Create();
            doPoint->SetPosition(pp, false, false);
            displayList->AddDisplayObject(doPoint);
+            if (pointIdx + 1 < vPoints.size() && pnt.GetTransitionType() != CPierPointData::ttStraight)
+            {
+                const auto& next = vPoints[pointIdx+1];
+                const Float64 nx = pPier->ConvertCrossBeamToPierCoordinate(pierID,next.Get_X());
+                const Float64 ny = fnTop.Evaluate(nx) - next.Get_Y();
+                WBFL::Geometry::PointDefinedArc arc;
+                if (arc.Initialize(Xp,Ypoint,nx,ny,pnt.GetRadius(),pnt.GetTransitionType() == CPierPointData::ttArcUpward))
+                {
+                    Float64 mx,my;
+                    arc.PointAtFraction(0.5,mx,my);
+                    CString text;
+                    const CString radiusText = FormatDimension(pnt.GetRadius(),pDisplayUnits->GetSpanLengthUnit());
+                    text.Format(_T("R%d = %s"),pointIdx+1,radiusText.GetString());
+                    auto label = WBFL::DManip::TextBlock::Create();
+                    label->SetText(text);
+                    label->SetBkMode(TRANSPARENT);
+                    label->SetTextAlign(TA_TOP | TA_CENTER);
+                    label->SetPosition(WBFL::Geometry::Point2d(mx,my - WBFL::Units::ConvertToSysUnits(0.5,WBFL::Units::Measure::Feet)));
+                    displayList->AddDisplayObject(label);
+                }
+            }
        }
 
    }

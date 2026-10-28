@@ -1680,6 +1680,14 @@ void xbrPierData::CreatePierModel(IPier** ppPier) const
 		   points->Add(point);
 	   }
 	   uxbeam->SetPoints(points);
+       CComQIPtr<IPointDefinedCrossBeam2> transitions(uxbeam);
+       if (!transitions) throw E_NOINTERFACE;
+       for (IndexType idx = 0; idx + 1 < vPoints.size(); ++idx)
+       {
+          hr = transitions->SetTransition(idx,
+             static_cast<CrossBeamTransition>(vPoints[idx].GetTransitionType()), vPoints[idx].GetRadius());
+          if (FAILED(hr)) throw hr;
+       }
    }
    else if (pierData.GetPierLayoutType() == pgsTypes::pltScalloped)
    {

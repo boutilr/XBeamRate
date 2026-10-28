@@ -226,7 +226,7 @@ void write_substructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::sha
    }
    else if (pierLayoutType == pgsTypes::pltUserDefined)
    {
-       pTable->SetNumberOfColumns(3);
+       pTable->SetNumberOfColumns(5);
 
 	   *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("UserDefined_XBeam_Dimensions.png")) << rptNewLine << rptNewLine;
        *pPara << _T("Horizonal dimensions are in the plane of the pier.") << rptNewLine;
@@ -258,6 +258,14 @@ void write_substructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::sha
 		   (*pTable)(2 + i, 0) << _T("Point ") << (i + 1);
 		   (*pTable)(2 + i, 1) << _T("X = ") << length.SetValue(vPoints[i].Get_X());
 		   (*pTable)(2 + i, 2) << _T("Y = ") << length.SetValue(vPoints[i].Get_Y());
+           if (i + 1 < vPoints.size())
+           {
+               const auto type = vPoints[i].GetTransitionType();
+               (*pTable)(2 + i, 3) << (type == CPierPointData::ttStraight ? _T("Straight") :
+                   type == CPierPointData::ttArcUpward ? _T("Arc upward") : _T("Arc downward"));
+               if (type != CPierPointData::ttStraight)
+                   (*pTable)(2 + i, 4) << _T("R = ") << length.SetValue(vPoints[i].GetRadius());
+           }
 	   }
 
 

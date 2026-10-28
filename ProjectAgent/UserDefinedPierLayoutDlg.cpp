@@ -204,6 +204,24 @@ void CUserDefinedPierLayoutDlg::DoDataExchange(CDataExchange* pDX)
 
          }
 
+        xbrPierData candidate(m_Pier);
+        candidate.SetLowerXBeamDimensions(m_XBeamHeight[0],m_XBeamHeight[1],
+            m_XBeamTaperHeight[0],m_XBeamTaperHeight[1],m_XBeamEndSlopeOffset[0],m_XBeamEndSlopeOffset[1],
+            m_XBeamTaperLength[0],m_XBeamTaperLength[1],m_XBeamWidth,m_Pier.GetPierPointData());
+        candidate.SetXBeamOverhangs(m_XBeamOverhang[0],m_XBeamOverhang[1]);
+        candidate.SetRefColumnLocation(m_TransverseOffsetMeasurement,m_RefColumnIdx,m_TransverseOffset);
+        try
+        {
+            CComPtr<IPier> model;
+            candidate.CreatePierModel(&model);
+        }
+        catch (HRESULT)
+        {
+            AfxMessageBox(_T("Invalid profile arc. Increase the radius, adjust the endpoints, or change the arc direction. "
+                "Arcs must run left to right and remain below the top of the crossbeam."));
+            pDX->Fail();
+        }
+
     }
 }
 

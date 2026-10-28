@@ -1811,6 +1811,15 @@ void CPierAgentImp::ValidatePointsOfInterest(PierIDType pierID) const
       }
    }
 
+   if (pProject->GetPierData(pierID).GetPierLayoutType() == pgsTypes::pltUserDefined)
+   {
+      for (const auto& point : vPoints)
+      {
+         if (0 < point.Get_X() && point.Get_X() < L)
+            vPoi.push_back(xbrPointOfInterest(m_NextPoiID++,point.Get_X(),POI_SECTIONCHANGE));
+      }
+   }
+
    // Need POI on a one-foot grid
    Float64 step = WBFL::Units::ConvertToSysUnits(1.0,WBFL::Units::Measure::Feet);
    Float64 Xpoi = 0;
