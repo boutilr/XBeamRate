@@ -1180,11 +1180,19 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
 
              m_vPierPoints.reserve(nPierPoints);
 
+             CPierPointData previousPoint; // Legacy transitions belonged to the preceding point.
              for (PierPointIndexType ppIdx = 0; ppIdx < nPierPoints; ++ppIdx)
              {
                  CPierPointData pierPoint;
 
-                 hr = pierPoint.Load(pStrLoad, pProgress);
+                 bool legacyTransition = false;
+                 hr = pierPoint.Load(pStrLoad, pProgress, &legacyTransition);
+                 if (legacyTransition)
+                 {
+                     CPierPointData outgoing = pierPoint;
+                     pierPoint.SetTransition(previousPoint.GetTransitionType(), previousPoint.GetRadius());
+                     previousPoint = outgoing;
+                 }
 
                  m_vPierPoints.push_back(std::move(pierPoint));
              }
@@ -1657,6 +1665,22 @@ void xbrPierData::CreatePierModel(IPier** ppPier) const
        CComPtr<IPoint2dCollection> points;
        points.CoCreateInstance(CLSID_Point2dCollection);
 
+       Float64 length;
+       Float64 ohl, ohr;
+       pierData.GetXBeamOverhangs(&ohl, &ohr);
+       length = ohl + ohr - X1L - X1R;
+       for (ColumnIndexType idx = 1; idx < pierData.GetColumnCount(); ++idx)
+          length += pierData.GetColumnSpacing(idx - 1);
+       CPierPointData::UpdateEndPoint(vPoints, length, H1R);
+       Float64 startX, startCurbX, startY;
+       pierModel->ConvertCrossBeamToPierCoordinate(0.0, &startX);
+       pierModel->ConvertCrossBeamToCurbLineCoordinate(-X1L, &startCurbX);
+       pierModel->get_Elevation(startCurbX, &startY);
+       CComPtr<IPoint2d> startPoint;
+       startPoint.CoCreateInstance(CLSID_Point2d);
+       startPoint->Move(startX, startY - pierData.GetDeckThickness() - HU - H1L);
+       points->Add(startPoint);
+
 	   for (const auto& pointData : vPoints)
 	   {
 		   CComPtr<IPoint2d> point;
@@ -1667,7 +1691,7 @@ void xbrPierData::CreatePierModel(IPier** ppPier) const
            pierModel->ConvertCrossBeamToPierCoordinate(Xxb, &Xp);
 
 		   Float64 Xcl;
-           pierModel->ConvertCrossBeamToCurbLineCoordinate(Xxb, &Xcl);
+           pierModel->ConvertCrossBeamToCurbLineCoordinate(Xxb + (pointData.IsEndPoint() ? X1R : 0), &Xcl);
 
            Float64 Ydeck;
            pierModel->get_Elevation(Xcl, &Ydeck);
@@ -1682,7 +1706,7 @@ void xbrPierData::CreatePierModel(IPier** ppPier) const
 	   uxbeam->SetPoints(points);
        CComQIPtr<IPointDefinedCrossBeam2> transitions(uxbeam);
        if (!transitions) throw E_NOINTERFACE;
-       for (IndexType idx = 0; idx + 1 < vPoints.size(); ++idx)
+       for (IndexType idx = 0; idx < vPoints.size(); ++idx)
        {
           hr = transitions->SetTransition(idx,
              static_cast<CrossBeamTransition>(vPoints[idx].GetTransitionType()), vPoints[idx].GetRadius());

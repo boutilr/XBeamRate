@@ -244,6 +244,12 @@ void write_substructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::sha
        Float64 OHL, OHR;
        OHL = pProject->GetXBeamLeftOverhang(pierID);
        OHR = pProject->GetXBeamRightOverhang(pierID);
+       Float64 beamLength = OHL + OHR - X1L - X1R;
+       for (ColumnIndexType idx = 1; idx < pProject->GetColumnCount(pierID); ++idx)
+           beamLength += pProject->GetColumnSpacing(pierID, idx - 1);
+       CPierPointData::UpdateEndPoint(vPoints, beamLength, H1R);
+       *pPara << _T("Point transitions connect the previous point to the listed point; End connects to the beam end.") << rptNewLine;
+
 
        (*pTable)(0, 0) << _T("H1L = ") << length.SetValue(H1L);
        (*pTable)(0, 1) << _T("X1L = ") << length.SetValue(X1L);
@@ -255,10 +261,10 @@ void write_substructure_data(std::shared_ptr<WBFL::EAF::Broker> pBroker,std::sha
 
 	   for (size_t i = 0; i < vPoints.size(); ++i)
 	   {
-		   (*pTable)(2 + i, 0) << _T("Point ") << (i + 1);
+		   if (vPoints[i].IsEndPoint()) (*pTable)(2 + i, 0) << _T("End");
+           else (*pTable)(2 + i, 0) << _T("Point ") << (i + 1);
 		   (*pTable)(2 + i, 1) << _T("X = ") << length.SetValue(vPoints[i].Get_X());
 		   (*pTable)(2 + i, 2) << _T("Y = ") << length.SetValue(vPoints[i].Get_Y());
-           if (i + 1 < vPoints.size())
            {
                const auto type = vPoints[i].GetTransitionType();
                (*pTable)(2 + i, 3) << (type == CPierPointData::ttStraight ? _T("Straight") :

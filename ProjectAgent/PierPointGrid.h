@@ -61,6 +61,7 @@ public:
 // Implementation
 public:
    void CustomInit();
+   void UpdateEndPoint(Float64 length, Float64 depth, Float64 startDepth);
 
 	// Generated message map functions
 protected:
@@ -74,6 +75,7 @@ protected:
    virtual void OnModifyCell(ROWCOL nRow,ROWCOL nCol);
 
 private:
+   Float64 m_StartDepth = 0;
    void AddPierPoint(const CPierPointData& pierPoint);
    void SetPierPointData(ROWCOL row,const CPierPointData& pierPoint);
    void GetPierPointData(ROWCOL row,CPierPointData* pierPoint);
