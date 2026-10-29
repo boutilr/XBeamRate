@@ -1180,19 +1180,11 @@ HRESULT xbrPierData::Load(IStructuredLoad* pStrLoad,std::shared_ptr<IEAFProgress
 
              m_vPierPoints.reserve(nPierPoints);
 
-             CPierPointData previousPoint; // Legacy transitions belonged to the preceding point.
              for (PierPointIndexType ppIdx = 0; ppIdx < nPierPoints; ++ppIdx)
              {
                  CPierPointData pierPoint;
 
-                 bool legacyTransition = false;
-                 hr = pierPoint.Load(pStrLoad, pProgress, &legacyTransition);
-                 if (legacyTransition)
-                 {
-                     CPierPointData outgoing = pierPoint;
-                     pierPoint.SetTransition(previousPoint.GetTransitionType(), previousPoint.GetRadius());
-                     previousPoint = outgoing;
-                 }
+                 hr = pierPoint.Load(pStrLoad, pProgress);
 
                  m_vPierPoints.push_back(std::move(pierPoint));
              }
@@ -1704,11 +1696,9 @@ void xbrPierData::CreatePierModel(IPier** ppPier) const
 		   points->Add(point);
 	   }
 	   uxbeam->SetPoints(points);
-       CComQIPtr<IPointDefinedCrossBeam2> transitions(uxbeam);
-       if (!transitions) throw E_NOINTERFACE;
        for (IndexType idx = 0; idx < vPoints.size(); ++idx)
        {
-          hr = transitions->SetTransition(idx,
+          hr = uxbeam->SetTransition(idx,
              static_cast<CrossBeamTransition>(vPoints[idx].GetTransitionType()), vPoints[idx].GetRadius());
           if (FAILED(hr)) throw hr;
        }
