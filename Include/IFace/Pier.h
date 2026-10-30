@@ -135,7 +135,7 @@ public:
    // The rebar points obtained through this method are in global cross section coordinates.
    virtual void GetRebarSection(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const = 0;
 
-   virtual void GetRebarLayout(IRebarLayout** rebarLayout) const = 0;
+   virtual void GetRebarLayout(PierIDType pierID,IRebarLayout** rebarLayout) const = 0;
 
    virtual IndexType GetRebarRowCount(PierIDType pierID) const = 0;
    virtual IndexType GetRebarCount(PierIDType pierID,IndexType rowIdx) const = 0;

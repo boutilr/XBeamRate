@@ -105,10 +105,10 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
 
     GET_IFACE2(pBroker, IXBRRebar, pRebar);
 
-    PierIndexType pierID = -1;
+    PierIDType pierID = pXBRRptSpec->GetPierID();
 
     CComPtr<IRebarLayout> rebarLayout;
-    pRebar->GetRebarLayout(&rebarLayout);
+    pRebar->GetRebarLayout(pierID, &rebarLayout);
     IndexType nRebarRows;
     rebarLayout->get_Count(&nRebarRows);
 
