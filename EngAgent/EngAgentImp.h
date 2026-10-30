@@ -138,7 +138,7 @@ private:
    MinMomentCapacityDetails ComputeMinMomentCapacity(PierIDType pierID,pgsTypes::LimitState limitState,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,VehicleIndexType vehicleIdx,IndexType llConfigIdx,IndexType permitLaneIdx) const;
    void GetCrackingMomentFactors(PierIDType pierID,Float64* pG1,Float64* pG2,Float64* pG3) const;
    CrackedSectionDetails ComputeCrackedSectionProperties(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,xbrTypes::LoadType loadType) const;
-   void BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,IRCBeam2** ppModel,Float64* pdt) const;
+   void BuildMomentCapacityModel(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi,bool bPositiveMoment,IRCBeam2** ppModel,Float64* pdt,std::vector<std::vector<RebarDevelopmentLengths>>* pRebarDevelopment) const;
 
    DvDetails ComputeDv(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const;
    ShearCapacityDetails ComputeShearCapacity(PierIDType pierID,pgsTypes::Stage stage,const xbrPointOfInterest& poi) const;

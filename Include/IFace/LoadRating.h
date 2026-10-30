@@ -26,6 +26,17 @@
 #include <XBeamRateExt\RatingArtifact.h>
 
 #include <WBFLRCCapacity.h>
+#include <vector>
+
+// Physical distances from the section cut to each bar end, as used for Kdb.
+// Several groups can belong to the same capacity layer when end distances differ.
+struct RebarDevelopmentLengths
+{
+   Float64 Ll;
+   Float64 Lr;
+   Float64 As;
+};
+
 typedef struct MomentCapacityDetails
 {
    Float64 dt; // distance from compression face to extreme tensile reinforcement
@@ -36,6 +47,7 @@ typedef struct MomentCapacityDetails
    Float64 Mr; // nominal resistance (phi*Mn)
    CComPtr<IRCBeam2> rcBeam; // need this for cracked section analysis, so cache it here
    CComPtr<ILRFDSolutionEx> solution;
+   std::vector<std::vector<RebarDevelopmentLengths>> RebarDevelopment; // indexed by rcBeam layer
 } MomentCapacityDetails;
 
 

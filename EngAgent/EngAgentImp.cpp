@@ -398,7 +398,8 @@ MomentCapacityDetails CEngAgentImp::ComputeMomentCapacity(PierIDType pierID,pgsT
 {
    CComPtr<IRCBeam2> rcBeam;
    Float64 dt;
-   BuildMomentCapacityModel(pierID,stage,poi,bPositiveMoment,&rcBeam,&dt);
+   std::vector<std::vector<RebarDevelopmentLengths>> rebarDevelopment;
+   BuildMomentCapacityModel(pierID,stage,poi,bPositiveMoment,&rcBeam,&dt,&rebarDevelopment);
 
    CComPtr<IRCSolutionEx> solution;
    HRESULT hr = m_MomentCapacitySolver->Solve(rcBeam,&solution); 
@@ -491,6 +492,7 @@ MomentCapacityDetails CEngAgentImp::ComputeMomentCapacity(PierIDType pierID,pgsT
 
    MomentCapacityDetails capacityDetails;
    capacityDetails.rcBeam = rcBeam;
+   capacityDetails.RebarDevelopment.swap(rebarDevelopment);
    hr = solution.QueryInterface(&capacityDetails.solution);
    ATLASSERT(SUCCEEDED(hr));
    capacityDetails.solution = solution;
@@ -876,7 +878,7 @@ ShearCapacityDetails CEngAgentImp::ComputeShearCapacity(PierIDType pierID,pgsTyp
    return details;
 }
 
-void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage stage, const xbrPointOfInterest& poi, bool bPositiveMoment, IRCBeam2** ppModel, Float64* pdt) const
+void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage stage, const xbrPointOfInterest& poi, bool bPositiveMoment, IRCBeam2** ppModel, Float64* pdt, std::vector<std::vector<RebarDevelopmentLengths>>* pRebarDevelopment) const
 {
    CComPtr<IRCBeam2> rcBeam;
    HRESULT hr = rcBeam.CoCreateInstance(CLSID_RCBeam2);
@@ -953,6 +955,8 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage s
 
    // key: Ybar, Fy, Es; value: accumulated As*devFactor
    std::map<RebarLumpKey, Float64, RebarLumpKey_less> rebarMap;
+   std::map<RebarLumpKey, std::vector<RebarDevelopmentLengths>, RebarLumpKey_less> rebarLengthMap;
+   pRebarDevelopment->clear();
 
    // This loop accumulates As for each unique Ybar... it doesn't
    // put the bar in the capacity model
@@ -1023,6 +1027,25 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage s
           found->second += As;
       }
 
+      // Capture the exact section-item extensions used by GetDevLengthFactor.
+      // Do not reverse left/right when reflecting the section for negative moment.
+      Float64 Ll, Lr;
+      rebarSectionItem->get_LeftExtension(&Ll);
+      rebarSectionItem->get_RightExtension(&Lr);
+      auto& groups = rebarLengthMap[key];
+      bool combined = false;
+      for (auto& group : groups)
+      {
+         if (IsEqual(group.Ll,Ll) && IsEqual(group.Lr,Lr))
+         {
+            group.As += As;
+            combined = true;
+            break;
+         }
+      }
+      if (!combined)
+         groups.push_back(RebarDevelopmentLengths{Ll,Lr,As});
+
       rebarSectionItem.Release();
    }
 
@@ -1039,6 +1062,7 @@ void CEngAgentImp::BuildMomentCapacityModel(PierIDType pierID, pgsTypes::Stage s
        Float64 As = iter->second;
 
        rcBeam->AddRebarLayer(Ybar, As, Es, Fy, DevFactor);
+       pRebarDevelopment->push_back(rebarLengthMap[iter->first]);
 
        dt = Max(dt, Ybar);
    }
