@@ -27,6 +27,9 @@
 
 #include <AgentTools.h>
 #include <IFace/Project.h>
+#include <..\..\PGSuper\Include\IFace\Project.h>
+#include <XBeamRateExt/XBeamRateUtilities.h>
+#include <PsgLib/BridgeDescription2.h>
 #include <DManip/DimensionLine.h>
 #include <DManip/DisplayObjectEvents.h>
 #include <DManip/EditableUnitValueTextBlock.h>
@@ -76,6 +79,67 @@ private:
 
    xbrPierData m_Before, m_After;
 };
+
+// Hosted edits must change PGSuper's source bridge, not XBRate's cached copy.
+// Use the same bridge snapshots and event batching as PGSuper's Edit Pier.
+class txnEditHostedPierDimension : public WBFL::EAF::Transaction
+{
+public:
+   txnEditHostedPierDimension(const CBridgeDescription2& before, const CBridgeDescription2& after) :
+      m_Before(before), m_After(after) {}
+
+   virtual bool Execute() override { Apply(m_After); return true; }
+   virtual void Undo() override { Apply(m_Before); }
+   virtual std::unique_ptr<WBFL::EAF::Transaction> CreateClone() const override
+      { return std::make_unique<txnEditHostedPierDimension>(m_Before, m_After); }
+   virtual std::_tstring Name() const override { return _T("Edit Pier Dimension"); }
+   virtual bool IsUndoable() const override { return true; }
+   virtual bool IsRepeatable() const override { return false; }
+
+private:
+   void Apply(const CBridgeDescription2& bridge)
+   {
+      auto pBroker = EAFGetBroker();
+      GET_IFACE2(pBroker, IBridgeDescription, pBridge);
+      GET_IFACE2(pBroker, IEvents, pEvents);
+      CIEventsHolder holder(pEvents);
+      pBridge->SetBridgeDescription(bridge);
+   }
+
+   CBridgeDescription2 m_Before, m_After;
+};
+
+// Apply only the edited input. All other bridge data stays in the snapshot.
+bool SetHostedDimension(CPierData2& pier, xbrPierData& data,
+   PierDimension dimension, IndexType index)
+{
+   switch (dimension)
+   {
+   case PierDimension::H1L:
+   case PierDimension::H2L:
+   case PierDimension::X1L:
+   case PierDimension::X2L:
+      pier.SetXBeamDimensions(pgsTypes::stLeft, data.GetH1L(), data.GetH2L(), data.GetX2L(), data.GetX1L());
+      break;
+   case PierDimension::H1R:
+   case PierDimension::H2R:
+   case PierDimension::X1R:
+   case PierDimension::X2R:
+      pier.SetXBeamDimensions(pgsTypes::stRight, data.GetH1R(), data.GetH2R(), data.GetX2R(), data.GetX1R());
+      break;
+   case PierDimension::LowerWidth: pier.SetXBeamWidth(data.GetW()); break;
+   case PierDimension::LeftOverhang: pier.SetXBeamOverhang(pgsTypes::stLeft, data.GetOHL()); break;
+   case PierDimension::RightOverhang: pier.SetXBeamOverhang(pgsTypes::stRight, data.GetOHR()); break;
+   case PierDimension::ColumnSpacing: pier.SetColumnSpacing(index, data.GetColumnSpacing(index)); break;
+   case PierDimension::ColumnHeight: pier.SetColumnData(index, data.GetColumnData(index)); break;
+   case PierDimension::ScallopDepth: pier.SetColumnScallopDepth(index, data.GetColumnScallopDepth(index)); break;
+   case PierDimension::BayRadius: pier.SetColumnScallopRadius(index, data.GetColumnScallopRadius(index)); break;
+   case PierDimension::LeftRadius: pier.SetXBeamOverhangRadius(pgsTypes::stLeft, data.GetXBeamOverhangRadius(pgsTypes::stLeft)); break;
+   case PierDimension::RightRadius: pier.SetXBeamOverhangRadius(pgsTypes::stRight, data.GetXBeamOverhangRadius(pgsTypes::stRight)); break;
+   default: return false; // Upper diaphragm dimensions are computed by PGSuper.
+   }
+   return true;
+}
 
 Float64& DimensionInput(xbrPierData& data, PierDimension dimension, IndexType index)
 {
@@ -290,7 +354,21 @@ public:
          AfxMessageBox(message, MB_OK | MB_ICONEXCLAMATION);
          return;
       }
-      WBFL::EAF::TxnManager::GetInstance().Execute(std::make_unique<txnEditPierDimension>(before, after));
+      if (IsStandAlone())
+         WBFL::EAF::TxnManager::GetInstance().Execute(std::make_unique<txnEditPierDimension>(before, after));
+      else
+      {
+         GET_IFACE2(pBroker, IBridgeDescription, pBridge);
+         const CBridgeDescription2 oldBridge = *pBridge->GetBridgeDescription();
+         CBridgeDescription2 newBridge = oldBridge;
+         CPierData2* pier = newBridge.FindPier(m_PierID);
+         if (!pier || !SetHostedDimension(*pier, after, m_Dimension, m_Index))
+         {
+            text->SetText(previousText);
+            return;
+         }
+         WBFL::EAF::TxnManager::GetInstance().Execute(std::make_unique<txnEditHostedPierDimension>(oldBridge, newBridge));
+      }
    }
 
    virtual bool OnLButtonDblClk(std::shared_ptr<WBFL::DManip::iDisplayObject> object, UINT, const POINT& point) override
