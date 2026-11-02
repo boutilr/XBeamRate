@@ -1594,7 +1594,6 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
                strRadiusLabel.Format(_T("R%d = %s"), arcIdx, strRadius.GetString());
 
            std::shared_ptr<WBFL::DManip::iTextBlock> doRadiusLabel;
-           if (IsStandAlone())
            {
                auto editable = WBFL::DManip::EditableLengthUnitValueTextBlock::Create(pDisplayUnits->GetSpanLengthUnit());
                editable->SetValue(radius);
@@ -1607,8 +1606,6 @@ void CXBeamRateView::UpdateDimensionsDisplayObjects()
                    arcIdx > 0 && arcIdx < nColumns ? arcIdx - 1 : INVALID_INDEX);
                doRadiusLabel = editable;
            }
-           else
-               doRadiusLabel = WBFL::DManip::TextBlock::Create();
            doRadiusLabel->SetText(strRadiusLabel);
            doRadiusLabel->SetBkMode(TRANSPARENT);
            doRadiusLabel->SetTextAlign(TA_TOP | TA_CENTER);
@@ -1936,8 +1933,8 @@ void CXBeamRateView::BuildEditableDimensionLine(std::shared_ptr<WBFL::DManip::iD
    const Float64 distance = toPoint.Distance(fromPoint);
    if (IsZero(distance)) return; // Preserve the omission of collapsed dimensions.
    auto line = BuildDimensionLine(pDL, fromPoint, toPoint, distance);
-   // Hosted geometry belongs to PGSuper; retain its Edit Pier command there.
-   if (!IsStandAlone()) return;
+   // PGSuper derives the upper diaphragm from bridge and bearing geometry.
+   if (!IsStandAlone() && (dimension == PierDimension::UpperHeight || dimension == PierDimension::UpperWidth)) return;
    if (dimension == PierDimension::UpperHeight)
    {
       auto pBroker = EAFGetBroker();
@@ -1963,7 +1960,6 @@ void CXBeamRateView::BuildEditableDimensionLine(std::shared_ptr<WBFL::DManip::iD
 void CXBeamRateView::HandleLButtonDblClk(UINT nFlags, CPoint logPoint)
 {
    CDisplayView::HandleLButtonDblClk(nFlags,logPoint);
-   if (IsStandAlone())
    {
       auto dimensions = m_pDispMgr->FindDisplayList(DIMENSIONS_DISPLAY_LIST_ID);
       for (auto object : dimensions->FindDisplayObjects(static_cast<POINT>(logPoint)))
