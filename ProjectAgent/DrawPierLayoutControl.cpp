@@ -27,6 +27,7 @@
 #include "ProjectAgent.h"
 #include <PGSuperColors.h>
 #include "DrawPierLayoutControl.h"
+#include <EAF\EAFApp.h>
 
 #include <WBFLGenericBridge.h>
 
@@ -1070,6 +1071,20 @@ BOOL CDrawPierLayoutControl::CreatePopout(const xbrPierData& pierData, CWnd* pOw
     if (!ok)
         return FALSE;
 
+    // Restore the popout size and position when its saved monitor is available.
+    CEAFApp* pApp = EAFGetApp();
+    WINDOWPLACEMENT wp = {};
+    wp.length = sizeof wp;
+    if (pApp->ReadWindowPlacement(CString("Window Positions"), CString("XBeamRatePierLayoutPopout"), &wp))
+    {
+        if (MonitorFromRect(&wp.rcNormalPosition, MONITOR_DEFAULTTONULL) != NULL)
+        {
+            SetWindowPos(NULL, wp.rcNormalPosition.left, wp.rcNormalPosition.top,
+                wp.rcNormalPosition.right - wp.rcNormalPosition.left,
+                wp.rcNormalPosition.bottom - wp.rcNormalPosition.top, SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+    }
+
     // Initialize control after creation
     CustomInit(pierData);
 
@@ -1091,6 +1106,20 @@ void CDrawPierLayoutControl::OnPaint()
 
 void CDrawPierLayoutControl::OnDestroy()
 {
+    // Embedded preview controls do not have a popout placement to save.
+    if ((GetStyle() & WS_CHILD) == 0)
+    {
+        WINDOWPLACEMENT wp = {};
+        wp.length = sizeof wp;
+        if (GetWindowPlacement(&wp))
+        {
+            wp.flags = 0;
+            wp.showCmd = SW_SHOWNORMAL;
+            CEAFApp* pApp = EAFGetApp();
+            pApp->WriteWindowPlacement(CString("Window Positions"), CString("XBeamRatePierLayoutPopout"), &wp);
+        }
+    }
+
     // The native owner can be the property sheet, rather than the layout page.
     if (::IsWindow(m_hPopoutOwner))
         ::SendMessage(m_hPopoutOwner, WM_PIER_LAYOUT_POPOUT_CLOSED, 0, 0);
