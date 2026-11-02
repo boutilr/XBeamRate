@@ -212,8 +212,6 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
 
     (*pParagraph) << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("DevelopmentLengthFactor.png")) << rptNewLine;
 
-    GET_IFACE2(pBroker, IXBRProject, pProject);
-
     INIT_UV_PROTOTYPE(rptStressUnitValue, stress, pDisplayUnits->GetStressUnit(), false);
     INIT_UV_PROTOTYPE(rptLengthUnitValue, length, pDisplayUnits->GetComponentDimUnit(), false);
     INIT_UV_PROTOTYPE(rptLength2UnitValue, area, pDisplayUnits->GetAreaUnit(), false);
@@ -263,6 +261,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                 rebar->get_NominalDiameter(&db);
                 rebar->get_YieldStrength(&fy);
 
+                GET_IFACE2(pBroker, IXBRProject, pProject);
                 const CConcreteMaterial& concrete = pProject->GetConcrete(pierID);
                 Float64 fc = concrete.Fc;
 
@@ -336,6 +335,7 @@ rptChapter* CDevLengthDetailsChapterBuilder::Build(const std::shared_ptr<const W
                     rebar->get_NominalDiameter(&db);
                     rebar->get_YieldStrength(&fy);
 
+                    GET_IFACE2(pBroker, IXBRProject, pProject);
                     const CConcreteMaterial& concrete = pProject->GetConcrete(pierID);
                     Float64 fc = concrete.Fc;
 
