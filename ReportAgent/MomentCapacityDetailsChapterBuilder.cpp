@@ -81,10 +81,7 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("XBR_de.png")) << rptNewLine;
 
-   *pPara << _T("Ll and Lr are distances from the section cut to the physical left and right bar ends; Lx = min(Ll,Lr). ")
-      << _T("Left and right follow the crossbeam coordinates for both moment directions. ")
-      << _T("Rows with the same layer number identify bar groups with different end distances; their As values sum to the capacity-layer area. ")
-      << _T("The existing hook rules still apply to Kdb.") << rptNewLine;
+   *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("XBR_lx.png")) << rptNewLine;
 
    for ( int i = 0; i < 2; i++ )
    {
