@@ -857,10 +857,10 @@ void CPierAgentImp::GetRebarSection(PierIDType pierID,pgsTypes::Stage stage,cons
    rebarLayout->CreateRebarSection(Xxb,stageIdx,ppRebarSection);
 }
 
-void CPierAgentImp::GetRebarLayout(IRebarLayout** rebarLayout) const
+void CPierAgentImp::GetRebarLayout(PierIDType pierID,IRebarLayout** rebarLayout) const
 {
     CComPtr<IPier> pier;
-    GetPierModel(-1, &pier);
+    GetPierModel(pierID, &pier);
 
     CComPtr<ICrossBeam> xbeam;
     pier->get_CrossBeam(&xbeam);

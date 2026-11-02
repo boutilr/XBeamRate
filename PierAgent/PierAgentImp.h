@@ -118,7 +118,7 @@ public:
 // IXBRRebar
 public:
    void GetRebarSection(PierIDType pierIdx,pgsTypes::Stage stage,const xbrPointOfInterest& poi,IRebarSection** ppRebarSection) const override;
-   void GetRebarLayout(IRebarLayout** rebarLayout) const override;
+   void GetRebarLayout(PierIDType pierID,IRebarLayout** rebarLayout) const override;
    IndexType GetRebarRowCount(PierIDType pierID) const override;
    IndexType GetRebarCount(PierIDType pierID,IndexType rowIdx) const override;
    void GetRebarProfile(PierIDType pierID,IndexType rowIdx,IPoint2dCollection** ppPoints) const override;
