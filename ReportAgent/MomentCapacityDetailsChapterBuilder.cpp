@@ -81,6 +81,11 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 
    *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("XBR_de.png")) << rptNewLine;
 
+   *pPara << _T("Ll and Lr are distances from the section cut to the physical left and right bar ends; Lx = min(Ll,Lr). ")
+      << _T("Left and right follow the crossbeam coordinates for both moment directions. ")
+      << _T("Rows with the same layer number identify bar groups with different end distances; their As values sum to the capacity-layer area. ")
+      << _T("The existing hook rules still apply to Kdb.") << rptNewLine;
+
    for ( int i = 0; i < 2; i++ )
    {
       bool bPositiveMoment = (i == 0 ? true : false);
@@ -145,7 +150,7 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
          (*pTable)(row,col++) << dim.SetValue(beta1*c);
          (*pTable)(row,col++) << dim.SetValue(bw);
 
-         rptRcTable* pReinfTable = rptStyleManager::CreateDefaultTable(7);
+         rptRcTable* pReinfTable = rptStyleManager::CreateDefaultTable(10);
          (*pTable)(row,col++) << pReinfTable;
 
          (*pTable)(row,col++) << dim.SetValue(mcd.de);
@@ -156,11 +161,14 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 
          (*pReinfTable)(0,0) << _T("Layer");
          (*pReinfTable)(0,1) << COLHDR(Sub2(_T("d"),_T("s")),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
-         (*pReinfTable)(0,2) << Sub2(_T("K"),_T("db"));
-         (*pReinfTable)(0,3) << COLHDR(Sub2(_T("A"),_T("s")),rptAreaUnitTag,pDisplayUnits->GetAreaUnit());
-         (*pReinfTable)(0,4) << COLHDR(Sub2(_T("E"),_T("s")),rptStressUnitTag,pDisplayUnits->GetModEUnit());
-         (*pReinfTable)(0,5) << COLHDR(Sub2(_T("f"),_T("y")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
-         (*pReinfTable)(0,6) << COLHDR(Sub2(_T("f"),_T("s")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
+         (*pReinfTable)(0,2) << COLHDR(Sub2(_T("L"),_T("l")),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
+         (*pReinfTable)(0,3) << COLHDR(Sub2(_T("L"),_T("r")),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
+         (*pReinfTable)(0,4) << COLHDR(Sub2(_T("L"),_T("x")),rptLengthUnitTag,pDisplayUnits->GetComponentDimUnit());
+         (*pReinfTable)(0,5) << Sub2(_T("K"),_T("db"));
+         (*pReinfTable)(0,6) << COLHDR(Sub2(_T("A"),_T("s")),rptAreaUnitTag,pDisplayUnits->GetAreaUnit());
+         (*pReinfTable)(0,7) << COLHDR(Sub2(_T("E"),_T("s")),rptStressUnitTag,pDisplayUnits->GetModEUnit());
+         (*pReinfTable)(0,8) << COLHDR(Sub2(_T("f"),_T("y")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
+         (*pReinfTable)(0,9) << COLHDR(Sub2(_T("f"),_T("s")),rptStressUnitTag,pDisplayUnits->GetStressUnit());
 
          IndexType nRebarLayers;
          mcd.rcBeam->get_RebarLayerCount(&nRebarLayers);
@@ -174,7 +182,8 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
 //#endif
          RowIndexType reinfTableRow = pReinfTable->GetNumberOfHeaderRows();
 
-         for ( IndexType rebarLayerIdx = 0; rebarLayerIdx < nRebarLayers; rebarLayerIdx++, reinfTableRow++ )
+         ATLASSERT(mcd.RebarDevelopment.size() == nRebarLayers);
+         for ( IndexType rebarLayerIdx = 0; rebarLayerIdx < nRebarLayers; rebarLayerIdx++ )
          {
             Float64 As, ds, Es, Fy, devFactor;
             mcd.rcBeam->GetRebarLayer(rebarLayerIdx,&ds,&As,&Es,&Fy,&devFactor);
@@ -182,13 +191,20 @@ rptChapter* CMomentCapacityDetailsChapterBuilder::Build(const std::shared_ptr<co
             Float64 fs;
             vfs->get_Item(rebarLayerIdx,&fs);
 
-            (*pReinfTable)(reinfTableRow,0) << LABEL_INDEX(rebarLayerIdx);
-            (*pReinfTable)(reinfTableRow,1) << dim.SetValue(ds);
-            (*pReinfTable)(reinfTableRow,2) << scalar.SetValue(devFactor);
-            (*pReinfTable)(reinfTableRow,3) << area.SetValue(As);
-            (*pReinfTable)(reinfTableRow,4) << modE.SetValue(Es);
-            (*pReinfTable)(reinfTableRow,5) << stress.SetValue(Fy);
-            (*pReinfTable)(reinfTableRow,6) << stress.SetValue(fs);
+            for (const auto& lengths : mcd.RebarDevelopment[rebarLayerIdx])
+            {
+               (*pReinfTable)(reinfTableRow,0) << LABEL_INDEX(rebarLayerIdx);
+               (*pReinfTable)(reinfTableRow,1) << dim.SetValue(ds);
+               (*pReinfTable)(reinfTableRow,2) << dim.SetValue(lengths.Ll);
+               (*pReinfTable)(reinfTableRow,3) << dim.SetValue(lengths.Lr);
+               (*pReinfTable)(reinfTableRow,4) << dim.SetValue(Min(lengths.Ll,lengths.Lr));
+               (*pReinfTable)(reinfTableRow,5) << scalar.SetValue(devFactor);
+               (*pReinfTable)(reinfTableRow,6) << area.SetValue(lengths.As);
+               (*pReinfTable)(reinfTableRow,7) << modE.SetValue(Es);
+               (*pReinfTable)(reinfTableRow,8) << stress.SetValue(Fy);
+               (*pReinfTable)(reinfTableRow,9) << stress.SetValue(fs);
+               reinfTableRow++;
+            }
          }
 
 
