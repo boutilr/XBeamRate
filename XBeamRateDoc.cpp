@@ -36,6 +36,7 @@
 #include "AboutDlg.h"
 
 #include <BridgeLink.h>
+#include <LRFD/MBEManager.h>
 
 #include <XBeamRateCatCom.h>
 
@@ -324,6 +325,9 @@ BOOL CXBeamRateDoc::OnNewDocument()
 {
 	if (!CEAFBrokerDocument::OnNewDocument())
 		return FALSE;
+
+   // New projects use the current MBE, even after an older project was opened.
+   WBFL::LRFD::MBEManager::SetEdition(WBFL::LRFD::MBEManager::GetLatestEdition());
 
    CBridgeLinkApp* pApp = (CBridgeLinkApp*)EAFGetApp();
    IBridgeLink* pBL = (IBridgeLink*)pApp;
