@@ -21,6 +21,8 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include <LRFD/Shear.h>
+#include <LRFD/RatingSolver.h>
 #include "EngAgent.h"
 #include "LoadRater.h"
 #include <IFace\Project.h>
@@ -33,6 +35,8 @@
 #include <EAF/AutoProgress.h>
 
 #include <WBFLGenericBridge.h>
+#include <LRFD/MBEManager.h>
+#include <stdexcept>
 
 #include <PGSuperUnits.h> // for FormatDimension
 
@@ -274,8 +278,8 @@ void xbrLoadRater::ShearRating(PierIDType pierID, xbrTypes::Stage stage, const s
       Float64 PS   = MaxMagnitude(vPS.Left(),vPS.Right());
 
       Float64 LLIM = 0;
-      IndexType llConfigIdx;
-      VehicleIndexType vehIdx;
+      IndexType llConfigIdx = INVALID_INDEX;
+      VehicleIndexType vehIdx = vehicleIdx;
       if (bIsWSDOTMethodApplicable)
       {
          // for WSDOT permit or emergency rating, the analysis is done in the rating artifact object
@@ -380,19 +384,127 @@ void xbrLoadRater::ShearRating(PierIDType pierID, xbrTypes::Stage stage, const s
       shearArtifact.SetLiveLoadShear(LLIM);
       shearArtifact.SetLiveLoadConfigurationIndex(llConfigIdx);
 
-#pragma Reminder("add longitudinal reinforcement for shear check")
-   //   // longitudinal steel check
-   //   pgsLongReinfShearArtifact l_artifact;
-   //   SHEARCAPACITYDETAILS scd;
-   //   pgsDesigner2 designer;
-   //   designer.SetBroker(m_pBroker);
-   //   pShearCapacity->GetShearCapacityDetails(ls,loadRatingIntervalIdx,poi,&scd);
-   //   designer.InitShearCheck(poi.GetSegmentKey(),loadRatingIntervalIdx,ls,nullptr);
-   //   designer.CheckLongReinfShear(poi,loadRatingIntervalIdx,ls,scd,nullptr,&l_artifact);
-   //   shearArtifact.SetLongReinfShearArtifact(l_artifact);
+      if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition())
+         ComputeMBE4LongitudinalRating(pierID, stage, poi, ratingType, vehicleIdx, &shearArtifact);
 
       ratingArtifact.AddArtifact(poi,shearArtifact);
    }
+}
+
+void xbrLoadRater::ComputeMBE4LongitudinalRating(PierIDType pierID, xbrTypes::Stage stage, const xbrPointOfInterest& poi,
+   pgsTypes::LoadRatingType ratingType, VehicleIndexType vehicleIdx, xbrShearRatingArtifact* artifact)
+{
+   GET_IFACE2(GetBroker(),IXBRProject, project);
+   GET_IFACE2(GetBroker(),IXBRRatingSpecification, spec);
+   GET_IFACE2(GetBroker(),IXBRAnalysisResults, results);
+   GET_IFACE2(GetBroker(),IXBRProductForces, placements);
+   GET_IFACE2(GetBroker(),IXBRMomentCapacity, moments);
+   GET_IFACE2(GetBroker(),IXBRShearCapacity, shears);
+   GET_IFACE2(GetBroker(),IXBRSectionProperties, sections);
+   GET_IFACE2(GetBroker(),IXBRMaterial, materials);
+   auto ls = GetStrengthLimitStateType(ratingType);
+   Float64 verticalRF = artifact->GetRatingFactor(); // completes WSDOT configuration selection
+   bool adjacent = spec->IsWSDOTPermitRating(ratingType) || spec->IsWSDOTEmergencyRating(ratingType);
+   VehicleIndexType verticalVehicle = artifact->GetVerticalVehicleIndex();
+   if (adjacent)
+   {
+      IndexType config, lane;
+      Float64 permitShear, legalShear;
+      artifact->GetWSDOTPermitConfiguration(&config, &lane, &verticalVehicle, &permitShear, &legalShear, true);
+   }
+   if (verticalVehicle != INVALID_INDEX)
+   {
+      artifact->SetVehicleIndex(verticalVehicle);
+      artifact->SetVehicleName(project->GetLiveLoadName(pierID, ratingType, verticalVehicle).c_str());
+      artifact->SetVehicleWeight(project->GetVehicleWeight(pierID, ratingType, verticalVehicle));
+   }
+   Float64 longRF = DBL_MAX;
+   bool firstLongitudinal = true;
+   Float64 modifier = Max(0.85, project->GetSystemFactorShear() * project->GetConditionFactor(pierID));
+   const auto& resistance = shears->GetShearCapacityDetails(pierID, stage, poi);
+   Float64 height = sections->GetDepth(pierID, stage, poi);
+   Float64 Es, fy, fu;
+   materials->GetRebarProperties(pierID, &Es, &fy, &fu);
+   Float64 tie[2] = {}, phiM[2] = {};
+   for (int sign = 0; sign < 2; ++sign)
+   {
+      const auto& moment = moments->GetMomentCapacityDetails(pierID, stage, poi, sign == 0);
+      phiM[sign] = moment.phi;
+      IndexType count;
+      moment.rcBeam->get_RebarLayerCount(&count);
+      for (IndexType row = 0; row < count; ++row)
+      {
+         Float64 depth, area, development;
+         moment.rcBeam->GetRebarLayer(row, &depth, &area, &development);
+         // The negative-moment capacity model is inverted. Its bottom half
+         // is the appropriate tension tie for that sign of bending.
+         if (height * 0.5 <= depth) tie[sign] += area * development * fy;
+      }
+   }
+   VehicleIndexType first = vehicleIdx == INVALID_INDEX ? 0 : vehicleIdx;
+   VehicleIndexType last = vehicleIdx == INVALID_INDEX ? project->GetLiveLoadReactionCount(pierID, ratingType) : vehicleIdx + 1;
+   const xbrTypes::CombinedForceType combos[] = { xbrTypes::lcDC, xbrTypes::lcDW, xbrTypes::lcCR, xbrTypes::lcSH, xbrTypes::lcRE, xbrTypes::lcPS };
+   Float64 factors[] = { project->GetDCLoadFactor(ls), project->GetDWLoadFactor(ls), project->GetCRLoadFactor(ls),
+      project->GetSHLoadFactor(ls), project->GetRELoadFactor(ls), project->GetPSLoadFactor(ls) };
+   IndexType count = placements->GetLiveLoadConfigurationCount(pierID, ratingType);
+   for (bool right : { false, true })
+   {
+      xbrRatingForceState dead;
+      for (int i = 0; i < 6; ++i)
+      {
+         auto value = results->GetRatingDeadForces(pierID, combos[i], poi, right);
+         dead.Moment += factors[i] * value.Moment;
+         dead.Axial += factors[i] * value.Axial;
+         dead.Shear += factors[i] * value.Shear;
+      }
+      for (VehicleIndexType truck = first; truck < last; ++truck)
+      {
+         Float64 gLL = project->GetLiveLoadFactor(pierID, ls, truck);
+         for (IndexType config = 0; config < count; ++config)
+         {
+            IndexType lanes = placements->GetLoadedLaneCount(pierID, config);
+            if (!adjacent && IsPermitRatingType(ratingType) && lanes != 1) continue;
+            for (IndexType lane = 0; lane < (adjacent ? lanes : 1); ++lane)
+            {
+               xbrRatingForceState permit, legal;
+               results->GetRatingLiveForces(pierID, ratingType, truck, config, lane, poi, right, &permit, &legal);
+               auto reserve = [&](Float64 rf) {
+                  // Retain WSDOT BDM's effective permit-minus-legal loading;
+                  // AASHTO cases have no legal component here.
+                  Float64 m = dead.Moment + rf * gLL * (permit.Moment - legal.Moment);
+                  Float64 n = dead.Axial + rf * gLL * (permit.Axial - legal.Axial);
+                  Float64 v = dead.Shear + rf * gLL * (permit.Shear - legal.Shear);
+                  int sign = m < 0 ? 1 : 0;
+                  Float64 demand = WBFL::LRFD::Shear::LongitudinalShearDemand(m, n, v, resistance.dv,
+                     phiM[sign], n < 0 ? 0.75 : 1.0, resistance.phi, 0.0, resistance.Vs, resistance.theta);
+                  return modifier * tie[sign] - demand;
+               };
+               std::vector<Float64> transitions;
+               if (gLL * (permit.Moment - legal.Moment) != 0)
+                  transitions.push_back(-dead.Moment / (gLL * (permit.Moment - legal.Moment)));
+               if (gLL * (permit.Axial - legal.Axial) != 0)
+                  transitions.push_back(-dead.Axial / (gLL * (permit.Axial - legal.Axial)));
+               if (gLL * (permit.Shear - legal.Shear) != 0)
+                  transitions.push_back(-dead.Shear / (gLL * (permit.Shear - legal.Shear)));
+               Float64 rf = WBFL::LRFD::RatingSolver::Solve(reserve, transitions);
+               if (firstLongitudinal || rf < longRF)
+               {
+                  firstLongitudinal = false;
+                  longRF = rf;
+                  artifact->SetLongitudinalVehicle(truck, project->GetLiveLoadName(pierID, ratingType, truck),
+                     project->GetVehicleWeight(pierID, ratingType, truck));
+                  Float64 m = dead.Moment + gLL * (permit.Moment - legal.Moment);
+                  int sign = m < 0 ? 1 : 0;
+                  Float64 capacity = modifier * tie[sign];
+                  artifact->SetLongitudinalDetails(capacity, capacity - reserve(1.0), config, lane, permit.Shear, legal.Shear);
+               }
+            }
+         }
+      }
+   }
+   if (firstLongitudinal)
+      throw std::runtime_error("No live-load configurations available for longitudinal shear rating");
+   artifact->SetIteratedRatingFactors(verticalRF, longRF);
 }
 
 void xbrLoadRater::CheckReinforcementYielding(PierIDType pierID, xbrTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact)

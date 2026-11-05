@@ -35,6 +35,7 @@ xbrShearRatingArtifact::xbrShearRatingArtifact() :
 m_strVehicleName(_T("Unknown"))
 {
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
    m_RF = 0;
    m_LLConfigIdx = INVALID_INDEX;
    m_PermitLaneIdx = INVALID_INDEX;
@@ -94,6 +95,7 @@ void xbrShearRatingArtifact::SetPierID(PierIDType pierID)
 {
    m_PierID = pierID;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 PierIDType xbrShearRatingArtifact::GetPierID() const
@@ -115,6 +117,7 @@ void xbrShearRatingArtifact::SetRatingType(pgsTypes::LoadRatingType ratingType)
 {
    m_RatingType = ratingType;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 pgsTypes::LoadRatingType xbrShearRatingArtifact::GetLoadRatingType() const
@@ -126,6 +129,7 @@ void xbrShearRatingArtifact::SetEmergencyRatingMethod(xbrTypes::EmergencyRatingM
 {
    m_EmergencyRatingMethod = emergencyRatingMethod;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 xbrTypes::EmergencyRatingMethod xbrShearRatingArtifact::GetEmergencyRatingMethod() const
@@ -137,6 +141,7 @@ void xbrShearRatingArtifact::SetPermitRatingMethod(xbrTypes::PermitRatingMethod 
 {
    m_PermitRatingMethod = permitRatingMethod;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 xbrTypes::PermitRatingMethod xbrShearRatingArtifact::GetPermitRatingMethod() const
@@ -151,6 +156,7 @@ void xbrShearRatingArtifact::SetVehicleIndex(VehicleIndexType vehicleIdx)
 
 VehicleIndexType xbrShearRatingArtifact::GetVehicleIndex() const
 {
+   if (m_HasIteratedRating && m_LongitudinalRF < m_VerticalRF) return m_LongVehicleIndex;
    return m_VehicleIdx;
 }
 
@@ -161,6 +167,7 @@ void xbrShearRatingArtifact::SetVehicleWeight(Float64 W)
 
 Float64 xbrShearRatingArtifact::GetVehicleWeight() const
 {
+   if (m_HasIteratedRating && m_LongitudinalRF < m_VerticalRF) return m_LongVehicleWeight;
    return m_VehicleWeight;
 }
 
@@ -171,6 +178,7 @@ void xbrShearRatingArtifact::SetVehicleName(LPCTSTR str)
 
 const std::_tstring& xbrShearRatingArtifact::GetVehicleName() const
 {
+   if (m_HasIteratedRating && m_LongitudinalRF < m_VerticalRF) return m_LongVehicleName;
    return m_strVehicleName;
 }
 
@@ -178,6 +186,7 @@ void xbrShearRatingArtifact::SetSystemFactor(Float64 systemFactor)
 {
    m_SystemFactor = systemFactor;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetSystemFactor() const
@@ -189,6 +198,7 @@ void xbrShearRatingArtifact::SetConditionFactor(Float64 conditionFactor)
 {
    m_ConditionFactor = conditionFactor;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetConditionFactor() const
@@ -200,6 +210,7 @@ void xbrShearRatingArtifact::SetCapacityReductionFactor(Float64 phi)
 {
    m_CapacityRedutionFactor = phi;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetCapacityReductionFactor() const
@@ -211,6 +222,7 @@ void xbrShearRatingArtifact::SetNominalShearCapacity(Float64 Vn)
 {
    m_Vn = Vn;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetNominalShearCapacity() const
@@ -222,6 +234,7 @@ void xbrShearRatingArtifact::SetDeadLoadFactor(Float64 gDC)
 {
    m_gDC = gDC;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetDeadLoadFactor() const
@@ -233,6 +246,7 @@ void xbrShearRatingArtifact::SetDeadLoadShear(Float64 Vdc)
 {
    m_Vdc = Vdc;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetDeadLoadShear() const
@@ -244,6 +258,7 @@ void xbrShearRatingArtifact::SetWearingSurfaceFactor(Float64 gDW)
 {
    m_gDW = gDW;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetWearingSurfaceFactor() const
@@ -255,6 +270,7 @@ void xbrShearRatingArtifact::SetWearingSurfaceShear(Float64 Vdw)
 {
    m_Vdw = Vdw;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetWearingSurfaceShear() const
@@ -266,6 +282,7 @@ void xbrShearRatingArtifact::SetCreepFactor(Float64 gCR)
 {
    m_gCR = gCR;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetCreepFactor() const
@@ -277,6 +294,7 @@ void xbrShearRatingArtifact::SetCreepShear(Float64 Vcr)
 {
    m_Vcr = Vcr;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetCreepShear() const
@@ -288,6 +306,7 @@ void xbrShearRatingArtifact::SetShrinkageFactor(Float64 gSH)
 {
    m_gSH = gSH;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetShrinkageFactor() const
@@ -299,6 +318,7 @@ void xbrShearRatingArtifact::SetShrinkageShear(Float64 Vsh)
 {
    m_Vsh = Vsh;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetShrinkageShear() const
@@ -310,6 +330,7 @@ void xbrShearRatingArtifact::SetRelaxationFactor(Float64 gRE)
 {
    m_gRE = gRE;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetRelaxationFactor() const
@@ -321,6 +342,7 @@ void xbrShearRatingArtifact::SetRelaxationShear(Float64 Vre)
 {
    m_Vre = Vre;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetRelaxationShear() const
@@ -332,6 +354,7 @@ void xbrShearRatingArtifact::SetSecondaryEffectsFactor(Float64 gPS)
 {
    m_gPS = gPS;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetSecondaryEffectsFactor() const
@@ -343,6 +366,7 @@ void xbrShearRatingArtifact::SetSecondaryEffectsShear(Float64 Vps)
 {
    m_Vps = Vps;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetSecondaryEffectsShear() const
@@ -354,6 +378,7 @@ void xbrShearRatingArtifact::SetLiveLoadFactor(Float64 gLL)
 {
    m_gLL = gLL;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetLiveLoadFactor() const
@@ -365,6 +390,7 @@ void xbrShearRatingArtifact::SetLiveLoadShear(Float64 Vllim)
 {
    m_Vllim = Vllim;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 Float64 xbrShearRatingArtifact::GetLiveLoadShear() const
@@ -376,15 +402,26 @@ void xbrShearRatingArtifact::SetLiveLoadConfigurationIndex(IndexType llConfigIdx
 {
    m_LLConfigIdx = llConfigIdx;
    m_bRFComputed = false;
+   m_HasIteratedRating = false;
 }
 
 IndexType xbrShearRatingArtifact::GetLiveLoadConfigurationIndex() const
 {
+   if (m_HasIteratedRating && m_LongitudinalRF < m_VerticalRF) return m_LongConfig;
    return m_LLConfigIdx;
+}
+
+void xbrShearRatingArtifact::SetIteratedRatingFactors(Float64 vertical, Float64 longitudinal)
+{
+   m_VerticalRF = vertical;
+   m_LongitudinalRF = longitudinal;
+   m_bRFComputed = false;
+   m_HasIteratedRating = true;
 }
 
 Float64 xbrShearRatingArtifact::GetRatingFactor() const
 {
+   if (m_HasIteratedRating) return Min(m_VerticalRF, m_LongitudinalRF);
    if ( m_bRFComputed )
    {
       return m_RF;
@@ -551,8 +588,15 @@ Float64 xbrShearRatingArtifact::GetRatingFactor() const
    return m_RF;
 }
 
-void xbrShearRatingArtifact::GetWSDOTPermitConfiguration(IndexType* pLLConfigIdx,IndexType* pPermitLaneIdx,VehicleIndexType* pVehicleIdx,Float64 *pVpermit,Float64* pVlegal) const
+void xbrShearRatingArtifact::GetWSDOTPermitConfiguration(IndexType* pLLConfigIdx,IndexType* pPermitLaneIdx,VehicleIndexType* pVehicleIdx,Float64 *pVpermit,Float64* pVlegal, bool verticalOnly) const
 {
+   if (!verticalOnly && m_HasIteratedRating && m_LongitudinalRF < m_VerticalRF)
+   {
+      *pLLConfigIdx = m_LongConfig; *pPermitLaneIdx = m_LongLane; *pVehicleIdx = m_LongVehicleIndex;
+      *pVpermit = m_LongVpermit; *pVlegal = m_LongVlegal;
+      return;
+   }
+
    Float64 RF = GetRatingFactor(); // causes the rating factor analysis to happen
 
    *pLLConfigIdx   = m_LLConfigIdx;
@@ -564,6 +608,15 @@ void xbrShearRatingArtifact::GetWSDOTPermitConfiguration(IndexType* pLLConfigIdx
 
 void xbrShearRatingArtifact::MakeCopy(const xbrShearRatingArtifact& rOther)
 {
+   m_LongCapacity = rOther.m_LongCapacity; m_LongDemand = rOther.m_LongDemand;
+   m_LongConfig = rOther.m_LongConfig; m_LongLane = rOther.m_LongLane;
+   m_LongVpermit = rOther.m_LongVpermit; m_LongVlegal = rOther.m_LongVlegal;
+   m_LongVehicleIndex = rOther.m_LongVehicleIndex;
+   m_LongVehicleName = rOther.m_LongVehicleName;
+   m_LongVehicleWeight = rOther.m_LongVehicleWeight;
+   m_HasIteratedRating = rOther.m_HasIteratedRating;
+   m_VerticalRF = rOther.m_VerticalRF;
+   m_LongitudinalRF = rOther.m_LongitudinalRF;
    m_PierID                     = rOther.m_PierID;
    m_POI                        = rOther.m_POI;
    m_RatingType                 = rOther.m_RatingType;

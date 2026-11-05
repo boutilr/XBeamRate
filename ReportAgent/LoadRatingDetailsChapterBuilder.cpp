@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #include "StdAfx.h"
+#include <LRFD/MBEManager.h>
 #include "ReportAgent.h"
 #include "LoadRatingDetailsChapterBuilder.h"
 #include <EAF\EAFDisplayUnits.h>
@@ -480,7 +481,7 @@ void CLoadRatingDetailsChapterBuilder::ShearRatingDetails(rptChapter* pChapter,s
       Float64 Vlegal;
       if ( bIsWSDOTRating )
       {
-         artifact.GetWSDOTPermitConfiguration(&llConfigIdx,&permitLaneIdx,&permitVehicleIdx,&Vpermit,&Vlegal);
+         artifact.GetWSDOTPermitConfiguration(&llConfigIdx,&permitLaneIdx,&permitVehicleIdx,&Vpermit,&Vlegal,true);
       }
 
       (*pTable)(row,col++) << location.SetValue(poi);
@@ -511,10 +512,10 @@ void CLoadRatingDetailsChapterBuilder::ShearRatingDetails(rptChapter* pChapter,s
       else
       {
          (*pTable)(row,col++) << shear.SetValue(artifact.GetLiveLoadShear());
-         (*pTable)(row,col++) << _T("LC") << LABEL_INDEX(artifact.GetLiveLoadConfigurationIndex());
+         (*pTable)(row,col++) << _T("LC") << LABEL_INDEX(artifact.GetVerticalLiveLoadConfigurationIndex());
          if ( ::IsDesignRatingType(ratingType) )
          {
-            (*pTable)(row,col-1) << _T(", D") << LABEL_INDEX(artifact.GetVehicleIndex());
+            (*pTable)(row,col-1) << _T(", D") << LABEL_INDEX(artifact.GetVerticalVehicleIndex());
          }
       }
 
@@ -529,6 +530,55 @@ void CLoadRatingDetailsChapterBuilder::ShearRatingDetails(rptChapter* pChapter,s
 
       row++;
    } // next poi
+   if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition())
+   {
+      rptParagraph* explanation = new rptParagraph;
+      *pChapter << explanation;
+      *explanation << _T("MBE 4 longitudinal shear ratings use concurrent forces and scaled truck loads. Vertical shear retains the fixed beta = 2 and theta = 45 degree method. ")
+         << _T("The RF in the shear table is the smaller of the vertical and longitudinal reinforcement ratings below.") << rptNewLine;
+      rptRcTable* detail = rptStyleManager::CreateDefaultTable(6, _T("MBE 4 shear rating components"));
+      *explanation << detail;
+      (*detail)(0,0) << _T("Location");
+      (*detail)(0,1) << _T("Vertical vehicle");
+      (*detail)(0,2) << _T("Longitudinal vehicle");
+      (*detail)(0,3) << _T("Vertical RF");
+      (*detail)(0,4) << _T("Longitudinal RF");
+      (*detail)(0,5) << _T("Controlling RF");
+      RowIndexType r = detail->GetNumberOfHeaderRows();
+      for (const auto& entry : pRatingArtifact->GetShearRatings())
+      {
+         const auto& artifact = entry.second;
+         if (!artifact.HasIteratedRatingFactors()) continue;
+         (*detail)(r,0) << location.SetValue(entry.first);
+         (*detail)(r,1) << artifact.GetVerticalVehicleName();
+         (*detail)(r,2) << artifact.GetLongitudinalVehicleName();
+         (*detail)(r,3) << rating_factor.SetValue(artifact.GetVerticalRatingFactor());
+         (*detail)(r,4) << rating_factor.SetValue(artifact.GetLongitudinalRatingFactor());
+         (*detail)(r,5) << rating_factor.SetValue(artifact.GetRatingFactor());
+         ++r;
+      }
+      rptRcTable* tension = rptStyleManager::CreateDefaultTable(5, _T("Longitudinal reinforcement at RF = 1"));
+      *explanation << tension;
+      (*tension)(0,0) << _T("Location");
+      (*tension)(0,1) << COLHDR(_T("Capacity"), rptForceUnitTag, pDisplayUnits->GetShearUnit());
+      (*tension)(0,2) << COLHDR(_T("Demand"), rptForceUnitTag, pDisplayUnits->GetShearUnit());
+      (*tension)(0,3) << _T("Live load case");
+      (*tension)(0,4) << _T("Permit lane");
+      r = tension->GetNumberOfHeaderRows();
+      for (const auto& entry : pRatingArtifact->GetShearRatings())
+      {
+         const auto& artifact = entry.second;
+         if (!artifact.HasIteratedRatingFactors()) continue;
+         (*tension)(r,0) << location.SetValue(entry.first);
+         (*tension)(r,1) << shear.SetValue(artifact.GetLongitudinalCapacity());
+         (*tension)(r,2) << shear.SetValue(artifact.GetLongitudinalDemand());
+         if (artifact.GetLongitudinalConfigurationIndex() != INVALID_INDEX)
+            (*tension)(r,3) << _T("LC") << LABEL_INDEX(artifact.GetLongitudinalConfigurationIndex());
+         if (bIsWSDOTRating) (*tension)(r,4) << LABEL_INDEX(artifact.GetLongitudinalPermitLaneIndex());
+         else (*tension)(r,4) << _T("N/A");
+         ++r;
+      }
+   }
 }
 
 void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* pChapter, std::shared_ptr<WBFL::EAF::Broker> pBroker,PierIDType pierID,pgsTypes::LoadRatingType ratingType,bool bPositiveMoment,const xbrRatingArtifact* pRatingArtifact) const

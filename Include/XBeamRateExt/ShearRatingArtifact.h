@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include <cfloat>
 
 #include <XBeamRateExt\XBRExtExp.h>
 #include <XBeamRateExt\PointOfInterest.h>
@@ -130,9 +131,30 @@ public:
    void SetLiveLoadConfigurationIndex(IndexType llConfigIdx);
    IndexType GetLiveLoadConfigurationIndex() const;
 
+   void SetLongitudinalDetails(Float64 capacity, Float64 demand, IndexType config, IndexType lane,
+      Float64 vPermit, Float64 vLegal)
+   { m_LongCapacity = capacity; m_LongDemand = demand; m_LongConfig = config; m_LongLane = lane;
+     m_LongVpermit = vPermit; m_LongVlegal = vLegal; }
+   Float64 GetLongitudinalCapacity() const { return m_LongCapacity; }
+   Float64 GetLongitudinalDemand() const { return m_LongDemand; }
+   IndexType GetLongitudinalConfigurationIndex() const { return m_LongConfig; }
+   IndexType GetLongitudinalPermitLaneIndex() const { return m_LongLane; }
+   IndexType GetVerticalLiveLoadConfigurationIndex() const { return m_LLConfigIdx; }
+   void SetLongitudinalVehicle(VehicleIndexType index, const std::_tstring& name, Float64 weight)
+   { m_LongVehicleIndex = index; m_LongVehicleName = name; m_LongVehicleWeight = weight; }
+   const std::_tstring& GetLongitudinalVehicleName() const { return m_LongVehicleName; }
+   const std::_tstring& GetVerticalVehicleName() const { return m_strVehicleName; }
+   VehicleIndexType GetVerticalVehicleIndex() const { return m_VehicleIdx; }
+   Float64 GetVerticalVehicleWeight() const { return m_VehicleWeight; }
+
+   // Explicit MBE 4 solutions: resistance is evaluated at the scaled truck load.
+   void SetIteratedRatingFactors(Float64 vertical, Float64 longitudinal);
+   bool HasIteratedRatingFactors() const { return m_HasIteratedRating; }
+   Float64 GetVerticalRatingFactor() const { return m_VerticalRF; }
+   Float64 GetLongitudinalRatingFactor() const { return m_LongitudinalRF; }
    Float64 GetRatingFactor() const;
 
-   void GetWSDOTPermitConfiguration(IndexType* pLLConfigIdx,IndexType* pPermitLaneIdx,VehicleIndexType* pVehicleIdx,Float64 *pVpermit,Float64* pVlegal) const;
+   void GetWSDOTPermitConfiguration(IndexType* pLLConfigIdx,IndexType* pPermitLaneIdx,VehicleIndexType* pVehicleIdx,Float64 *pVpermit,Float64* pVlegal, bool verticalOnly = false) const;
 
 protected:
    void MakeCopy(const xbrShearRatingArtifact& rOther);
@@ -140,6 +162,14 @@ protected:
 
    Float64 GetRatingFactor(Float64 Vllim,Float64 VllimAdj) const;
 
+   Float64 m_LongCapacity = 0, m_LongDemand = 0, m_LongVpermit = 0, m_LongVlegal = 0;
+   IndexType m_LongConfig = INVALID_INDEX, m_LongLane = INVALID_INDEX;
+   VehicleIndexType m_LongVehicleIndex = INVALID_INDEX;
+   std::_tstring m_LongVehicleName;
+   Float64 m_LongVehicleWeight = 0;
+   bool m_HasIteratedRating = false;
+   Float64 m_VerticalRF = DBL_MAX;
+   Float64 m_LongitudinalRF = DBL_MAX;
    mutable bool m_bRFComputed;
    mutable Float64 m_RF;
    // loading configuration, for the WSDOT method, that
