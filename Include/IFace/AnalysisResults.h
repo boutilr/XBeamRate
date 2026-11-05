@@ -80,6 +80,13 @@ DESCRIPTION
 // {D8B2E731-710A-48ae-9916-AC152FEF2031}
 DEFINE_GUID(IID_IXBRAnalysisResults, 
 0xd8b2e731, 0x710a, 0x48ae, 0x99, 0x16, 0xac, 0x15, 0x2f, 0xef, 0x20, 0x31);
+struct xbrRatingForceState
+{
+   Float64 Moment = 0.0;
+   Float64 Axial = 0.0;
+   Float64 Shear = 0.0;
+};
+
 class IXBRAnalysisResults
 {
 public:
@@ -126,4 +133,10 @@ public:
    virtual void GetShear(PierIDType pierID,pgsTypes::LimitState limitState,const xbrPointOfInterest& poi,WBFL::System::SectionValue* pMin,WBFL::System::SectionValue* pMax) const = 0;
    virtual void GetMoment(PierIDType pierID,pgsTypes::LimitState limitState,const std::vector<xbrPointOfInterest>& vPoi,std::vector<Float64>* pvMin,std::vector<Float64>* pvMax) const = 0;
    virtual void GetShear(PierIDType pierID,pgsTypes::LimitState limitState,const std::vector<xbrPointOfInterest>& vPoi,std::vector<WBFL::System::SectionValue>* pvMin,std::vector<WBFL::System::SectionValue>* pvMax) const = 0;
+
+   // Concurrent forces for MBE Fourth Edition rating.
+   virtual xbrRatingForceState GetRatingDeadForces(PierIDType pierID, xbrTypes::CombinedForceType load, const xbrPointOfInterest& poi, bool rightFace) const = 0;
+   virtual void GetRatingLiveForces(PierIDType pierID, pgsTypes::LoadRatingType ratingType, VehicleIndexType truck,
+      IndexType config, IndexType permitLane, const xbrPointOfInterest& poi, bool rightFace,
+      xbrRatingForceState* permit, xbrRatingForceState* legal) const = 0;
 };

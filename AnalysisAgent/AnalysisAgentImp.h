@@ -89,6 +89,10 @@ public:
 
 // IXBRAnalysisResults
 public:
+   xbrRatingForceState GetRatingDeadForces(PierIDType pierID, xbrTypes::CombinedForceType load, const xbrPointOfInterest& poi, bool rightFace) const override;
+   void GetRatingLiveForces(PierIDType pierID, pgsTypes::LoadRatingType ratingType, VehicleIndexType truck,
+      IndexType config, IndexType permitLane, const xbrPointOfInterest& poi, bool rightFace,
+      xbrRatingForceState* permit, xbrRatingForceState* legal) const override;
    Float64 GetMoment(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const override;
    WBFL::System::SectionValue GetShear(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const override;
    std::vector<Float64> GetMoment(PierIDType pierID,xbrTypes::ProductForceType pfType,const std::vector<xbrPointOfInterest>& vPoi) const override;

@@ -1135,6 +1135,55 @@ void CAnalysisAgentImp::GetGoverningShearLiveLoadConfigurations(PierIDType pierI
 
 //////////////////////////////////////////////////////////////////////
 // IAnalysisResults
+xbrRatingForceState CAnalysisAgentImp::GetRatingDeadForces(PierIDType pierID, xbrTypes::CombinedForceType load,
+   const xbrPointOfInterest& poi, bool rightFace) const
+{
+   auto model = GetModelData(pierID);
+   PoiIDType id = model->m_PoiMap.at(poi.GetID());
+   xbrRatingForceState total;
+   for (auto product : GetLoads(load))
+   {
+      Float64 fx, fy, mz;
+      model->m_Model->ComputePOIForces(GetLoadCaseID(product), id,
+         rightFace ? WBFL::FEA2D::MemberFaceType::Right : WBFL::FEA2D::MemberFaceType::Left,
+         WBFL::FEA2D::LoadOrientation::Member, &fx, &fy, &mz);
+      total.Moment += rightFace ? -mz : mz;
+      total.Axial += rightFace ? -fx : fx;
+      total.Shear += rightFace ? fy : -fy;
+   }
+   return total;
+}
+
+void CAnalysisAgentImp::GetRatingLiveForces(PierIDType pierID, pgsTypes::LoadRatingType ratingType, VehicleIndexType truck,
+   IndexType config, IndexType permitLane, const xbrPointOfInterest& poi, bool rightFace,
+   xbrRatingForceState* permit, xbrRatingForceState* legal) const
+{
+   *permit = {}; *legal = {};
+   GET_IFACE(IXBRProject, project);
+   GET_IFACE(IXBRRatingSpecification, spec);
+   auto model = GetModelData(pierID);
+   PoiIDType id = model->m_PoiMap.at(poi.GetID());
+   auto& placement = model->m_LiveLoadConfigurations.at(config);
+   bool adjacent = spec->IsWSDOTPermitRating(ratingType) || spec->IsWSDOTEmergencyRating(ratingType);
+   IndexType lanes = GetLoadedLaneCount(pierID, config);
+   Float64 mpf = (::IsPermitRatingType(ratingType) && lanes == 1) ? 1.0 : WBFL::LRFD::Utility::GetMultiplePresenceFactor(lanes);
+   IndexType lane = 0;
+   for (auto loadCase : placement.m_LoadCases)
+   {
+      Float64 fx, fy, mz;
+      model->m_Model->ComputePOIForces(loadCase, id,
+         rightFace ? WBFL::FEA2D::MemberFaceType::Right : WBFL::FEA2D::MemberFaceType::Left,
+         WBFL::FEA2D::LoadOrientation::Member, &fx, &fy, &mz);
+      bool isLegal = adjacent && lane != permitLane;
+      Float64 reaction = isLegal ? GetMaxLegalReaction(pierID) : project->GetLiveLoadReaction(pierID, ratingType, truck);
+      auto target = isLegal ? legal : permit;
+      target->Moment += mpf * reaction * (rightFace ? -mz : mz);
+      target->Axial += mpf * reaction * (rightFace ? -fx : fx);
+      target->Shear += mpf * reaction * (rightFace ? fy : -fy);
+      ++lane;
+   }
+}
+
 Float64 CAnalysisAgentImp::GetMoment(PierIDType pierID,xbrTypes::ProductForceType pfType,const xbrPointOfInterest& poi) const
 {
    ModelData* pModelData = GetModelData(pierID);
