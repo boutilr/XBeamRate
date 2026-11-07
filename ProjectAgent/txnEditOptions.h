@@ -43,6 +43,7 @@ struct txnEditOptionsData
    Float64 m_YieldStressCoefficient;
    xbrTypes::PermitRatingMethod m_PermitRatingMethod;
 
+   bool m_bUseReducedDemandK;
    Float64 m_SystemFactorFlexure;
    Float64 m_SystemFactorShear;
 

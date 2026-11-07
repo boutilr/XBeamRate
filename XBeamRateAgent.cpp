@@ -474,6 +474,7 @@ CPropertyPage* CXBeamRateAgent::CreatePropertyPage(IEditLoadRatingOptions* pLoad
    CLoadRatingOptionsPage* pPage = new CLoadRatingOptionsPage();
 
    GET_IFACE(IXBRRatingSpecification,pSpec);
+   pPage->m_bUseReducedDemandK = pSpec->UseReducedDemandK();
    pPage->m_AnalysisType = pSpec->GetAnalysisMethodForReactions();
    pPage->m_PermitRatingMethod = pSpec->GetPermitRatingMethod();
    pPage->m_EmergencyRatingMethod = pSpec->GetEmergencyRatingMethod();
@@ -496,6 +497,7 @@ std::unique_ptr<WBFL::EAF::Transaction> CXBeamRateAgent::OnOK(CPropertyPage* pPa
    GET_IFACE(IXBRRatingSpecification,pSpec);
 
    txnLoadRatingOptions oldOptions;
+   oldOptions.m_bUseReducedDemandK = pSpec->UseReducedDemandK();
    oldOptions.m_AnalysisType = pSpec->GetAnalysisMethodForReactions();
    oldOptions.m_PermitRatingMethod = pSpec->GetPermitRatingMethod();
    oldOptions.m_EmergencyRatingMethod = pSpec->GetEmergencyRatingMethod();
@@ -509,6 +511,7 @@ std::unique_ptr<WBFL::EAF::Transaction> CXBeamRateAgent::OnOK(CPropertyPage* pPa
    oldOptions.m_bDoAnalyzeNegativeMomentBetweenFOC = pProject->GetDoAnalyzeNegativeMomentBetweenFocOptions(&(oldOptions.m_MinColumnWidthForNegMoment));
 
    txnLoadRatingOptions newOptions;
+   newOptions.m_bUseReducedDemandK = pLROPage->m_bUseReducedDemandK;
    newOptions.m_AnalysisType = pLROPage->m_AnalysisType;
    newOptions.m_PermitRatingMethod = pLROPage->m_PermitRatingMethod;
    newOptions.m_EmergencyRatingMethod = pLROPage->m_EmergencyRatingMethod;

@@ -81,6 +81,7 @@ void txnEditOptions::Execute(int i)
    pRatingSpec->EnableRating(pgsTypes::lrPermit_Special,m_Options[i].m_bPermitRating);
    pRatingSpec->RateForShear(pgsTypes::lrPermit_Routine,m_Options[i].m_bPermitRateForShear);
    pRatingSpec->RateForShear(pgsTypes::lrPermit_Special,m_Options[i].m_bPermitRateForShear);
+   pRatingSpec->UseReducedDemandK(m_Options[i].m_bUseReducedDemandK);
    pRatingSpec->CheckYieldStressLimit(m_Options[i].m_bCheckYieldStress);
    pRatingSpec->SetYieldStressLimitCoefficient(m_Options[i].m_YieldStressCoefficient);
    pRatingSpec->SetPermitRatingMethod(m_Options[i].m_PermitRatingMethod);

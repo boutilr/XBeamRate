@@ -39,6 +39,9 @@ DEFINE_GUID(IID_IXBRRatingSpecification,
 class IXBRRatingSpecification
 {
 public:
+   // Optional MBE C6A.5.6 allowance, stored for this crossbeam project.
+   virtual bool UseReducedDemandK() const = 0;
+   virtual void UseReducedDemandK(bool enabled) = 0;
    virtual bool IsRatingEnabled(pgsTypes::LoadRatingType ratingType) const = 0;
    virtual void EnableRating(pgsTypes::LoadRatingType ratingType,bool bEnable) = 0;
 

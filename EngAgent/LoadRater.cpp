@@ -23,6 +23,7 @@
 #include "stdafx.h"
 #include <LRFD/Shear.h>
 #include <LRFD/RatingSolver.h>
+#include <LRFD/MBERating.h>
 #include "EngAgent.h"
 #include "LoadRater.h"
 #include <IFace\Project.h>
@@ -200,6 +201,23 @@ void xbrLoadRater::MomentRating(PierIDType pierID, xbrTypes::Stage stage,pgsType
          momentArtifact.SetSecondaryEffectsMoment(PS);
          momentArtifact.SetLiveLoadFactor(gLL);
          momentArtifact.SetLiveLoadMoment(LLIM);
+
+         if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() &&
+             !pSpec->IsWSDOTEmergencyRating(ratingType) && !pSpec->IsWSDOTPermitRating(ratingType) &&
+             pSpec->UseReducedDemandK() &&
+             0.0 < K && K < 1.0 && momentArtifact.GetRatingFactor() < 1.0)
+         {
+            Float64 liveMoment = gLL * LLIM;
+            const auto& minimum = pMomentCapacity->GetMinMomentCapacityDetails(pierID,ls,stage,poi,bPositiveMoment);
+            if (!IsZero(liveMoment) && BinarySign(liveMoment) == BinarySign(minimum.Mr))
+            {
+               // MBE C6A.5.6: retain permanent loads while iterating K at balanced demand.
+               Float64 modifier = Max(0.85, system_factor * condition_factor);
+               Float64 reducedK = WBFL::LRFD::MBERating::GetReducedDemandMinimumReinforcementFactor(
+                  minimum.Mr, minimum.MrMin1, modifier);
+               momentArtifact.SetMinimumReinforcementFactor(Max(K, reducedK));
+            }
+         }
 
          if ( vehicleIdx == INVALID_INDEX && llConfigIdx != INVALID_INDEX )
          {
