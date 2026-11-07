@@ -235,7 +235,7 @@ Float64 xbrRatingArtifact::GetYieldStressRatioEx(bool bPositiveMoment,const xbrY
    for ( iter = pRatios->begin(); iter != pRatios->end(); iter++ )
    {
       const xbrYieldStressRatioArtifact& artifact = iter->second;
-      Float64 ratio = artifact.GetStressRatio();
+      Float64 ratio = artifact.GetRatingFactor();
       if ( ratio < RF )
       {
          RF = ratio;
