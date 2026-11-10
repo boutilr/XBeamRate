@@ -254,6 +254,8 @@ public:
    // Evaluate yield stress in reinforcement MBE 6A.5.4.2.2b
    void CheckYieldStressLimit(bool bCheckYieldStress) override;
    bool CheckYieldStressLimit() const override;
+   bool UseReducedDemandK() const override;
+   void UseReducedDemandK(bool enabled) override;
 
    // returns fraction of yield stress that reinforcement can be stressed to during
    // a permit load rating evaluation MBE 6A.5.4.2.2b
@@ -351,6 +353,7 @@ private:
    std::array<bool, pgsTypes::lrLoadRatingTypeCount> m_bRatingEnabled; // array index is pgsTypes::LoadRatingType
    std::array<bool, pgsTypes::lrLoadRatingTypeCount> m_bRateForShear; // array index is pgsTypes::LoadRatingType
    bool m_bCheckYieldStress;
+   bool m_bUseReducedDemandK;
    Float64 m_YieldStressCoefficient;
 
    Float64 m_MaxLLStepSize; // maximum step size for moving live load

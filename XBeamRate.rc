@@ -321,6 +321,7 @@ BEGIN
     EDITTEXT        IDC_SYSTEM_FACTOR_FLEXURE,57,138,40,14,ES_RIGHT | ES_AUTOHSCROLL
     LTEXT           "Shear",IDC_STATIC,115,140,20,8
     EDITTEXT        IDC_SYSTEM_FACTOR_SHEAR,137,138,40,14,ES_RIGHT | ES_AUTOHSCROLL
+    CONTROL         "Recalculate K using reduced rating demand (MBE C6A.5.6)",IDC_MBE_REDUCED_K,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,222,420,10
     GROUPBOX        "Analysis Locations for Negative Moment over Columns",IDC_STATIC,14,167,424,43
     CONTROL         "If column width equals or exceeds",IDC_NEG_MOMENT_CHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,21,181,124,10
