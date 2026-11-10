@@ -38,6 +38,8 @@ protected:
 
    void MomentRating(PierIDType pierID,xbrTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact);
    void ShearRating(PierIDType pierID, xbrTypes::Stage stage, const std::vector<xbrPointOfInterest>& vPoi,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact);
+   void ComputeMBE4LongitudinalRating(PierIDType pierID, xbrTypes::Stage stage, const xbrPointOfInterest& poi,
+      pgsTypes::LoadRatingType ratingType, VehicleIndexType truck, xbrShearRatingArtifact* artifact);
    void CheckReinforcementYielding(PierIDType pierID, xbrTypes::Stage stage,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx,xbrRatingArtifact& ratingArtifact);
 
    void GetMoments(PierIDType pierID,pgsTypes::LoadRatingType ratingType,VehicleIndexType vehicleIdx, const std::vector<xbrPointOfInterest>& vPOI, std::vector<Float64>& vDC,std::vector<Float64>& vDW,std::vector<Float64>& vCR,std::vector<Float64>& vSH,std::vector<Float64>& vRE,std::vector<Float64>& vPS, std::vector<Float64>& vLLIMmin, std::vector<Float64>& vLLIMmax,std::vector<IndexType>& vMinLLConfigIdx,std::vector<IndexType>& vMaxLLConfigIdx);
