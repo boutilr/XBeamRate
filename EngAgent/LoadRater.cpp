@@ -165,7 +165,7 @@ void xbrLoadRater::MomentRating(PierIDType pierID, xbrTypes::Stage stage,pgsType
             const MinMomentCapacityDetails& minCapacityDetails = pMomentCapacity->GetMinMomentCapacityDetails(pierID,ls,stage,poi,bPositiveMoment);
             Float64 Mr = minCapacityDetails.Mr;
             Float64 MrMin = minCapacityDetails.MrMin;
-            Float64 K = (IsZero(MrMin) ? 1.0 : Mr/MrMin); // MBE 6A.5.6
+            K = (IsZero(MrMin) ? 1.0 : Mr/MrMin); // MBE 6A.5.6
             if ( K < 0.0 || 1.0 < K )
             {
                K = 1.0;
