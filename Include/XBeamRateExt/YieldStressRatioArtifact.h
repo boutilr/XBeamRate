@@ -133,13 +133,20 @@ public:
    Float64 GetRebarStress() const;
    Float64 GetFdl() const;
    Float64 GetFll() const;
+   // Legacy accessor: returns the Service I live-load RF, (fr-fdl)/fll.
    Float64 GetStressRatio() const;
+   // Stress ratio at the specified truck weight: fr/(fdl+fll).
+   Float64 GetAppliedStressRatio() const;
+   // Fourth Edition AASHTO reporting and fixed-load checks, without changing the WSDOT path.
+   void SetUseServiceIRatingFactor(bool enabled);
+   bool IsUsingServiceIRatingFactor() const;
    Float64 GetRatingFactor() const { return GetStressRatio(); }
 
 protected:
    void MakeCopy(const xbrYieldStressRatioArtifact& rOther);
    void MakeAssignment(const xbrYieldStressRatioArtifact& rOther);
 
+   bool m_UseServiceIRatingFactor;
    mutable bool m_bRFComputed;
    mutable Float64 m_StressRatio;
    mutable Float64 m_fdl;
