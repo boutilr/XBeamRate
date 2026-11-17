@@ -28,6 +28,7 @@
 #include <PgsExt\RatingArtifact.h>
 #include <PgsExt\CapacityToDemand.h>
 #include <PsgLib\Helpers.h>
+#include <LRFD/MBEManager.h>
 
 #include <EAF\EAFDisplayUnits.h>
 #include <IFace\Project.h>
@@ -47,6 +48,9 @@ rptRcTable* CRatingSummaryTable::BuildByLimitState(std::shared_ptr<WBFL::EAF::Br
 {
    GET_IFACE2(pBroker,IEAFDisplayUnits,pDisplayUnits);
    GET_IFACE2(pBroker,IXBRRatingSpecification,pRatingSpec);
+   bool serviceIRatingFactor = WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() &&
+      pRatingSpec->GetPermitRatingMethod() == xbrTypes::prmAASHTO;
+
 
    rptCapacityToDemand rating_factor;
 
@@ -140,8 +144,8 @@ rptRcTable* CRatingSummaryTable::BuildByLimitState(std::shared_ptr<WBFL::EAF::Br
       table->SetRowSpan(row0,0,2);
       (*table)(row0,0) << _T("Service I");
       row0 += 2;
-      (*table)(row1++,1) << _T("Stress Ratio (+M)");
-      (*table)(row1++,1) << _T("Stress Ratio (-M)");
+      (*table)(row1++,1) << (serviceIRatingFactor ? _T("Rating Factor (+M)") : _T("Stress Ratio (+M)"));
+      (*table)(row1++,1) << (serviceIRatingFactor ? _T("Rating Factor (-M)") : _T("Stress Ratio (-M)"));
    }
 
    GET_IFACE2(pBroker,IXBRArtifact,pArtifact);
@@ -490,7 +494,7 @@ rptRcTable* CRatingSummaryTable::BuildByVehicle(std::shared_ptr<WBFL::EAF::Broke
          gLL = pYieldStressPositiveMoment->GetLiveLoadFactor();
          strControlling = _T("Yield Stress Positive Moment");
          poi = pYieldStressPositiveMoment->GetPointOfInterest();
-         bIsStressRatio = true;
+         bIsStressRatio = !pYieldStressPositiveMoment->IsUsingServiceIRatingFactor();
       }
       else if ( pYieldStressNegativeMoment )
       {
@@ -498,7 +502,7 @@ rptRcTable* CRatingSummaryTable::BuildByVehicle(std::shared_ptr<WBFL::EAF::Broke
          gLL = pYieldStressNegativeMoment->GetLiveLoadFactor();
          strControlling = _T("Yield Stress Negative Moment");
          poi = pYieldStressNegativeMoment->GetPointOfInterest();
-         bIsStressRatio = true;
+         bIsStressRatio = !pYieldStressNegativeMoment->IsUsingServiceIRatingFactor();
       }
       else
       {

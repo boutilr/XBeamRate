@@ -602,6 +602,8 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
       return;
    }
 
+   bool serviceIRatingFactor = artifacts.begin()->second.IsUsingServiceIRatingFactor();
+
    rptParagraph* pPara = new rptParagraph(rptStyleManager::GetSubheadingStyle());
    *pChapter << pPara;
    if ( bPositiveMoment )
@@ -625,7 +627,7 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
       *pPara << rptRcImage(std::_tstring(rptStyleManager::GetImagePath()) + _T("XBeamReinforcementYieldingEquation_LRFD.png") ) << rptNewLine;
    }
 
-   ColumnIndexType nColumns = (bIsWSDOTPermitRating ? 17 : 16);
+   ColumnIndexType nColumns = (bIsWSDOTPermitRating ? 17 : 16) + (serviceIRatingFactor ? 1 : 0);
    rptRcTable* table = rptStyleManager::CreateDefaultTable(nColumns);
    
    table->SetColumnStyle(0,rptStyleManager::GetTableCellStyle(CB_NONE | CJ_RIGHT));
@@ -671,7 +673,11 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
    (*table)(0,col++) << COLHDR(RPT_STRESS(_T("r")), rptStressUnitTag, pDisplayUnits->GetStressUnit() );
    (*table)(0, col++) << COLHDR(RPT_STRESS(_T("dl")), rptStressUnitTag, pDisplayUnits->GetStressUnit());
    (*table)(0, col++) << COLHDR(RPT_STRESS(_T("ll")), rptStressUnitTag, pDisplayUnits->GetStressUnit());
-   (*table)(0,col++) << _T("SR");
+   (*table)(0,col++) << (serviceIRatingFactor ? _T("Service I RF") : _T("SR"));
+   if (serviceIRatingFactor)
+   {
+      (*table)(0,col++) << _T("Stress Ratio") << rptNewLine << _T("at RF = 1");
+   }
 
    const xbrYieldStressRatioArtifact* pControllingRating;
    pRatingArtifact->GetYieldStressRatioEx(bPositiveMoment,&pControllingRating);
@@ -710,6 +716,11 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
    dim.ShowUnitTag(false);
    modE.ShowUnitTag(false);
 
+   if (serviceIRatingFactor)
+   {
+      *pPara << _T("MBE 6A.5.4.2.2b: Service I RF = (fr - fdl)/fll. Permanent-load stress stays fixed while live load is scaled. The separate stress ratio at the specified truck weight is fr/(fdl + fll).") << rptNewLine;
+   }
+
    // Add table here
    *pPara << table << rptNewLine;
 
@@ -722,7 +733,7 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
       const xbrPointOfInterest& poi = iter->first;
       const xbrYieldStressRatioArtifact& artifact = iter->second;
 
-      Float64 SR = artifact.GetStressRatio();
+      Float64 SR = artifact.GetRatingFactor();
 
       if ( 1.0 <= SR && !ReportAtThisPoi(poi,controllingPoi, !bPositiveMoment) )
       {
@@ -760,6 +771,15 @@ void CLoadRatingDetailsChapterBuilder::ReinforcementYieldingDetails(rptChapter* 
       else
       {
          (*table)(row,col++) << RF_PASS(rating_factor,SR);
+      }
+
+      if (serviceIRatingFactor)
+      {
+         Float64 appliedRatio = artifact.GetAppliedStressRatio();
+         if (appliedRatio < 1.0)
+            (*table)(row,col++) << RF_FAIL(rating_factor,appliedRatio);
+         else
+            (*table)(row,col++) << RF_PASS(rating_factor,appliedRatio);
       }
 
       row++;

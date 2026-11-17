@@ -630,6 +630,9 @@ void xbrLoadRater::CheckReinforcementYielding(PierIDType pierID, xbrTypes::Stage
 
          // Get allowable
          xbrYieldStressRatioArtifact stressRatioArtifact;
+         stressRatioArtifact.SetUseServiceIRatingFactor(
+            WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition() &&
+            pMomentRatingArtifact->GetPermitRatingMethod() == xbrTypes::prmAASHTO);
          stressRatioArtifact.SetRatingType(ratingType);
          stressRatioArtifact.SetPermitRatingMethod(pMomentRatingArtifact->GetPermitRatingMethod());
          stressRatioArtifact.SetPointOfInterest(poi);

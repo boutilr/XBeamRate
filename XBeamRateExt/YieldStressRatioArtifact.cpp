@@ -22,6 +22,8 @@
 
 #include "stdafx.h"
 #include <XBeamRateExt\YieldStressRatioArtifact.h>
+#include <cmath>
+#include <stdexcept>
 
 
 /****************************************************************************
@@ -30,7 +32,11 @@ CLASS
 ****************************************************************************/
 xbrYieldStressRatioArtifact::xbrYieldStressRatioArtifact()
 {
+   m_UseServiceIRatingFactor = false;
    m_bRFComputed = false;
+   m_StressRatio = 0.0;
+   m_fdl = 0.0;
+   m_fll = 0.0;
 
    m_RatingType = pgsTypes::lrDesign_Inventory;
    m_PermitRatingMethod = xbrTypes::prmAASHTO;
@@ -407,6 +413,28 @@ Float64 xbrYieldStressRatioArtifact::GetFll() const
    return m_fll;
 }
 
+void xbrYieldStressRatioArtifact::SetUseServiceIRatingFactor(bool enabled)
+{
+   m_UseServiceIRatingFactor = enabled;
+   m_bRFComputed = false;
+}
+
+bool xbrYieldStressRatioArtifact::IsUsingServiceIRatingFactor() const
+{
+   return m_UseServiceIRatingFactor && ::IsPermitRatingType(m_RatingType) && m_PermitRatingMethod == xbrTypes::prmAASHTO;
+}
+
+Float64 xbrYieldStressRatioArtifact::GetRebarStress() const
+{
+   return GetFdl() + GetFll();
+}
+
+Float64 xbrYieldStressRatioArtifact::GetAppliedStressRatio() const
+{
+   Float64 stress = GetRebarStress();
+   return stress <= 0.0 ? Float64_Max : Min(Float64_Max, GetAllowableStress() / stress);
+}
+
 Float64 xbrYieldStressRatioArtifact::GetStressRatio() const
 {
    // NOTE: Calculation procedure based on MBE A2A.13.2.2
@@ -418,7 +446,23 @@ Float64 xbrYieldStressRatioArtifact::GetStressRatio() const
    Float64 SR = -Float64_Max;
    Float64 fdl, fll;
 
-   if ( IsZero(m_Mllim) || IsZero(m_gLL) )
+   if (IsUsingServiceIRatingFactor())
+   {
+      const Float64 inputs[] = { m_AllowableStressRatio, m_fy, m_Ybar,
+         m_Mdc, m_Mdw, m_Mcr, m_Msh, m_Mre, m_Mps, m_Mllim,
+         m_gDC, m_gDW, m_gCR, m_gSH, m_gRE, m_gPS, m_gLL };
+      for (Float64 value : inputs)
+         if (!std::isfinite(value)) throw std::invalid_argument("Non-finite Service I rating parameter");
+      if (m_AllowableStressRatio < 0.0 || m_fy < 0.0)
+         throw std::invalid_argument("Invalid Service I allowable stress");
+      for (int type = 0; type < 2; ++type)
+         if (!std::isfinite(m_Icr[type]) || m_Icr[type] <= 0.0 ||
+             !std::isfinite(m_c[type]) || !std::isfinite(m_n[type]) || m_n[type] <= 0.0)
+            throw std::invalid_argument("Invalid Service I cracked-section properties");
+   }
+
+   // MBE 6A.5.4.2.2b: check fixed-load stress even when no live-load increment is present.
+   if (!IsUsingServiceIRatingFactor() && (IsZero(m_Mllim) || IsZero(m_gLL)))
    {
       fdl = 0;
       fll = 0;
@@ -458,6 +502,10 @@ Float64 xbrYieldStressRatioArtifact::GetStressRatio() const
          fll += m_n[xbrTypes::ltTransient] * fLLIM_Adj; // WSDOT BDM Eqn. 13.1.1A-2
       }
 
+      if (IsUsingServiceIRatingFactor() &&
+          (!std::isfinite(fr) || !std::isfinite(fdl) || !std::isfinite(fll) || !std::isfinite(fr-fdl)))
+         throw std::overflow_error("Service I stress calculation overflow");
+
       SR = IsZero(fll) ? Float64_Max : (fr - fdl) / fll;
 
       if ( IsZero(fr) || (0 < fr && fr-fdl < 0) || (fr < 0 && 0 < fr-fdl) )
@@ -474,6 +522,8 @@ Float64 xbrYieldStressRatioArtifact::GetStressRatio() const
       }
    }
 
+   if (IsUsingServiceIRatingFactor()) SR = Min(Float64_Max, SR);
+
    m_fdl = fdl;
    m_fll = fll;
    m_StressRatio = SR;;
@@ -483,6 +533,7 @@ Float64 xbrYieldStressRatioArtifact::GetStressRatio() const
 
 void xbrYieldStressRatioArtifact::MakeCopy(const xbrYieldStressRatioArtifact& rOther)
 {
+   m_UseServiceIRatingFactor = rOther.m_UseServiceIRatingFactor;
    m_POI            = rOther.m_POI;
    m_RatingType     = rOther.m_RatingType;
    m_PermitRatingMethod         = rOther.m_PermitRatingMethod;
