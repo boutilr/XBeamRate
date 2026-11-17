@@ -31,3 +31,5 @@ Rate for Shear | When checked, permit load rating analysis is performed for shea
 Check reinforcement yielding | When checked, reinforcement yielding is check according to MBE 6A.5.4.2.2b
 Allowable Stress | Enter the allowable yield stress coefficient for the reinforcement yielding check
 Compute permit rating factors using | Select the option for computing the permit rating factors.
+
+**Recalculate K using reduced rating demand (MBE C6A.5.6)** is a project option for Fourth Edition AASHTO ratings. New projects default to enabled; existing files without the setting load with it disabled. When enabled, eligible ratings below 1.0 recalculate K at reduced live load with permanent loads fixed. Turning it off retains K at the original loading. The setting is saved and participates in undo/redo. It does not change WSDOT permit/emergency methods. The details report identifies the selection. XBRate retains fixed beta/theta vertical shear; no uncracked MCFT or prestress size-effect checkbox is offered.

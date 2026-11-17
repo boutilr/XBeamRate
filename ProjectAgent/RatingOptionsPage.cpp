@@ -70,6 +70,7 @@ void CRatingOptionsPage::DoDataExchange(CDataExchange* pDX)
 
    DDX_Check_Bool(pDX,IDC_PERMIT_RATING,pParent->m_Options.m_bPermitRating);
    DDX_Check_Bool(pDX,IDC_PERMIT_SHEAR,pParent->m_Options.m_bPermitRateForShear);
+   DDX_Check_Bool(pDX, IDC_MBE_REDUCED_K, pParent->m_Options.m_bUseReducedDemandK);
    DDX_Check_Bool(pDX,IDC_PERMIT_YIELD_STRESS,pParent->m_Options.m_bCheckYieldStress);
    DDX_Text(pDX,IDC_ALLOWABLE_STRESS,pParent->m_Options.m_YieldStressCoefficient);
    DDX_CBEnum(pDX,IDC_PERMIT_FACTORS,pParent->m_Options.m_PermitRatingMethod);
@@ -81,6 +82,7 @@ void CRatingOptionsPage::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CRatingOptionsPage, CPropertyPage)
 	ON_COMMAND(ID_HELP, OnHelp)
+   ON_CBN_SELCHANGE(IDC_LRFR, &CRatingOptionsPage::OnMBEEditionChanged)
    ON_BN_CLICKED(IDC_DESIGN_RATING, &CRatingOptionsPage::OnBnClickedDesignRating)
    ON_BN_CLICKED(IDC_LEGAL_RATING, &CRatingOptionsPage::OnBnClickedLegalRating)
    ON_BN_CLICKED(IDC_PERMIT_RATING, &CRatingOptionsPage::OnBnClickedPermitRating)
@@ -103,10 +105,18 @@ BOOL CRatingOptionsPage::OnInitDialog()
 
    CPropertyPage::OnInitDialog();
 
-   // TODO:  Add extra initialization here
+   OnMBEEditionChanged();
 
    return TRUE;  // return TRUE unless you set the focus to a control
    // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CRatingOptionsPage::OnMBEEditionChanged()
+{
+   auto* combo = (CComboBox*)GetDlgItem(IDC_LRFR);
+   auto edition = (WBFL::LRFD::MBEManager::Edition)combo->GetItemData(combo->GetCurSel());
+   GetDlgItem(IDC_MBE_REDUCED_K)->EnableWindow(
+      WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= edition);
 }
 
 void CRatingOptionsPage::FillEmergencyFactorList()

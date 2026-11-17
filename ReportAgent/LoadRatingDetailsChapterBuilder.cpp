@@ -65,6 +65,15 @@ rptChapter* CLoadRatingDetailsChapterBuilder::Build(const std::shared_ptr<const 
    GET_IFACE2(pBroker,IXBRRatingSpecification,pRatingSpec);
    GET_IFACE2(pBroker,IXBRProject,pProject);
 
+   if (WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition())
+   {
+      rptParagraph* options = new rptParagraph;
+      *pChapter << options;
+      *options << _T("MBE C6A.5.6 reduced-demand K iteration: ")
+         << (pRatingSpec->UseReducedDemandK() ? _T("enabled") : _T("disabled")) << rptNewLine
+         << _T("Applies only to eligible AASHTO ratings below 1.0; the WSDOT permit/emergency method is unchanged.");
+   }
+
    xbrTypes::PermitRatingMethod permitRatingMethod = pRatingSpec->GetPermitRatingMethod();
    m_bReportNegativeMomentBetweenFOCs = pRatingSpec->DoCheckNegativeMomentBetweenFOCs(pierID);
 

@@ -67,3 +67,5 @@
 #define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif
+
+#define IDC_MBE_REDUCED_K 19903

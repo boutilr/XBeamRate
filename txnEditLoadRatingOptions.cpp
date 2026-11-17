@@ -63,6 +63,7 @@ void txnEditLoadRatingOptions::Execute(int i)
    pEvents->HoldEvents(); // don't fire any changed events until all changes are done
 
    GET_IFACE2(pBroker,IXBRRatingSpecification,pSpec);
+   pSpec->UseReducedDemandK(m_Options[i].m_bUseReducedDemandK);
    pSpec->SetAnalysisMethodForReactions(m_Options[i].m_AnalysisType);
    pSpec->SetPermitRatingMethod(m_Options[i].m_PermitRatingMethod);
    pSpec->SetEmergencyRatingMethod(m_Options[i].m_EmergencyRatingMethod);

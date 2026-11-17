@@ -44,6 +44,7 @@ protected:
    void FillLRFRList();
 
    afx_msg void OnHelp();
+   afx_msg void OnMBEEditionChanged();
 
 	DECLARE_MESSAGE_MAP()
 public:

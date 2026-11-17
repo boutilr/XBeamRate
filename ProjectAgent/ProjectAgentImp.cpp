@@ -118,6 +118,7 @@ CProjectAgentImp::CProjectAgentImp()
    m_bRateForShear[pgsTypes::lrPermit_Special]   = true;
 
    m_bCheckYieldStress = true;
+   m_bUseReducedDemandK = true;
    m_YieldStressCoefficient = 0.9;
 
    m_gDC_StrengthI = 1.25;
@@ -449,6 +450,7 @@ bool CProjectAgentImp::Save(WBFL::System::IStructuredSave* pNativeStrSave)
       // when this is a PGSuper/PGSplice extension, there can be many piers
 
       pStrSave->BeginUnit(_T("RatingSpecification"),4.0);
+         pStrSave->put_Property(_T("UseReducedDemandK"), CComVariant(m_bUseReducedDemandK));
          pStrSave->put_Property(_T("LRFD"),CComVariant(WBFL::LRFD::BDSManager::GetEditionAsString(true)));
          pStrSave->put_Property(_T("LRFR"),CComVariant(WBFL::LRFD::MBEManager::GetEditionAsString(true)));
 
@@ -703,6 +705,7 @@ bool CProjectAgentImp::Save(WBFL::System::IStructuredSave* pNativeStrSave)
    else
    {
       pStrSave->BeginUnit(_T("RatingSpecification"),4.0);
+         pStrSave->put_Property(_T("UseReducedDemandK"), CComVariant(m_bUseReducedDemandK));
          pStrSave->put_Property(_T("AnalysisType"),CComVariant(m_AnalysisType));
          pStrSave->put_Property(_T("EmergencyRatingMethod"), CComVariant(m_EmergencyRatingMethod)); // added in version 2
          pStrSave->put_Property(_T("PermitRatingMethod"), CComVariant(m_PermitRatingMethod));
@@ -794,6 +797,13 @@ WBFL::EAF::Broker::LoadResult CProjectAgentImp::Load(WBFL::System::IStructuredLo
 
          {
             hr = pStrLoad->BeginUnit(_T("RatingSpecification"));
+         m_bUseReducedDemandK = false;
+         {
+            CComVariant option;
+            option.vt = VT_BOOL;
+            if (SUCCEEDED(pStrLoad->get_Property(_T("UseReducedDemandK"), &option)) && option.vt == VT_BOOL)
+               m_bUseReducedDemandK = option.boolVal == VARIANT_TRUE;
+         }
             Float64 version;
             pStrLoad->get_Version(&version);
 
@@ -1275,6 +1285,13 @@ WBFL::EAF::Broker::LoadResult CProjectAgentImp::Load(WBFL::System::IStructuredLo
       else
       {
          hr = pStrLoad->BeginUnit(_T("RatingSpecification"));
+         m_bUseReducedDemandK = false;
+         {
+            CComVariant option;
+            option.vt = VT_BOOL;
+            if (SUCCEEDED(pStrLoad->get_Property(_T("UseReducedDemandK"), &option)) && option.vt == VT_BOOL)
+               m_bUseReducedDemandK = option.boolVal == VARIANT_TRUE;
+         }
 
          Float64 version;
          pStrLoad->get_Version(&version);
@@ -2789,6 +2806,20 @@ bool CProjectAgentImp::RateForShear(pgsTypes::LoadRatingType ratingType) const
    }
 }
 
+bool CProjectAgentImp::UseReducedDemandK() const
+{
+   return m_bUseReducedDemandK;
+}
+
+void CProjectAgentImp::UseReducedDemandK(bool enabled)
+{
+   if (m_bUseReducedDemandK != enabled)
+   {
+      m_bUseReducedDemandK = enabled;
+      Fire_OnProjectChanged();
+   }
+}
+
 void CProjectAgentImp::CheckYieldStressLimit(bool bCheckYieldStress)
 {
    if (m_bCheckYieldStress != bCheckYieldStress)
@@ -3664,6 +3695,7 @@ void CProjectAgentImp::OnEditOptions()
 
    oldOptions.m_bPermitRating = pRatingSpec->IsRatingEnabled(pgsTypes::lrPermit_Routine);
    oldOptions.m_bPermitRateForShear = pRatingSpec->RateForShear(pgsTypes::lrPermit_Routine);
+   oldOptions.m_bUseReducedDemandK = pRatingSpec->UseReducedDemandK();
    oldOptions.m_bCheckYieldStress = pRatingSpec->CheckYieldStressLimit();
    oldOptions.m_YieldStressCoefficient = pRatingSpec->GetYieldStressLimitCoefficient();
    oldOptions.m_PermitRatingMethod = pRatingSpec->GetPermitRatingMethod();

@@ -24,6 +24,7 @@
 //
 
 #include "stdafx.h"
+#include <LRFD/MBEManager.h>
 #include <AgentTools.h>
 #include "resource.h"
 #include "LoadRatingOptionsPage.h"
@@ -65,6 +66,7 @@ void CLoadRatingOptionsPage::DoDataExchange(CDataExchange* pDX)
 
    DDX_Keyword(pDX,IDC_MAX_LANES,_T("ALL"),m_MaxLoadedLanes);
 
+   DDX_Check_Bool(pDX, IDC_MBE_REDUCED_K, m_bUseReducedDemandK);
    DDX_Text(pDX, IDC_SYSTEM_FACTOR_FLEXURE, m_SystemFactorFlexure);
    DDX_Text(pDX, IDC_SYSTEM_FACTOR_SHEAR, m_SystemFactorShear);
 
@@ -91,6 +93,8 @@ BOOL CLoadRatingOptionsPage::OnInitDialog()
    CPropertyPage::OnInitDialog();
 
    OnNegMomCheckChanged();
+   GetDlgItem(IDC_MBE_REDUCED_K)->EnableWindow(
+      WBFL::LRFD::MBEManager::Edition::FourthEdition2026 <= WBFL::LRFD::MBEManager::GetEdition());
 
    return TRUE;  // return TRUE unless you set the focus to a control
    // EXCEPTION: OCX Property Pages should return FALSE

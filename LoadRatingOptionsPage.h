@@ -41,6 +41,7 @@ public:
    xbrTypes::EmergencyRatingMethod m_EmergencyRatingMethod;
    Float64 m_MaxLLStepSize;
    IndexType m_MaxLoadedLanes;
+   bool m_bUseReducedDemandK;
    Float64 m_SystemFactorFlexure;
    Float64 m_SystemFactorShear;
 
