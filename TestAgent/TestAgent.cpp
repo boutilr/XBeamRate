@@ -49,6 +49,8 @@
 #include <IFace\PointOfInterest.h>
 #include <IFace\AnalysisResults.h>
 #include <IFace\LoadRating.h>
+#include <IFace\CapMeshDiagnostics.h>
+#include <IFace\RatingSpecification.h>
 
 #include <EAF/EAFProgress.h>
 #include <EAF/EAFStatusCenter.h>

@@ -89,6 +89,7 @@ bool CAnalysisAgentImp::RegisterInterfaces()
    EAF_AGENT_REGISTER_INTERFACES;
    REGISTER_INTERFACE(IXBRProductForces);
    REGISTER_INTERFACE(IXBRAnalysisResults);
+   REGISTER_INTERFACE(IXBRCapMeshDiagnostics);
 
    return true;
 };
@@ -130,6 +131,12 @@ CAnalysisAgentImp::ModelData* CAnalysisAgentImp::GetModelData(PierIDType pierID,
    ATLASSERT( found != m_pModelData->end() ); // should always find it!
    ModelData* pModelData = &(*found).second;
    return pModelData;
+}
+
+CapMeshStatistics CAnalysisAgentImp::GetCapMeshStatistics(PierIDType pierID) const
+{
+   const auto* model = GetModelData(pierID, MODEL_INIT_TOPOLOGY);
+   return {model->m_XBeamMembers.size(), model->m_CapMeshSplitLimitHits};
 }
 
 #define BEARING 0x0001
@@ -182,26 +189,34 @@ std::vector<Float64> GetLowerCapProfileLocations(const IXBRPier& pier, PierIDTyp
 }
 
 void AppendCapStiffnessBreaks(std::vector<Float64>& breaks, Float64 left, Float64 right,
-                             Float64 leftDepth, Float64 rightDepth, int remainingSplits)
+                             Float64 leftDepth, Float64 rightDepth, Float64 maxRelativeDepthChange,
+                             int remainingSplits, size_t& splitLimitHits)
 {
    // Depth is linear between adjacent profile vertices. Refine long tapers so a
    // single midpoint section does not represent a large change in stiffness.
-   constexpr Float64 MaxRelativeDepthChange = 0.05;
-   if (remainingSplits == 0 || right - left <= 2 * CapJointTolerance ||
-       std::abs(rightDepth - leftDepth) <= MaxRelativeDepthChange * (leftDepth + rightDepth) / 2)
+   if (right - left <= 2 * CapJointTolerance ||
+       std::abs(rightDepth - leftDepth) <= maxRelativeDepthChange * (leftDepth + rightDepth) / 2)
    {
+      return;
+   }
+   if (remainingSplits == 0)
+   {
+      ++splitLimitHits;
       return;
    }
 
    Float64 midpoint = (left + right) / 2;
    Float64 midDepth = (leftDepth + rightDepth) / 2;
-   AppendCapStiffnessBreaks(breaks, left, midpoint, leftDepth, midDepth, remainingSplits - 1);
+   AppendCapStiffnessBreaks(breaks, left, midpoint, leftDepth, midDepth,
+      maxRelativeDepthChange, remainingSplits - 1, splitLimitHits);
    breaks.push_back(midpoint);
-   AppendCapStiffnessBreaks(breaks, midpoint, right, midDepth, rightDepth, remainingSplits - 1);
+   AppendCapStiffnessBreaks(breaks, midpoint, right, midDepth, rightDepth,
+      maxRelativeDepthChange, remainingSplits - 1, splitLimitHits);
 }
 
 std::vector<Float64> GetCapStiffnessBreaks(const IXBRPier& pier, const IXBRSectionProperties& sections,
-                                          PierIDType pierID, Float64 length)
+                                          PierIDType pierID, Float64 length,
+                                          Float64 maxRelativeDepthChange, size_t& splitLimitHits)
 {
    const auto locations = GetLowerCapProfileLocations(pier, pierID, length);
    std::vector<Float64> depths;
@@ -222,7 +237,7 @@ std::vector<Float64> GetCapStiffnessBreaks(const IXBRPier& pier, const IXBRSecti
    for (size_t idx = 1; idx < locations.size(); ++idx)
    {
       AppendCapStiffnessBreaks(breaks, locations[idx - 1], locations[idx],
-         depths[idx - 1], depths[idx], MaxRefinementLevels);
+         depths[idx - 1], depths[idx], maxRelativeDepthChange, MaxRefinementLevels, splitLimitHits);
       if (idx + 1 < locations.size())
       {
          breaks.push_back(locations[idx]);
@@ -340,7 +355,13 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
       }
 
       Float64 Exb = pMaterial->GetXBeamEc(pierID);
-      const auto stiffnessBreaks = GetCapStiffnessBreaks(*pPier.get(), *pSectProp.get(), pierID, L);
+      const auto refinement = GetCapMeshExportOptions();
+      std::vector<Float64> stiffnessBreaks;
+      if (!refinement.useMidspanStiffness)
+      {
+         stiffnessBreaks = GetCapStiffnessBreaks(*pPier.get(), *pSectProp.get(), pierID, L,
+            refinement.depthPercent / 100.0, pModelData->m_CapMeshSplitLimitHits);
+      }
       auto nextBreak = stiffnessBreaks.begin();
 
       // build the model
@@ -353,7 +374,9 @@ void CAnalysisAgentImp::BuildModel(PierIDType pierID,int level) const
 
       auto createCapMember = [&](JointIDType start, JointIDType end, Float64 left, Float64 right)
       {
-         const xbrPointOfInterest section(INVALID_ID, (left + right) / 2);
+         // The legacy mesh uses the full cap's midpoint for every cap member.
+         const auto propertyStation = refinement.useMidspanStiffness ? L / 2 : (left + right) / 2;
+         const xbrPointOfInterest section(INVALID_ID, propertyStation);
          Float64 area = pSectProp->GetArea(pierID, pgsTypes::Stage2, section);
          Float64 inertia = pSectProp->GetIxx(pierID, pgsTypes::Stage2, section);
          femModel.CreateMember(xbeamMbrID, start, end, Exb * area, Exb * inertia);

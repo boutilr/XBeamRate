@@ -56,10 +56,12 @@ var NewCatalogServer = new String("Regression");
 var OldCatalogPublisher = new String;
 var NewCatalogPublisher = new String("Regression");
 
-var Application = projectDir+"\\BridgeLink\\RegFreeCOM\\" +XBRatePlatform+"\\"+XBRateVersion+"\\BridgeLink.exe ";
+var Application = projectDir+"\\BridgeLink\\RegFreeCOM\\" +XBRatePlatform+"\\"+XBRateVersion+"\\BridgeLink.exe";
 var StartFolderSpec = new String( projectDir+"\\XBeamRate\\RegressionTest" );
 
-var ErrorsExist = "FALSE";
+var ErrorsExist = false;
+// Include 1% as a finer reference for the 2.5% run.
+var ArchMeshModes = ["midspan", "10", "5", "2.5", "1"];
 
 // make sure exe exists
 if (!FSO.FileExists(Application))
@@ -84,10 +86,13 @@ if(ExecuteCommands)
 CleanUpTest();
 
 var st = 0;
-if (!ErrorsExist)
+if (ErrorsExist)
+{
+   st = 1;
+}
+else
 {
    DisplayMessage("Test Successful - no errors");
-   st = 1;
 }
 
 var endDate = new Date();
@@ -132,29 +137,14 @@ function RunTest (currFolder, currCommand)
       {
           var fc = new Enumerator(subFolder.Files);
           for (; !fc.atEnd(); fc.moveNext()) {
-              s = new String(fc.item());
-
-              idx1 = s.indexOf(".xbr");
-              idx2 = s.indexOf(".pgs");
-              idx3 = s.indexOf(".spl");
-              if (idx1 != -1 || idx2 != -1 || idx3 != -1) {
-                  cmd = Application + " /" + newCommand + " " + s;
-
-                  if (ExecuteCommands) {
-                      var begDate = new Date();
-                      var begrunTime = begDate.getTime();
-
-                      DisplayMessage("Running: " + cmd);
-                      DisplayMessage("");
-                      st = wsShell.Run(cmd, 1, "TRUE");
-
-                      var endrunDate = new Date();
-                      var endrunTime = endrunDate.getTime();
-                      var elapsed = (endrunTime - begrunTime) / 60000.0;
-                      timerFile.WriteLine(s + ", " + elapsed); // comma-delimited elapsed time for each file
+              var source = String(fc.item());
+              var extension = FSO.GetExtensionName(source).toLowerCase();
+              if (extension == "xbr" || extension == "pgs" || extension == "spl") {
+                  if (FSO.GetFileName(source).toLowerCase() == "continuous_pier_2_arch.xbr") {
+                      RunArchMeshSweep(source, newCommand);
                   }
                   else {
-                      DisplayMessage(cmd);
+                      RunRegressionCase(source, newCommand, "");
                   }
               }
           }
@@ -163,6 +153,218 @@ function RunTest (currFolder, currCommand)
      // Recurse
      RunTest(subFolder,newCommand);
    }
+}
+
+function RunRegressionCase(source, command, label)
+{
+   var cmd = '"' + Application + '" /' + command + ' "' + source + '"';
+   if (!ExecuteCommands)
+   {
+      DisplayMessage(label + cmd);
+      return 0;
+   }
+
+   DisplayMessage("Running: " + label + cmd);
+   var start = new Date().getTime();
+   var result = wsShell.Run(cmd, 1, true);
+   var elapsed = (new Date().getTime() - start) / 60000.0;
+   timerFile.WriteLine(label + source + ", " + elapsed);
+   return result;
+}
+
+function RunArchMeshSweep(source, command)
+{
+   // Each BridgeLink process inherits its own tolerance and builds a fresh model.
+   var variable = "XBR_MESH_DEPTH_PERCENT";
+   var environment = wsShell.Environment("PROCESS");
+   var original = environment.Item(variable);
+   var stem = source.slice(0, -4);
+   var comparison = stem + ".mesh-comparison.csv";
+   var outputs = [];
+   try
+   {
+      if (ExecuteCommands && FSO.FileExists(comparison))
+      {
+         FSO.DeleteFile(comparison);
+      }
+      for (var i = 0; i < ArchMeshModes.length; ++i)
+      {
+         var mode = ArchMeshModes[i];
+         var output = stem + ".mesh-" + mode + ".csv";
+         if (ExecuteCommands)
+         {
+            if (FSO.FileExists(output))
+            {
+               FSO.DeleteFile(output);
+            }
+            environment.Item(variable) = mode;
+         }
+
+         var result = RunRegressionCase(source, command, variable + "=" + mode + " ");
+         if (ExecuteCommands)
+         {
+            if (result != 0 || !FSO.FileExists(output) || FSO.GetFile(output).Size == 0)
+            {
+               throw new Error("Missing or failed mesh export: " + output);
+            }
+            outputs.push(output);
+         }
+      }
+
+      if (ExecuteCommands)
+      {
+         WriteMeshComparison(outputs, comparison);
+         DisplayMessage("Exported: " + comparison);
+      }
+   }
+   catch (error)
+   {
+      ErrorsExist = true;
+      DisplayMessage("Mesh sweep failed: " + error.message);
+   }
+   finally
+   {
+      if (ExecuteCommands)
+      {
+         if (original == "")
+         {
+            environment.Remove(variable);
+         }
+         else
+         {
+            environment.Item(variable) = original;
+         }
+      }
+   }
+}
+
+function WriteMeshComparison(outputs, destination)
+{
+   // The exporter writes numeric fields and fixed labels without quoting.
+   var header;
+   var baseline;
+   var finest;
+   var models = [];
+   var indices = {};
+   var keyFields = ["rating_level", "moment_sign", "station_ft", "column_index", "poi_flags"];
+   var metrics = ["dead_moment_kip_ft", "wearing_surface_moment_kip_ft",
+                  "live_moment_with_impact_kip_ft", "flexural_rf", "overall_rf"];
+
+   for (var i = 0; i < outputs.length; ++i)
+   {
+      var file = FSO.OpenTextFile(outputs[i], 1);
+      var lines;
+      try
+      {
+         lines = file.ReadAll().replace(/[\r\n]+$/, "").split(/\r?\n/);
+      }
+      finally
+      {
+         file.Close();
+      }
+
+      if (i == 0)
+      {
+         header = lines[0];
+         var fields = header.split(",");
+         for (var c = 0; c < fields.length; ++c)
+         {
+            indices[fields[c]] = c;
+         }
+         var required = keyFields.concat(metrics);
+         for (var f = 0; f < required.length; ++f)
+         {
+            if (indices[required[f]] === undefined)
+            {
+               throw new Error("Missing comparison field: " + required[f]);
+            }
+         }
+      }
+      if (lines[0] != header || lines.length < 2 || (i > 0 && lines.length - 1 != models[0].rows.length))
+      {
+         throw new Error("Inconsistent mesh CSV: " + outputs[i]);
+      }
+
+      var model = { rows: [], byStation: {} };
+      for (var r = 1; r < lines.length; ++r)
+      {
+         var row = lines[r].split(",");
+         if (row.length != fields.length)
+         {
+            throw new Error("Invalid mesh CSV row: " + outputs[i]);
+         }
+
+         var key = [];
+         for (var k = 0; k < keyFields.length; ++k)
+         {
+            key.push(row[indices[keyFields[k]]]);
+         }
+         var stationKey = key.join("|");
+         if (model.byStation[stationKey] || (baseline && !baseline[stationKey]))
+         {
+            throw new Error("Duplicate or unmatched rating station: " + stationKey + " in " + outputs[i]);
+         }
+         model.byStation[stationKey] = row;
+         model.rows.push({ key: stationKey, values: row });
+      }
+      models.push(model);
+      if (i == 0)
+      {
+         baseline = model.byStation;
+      }
+      finest = model.byStation;
+   }
+
+   var comparisonHeader = header;
+   for (var m = 0; m < metrics.length; ++m)
+   {
+      comparisonHeader += ",delta_vs_midspan_" + metrics[m] + ",delta_vs_1pct_" + metrics[m];
+   }
+   var comparison = [comparisonHeader];
+   for (var i = 0; i < models.length; ++i)
+   {
+      var rows = models[i].rows;
+      for (var r = 0; r < rows.length; ++r)
+      {
+         var entry = rows[r];
+         var result = entry.values.join(",");
+         for (var m = 0; m < metrics.length; ++m)
+         {
+            var column = indices[metrics[m]];
+            var value = entry.values[column];
+            result += "," + MeshDelta(value, baseline[entry.key][column]);
+            result += "," + MeshDelta(value, finest[entry.key][column]);
+         }
+         comparison.push(result);
+      }
+   }
+
+   // Publish the comparison only after every model produced usable rows.
+   var temporary = destination + ".tmp";
+   var file = FSO.CreateTextFile(temporary, true);
+   try
+   {
+      file.WriteLine(comparison.join("\r\n"));
+   }
+   finally
+   {
+      file.Close();
+   }
+   FSO.MoveFile(temporary, destination);
+}
+
+function MeshDelta(value, reference)
+{
+   if (value == "" || reference == "")
+   {
+      return "";
+   }
+   var delta = Number(value) - Number(reference);
+   if (!isFinite(delta))
+   {
+      throw new Error("Non-finite mesh comparison value");
+   }
+   return delta;
 }
 
 function InitTest(currFolder) 
@@ -183,7 +385,7 @@ function InitTest(currFolder)
 function SetPGSuperLibrary(server, publisher)
 {
    var cmd = new String;
-   cmd = Application + "/App=PGSuper /Configuration=\"" + server + "\":\"" + publisher + "\"";
+   cmd = '"' + Application + '" /App=PGSuper /Configuration="' + server + '":"' + publisher + '"';
 
    if(ExecuteCommands)
    {
@@ -270,7 +472,7 @@ function CheckResults(currFolder)
            }
            else
            {
-               ErrorsExist="TRUE";
+               ErrorsExist = true;
                DisplayMessage("Test Failed - .err files exist in: "+subFolder);
                continue;
            }

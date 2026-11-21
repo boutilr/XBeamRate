@@ -32,6 +32,7 @@
 #include "AnalysisAgentCLSID.h"
 
 #include <IFace/AnalysisResults.h>
+#include <IFace/CapMeshDiagnostics.h>
 
 #include <IFace\Project.h>
 
@@ -56,6 +57,7 @@ class CAnalysisAgentImp : public WBFL::EAF::Agent,
    public WBFL::EAF::IAgentPriority,
    public IXBRProductForces,
    public IXBRAnalysisResults,
+   public IXBRCapMeshDiagnostics,
    public IXBRProjectEventSink,
    public IBridgeDescriptionEventSink
 {  
@@ -74,6 +76,8 @@ public:
    // IAgentPriority
 public:
    IndexType GetPriority() const override;
+
+   CapMeshStatistics GetCapMeshStatistics(PierIDType pierID) const override;
 
 // IXBRProductForces
 public:
@@ -181,6 +185,7 @@ private:
       std::unique_ptr<WBFL::FEA2D::Model> m_Model;
       
       std::vector<BeamMember> m_XBeamMembers; // these members make up the cap beam
+      size_t m_CapMeshSplitLimitHits = 0;
       std::vector<BeamMember> m_SuperstructureMembers; // these are the members where the live load is applied
       
       std::vector<LowerXBeamLoad> m_LowerXBeamLoads;

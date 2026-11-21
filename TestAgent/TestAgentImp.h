@@ -35,6 +35,7 @@
 
 
 class xbrPointOfInterest;
+struct CapMeshExportOptions;
 
 /////////////////////////////////////////////////////////////////////////////
 // CTestAgentImp
@@ -61,6 +62,7 @@ private:
    EAF_DECLARE_AGENT_DATA;
 
    CString GetProcessID();
+   HRESULT ExportCapMeshRatings(PierIDType pierID, LPCTSTR resultsFile, const CapMeshExportOptions& options);
 
    void RunProductLoadActionsTest(std::_tostream& os,LPCTSTR lpszProcessID,PierIDType pierID,const std::vector<xbrPointOfInterest>& vPoi);
    void RunCombinedLoadActionsTest(std::_tostream& os,LPCTSTR lpszProcessID,PierIDType pierID,const std::vector<xbrPointOfInterest>& vPoi);

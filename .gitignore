@@ -338,6 +338,7 @@ bin/
 *.hh
 *.dm
 RegressionTest/Current/*.dbr
+RegressionTest/Current/*.mesh-*.csv
 RegressionTest/Current/*.dbp
 RegressionTest/Current/*.err
 RegressionTest/Current/*.Test

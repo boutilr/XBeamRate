@@ -31,6 +31,20 @@
 #include <IFace\PointOfInterest.h>
 #include <IFace\AnalysisResults.h>
 #include <IFace\LoadRating.h>
+#include <IFace\CapMeshDiagnostics.h>
+#include <IFace\RatingSpecification.h>
+#include <Units\Convert.h>
+#include <Units\Measure.h>
+
+#include <cfloat>
+#include <cmath>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <iomanip>
+#include <limits>
+#include <locale>
+#include <sstream>
 
 
 bool CTestAgentImp::RegisterInterfaces()
@@ -70,6 +84,16 @@ bool CTestAgentImp::ShutDown()
 // IXBRTest
 HRESULT CTestAgentImp::RunTest(PierIDType pierID,LPCTSTR lpszResultsFile)
 {
+   const auto meshExport = GetCapMeshExportOptions();
+   if (meshExport.enabled)
+   {
+      if (!meshExport.valid)
+      {
+         return E_INVALIDARG;
+      }
+      return ExportCapMeshRatings(pierID, lpszResultsFile, meshExport);
+   }
+
    std::_tofstream ofResults;
 
    ofResults.open(lpszResultsFile);
@@ -97,6 +121,140 @@ HRESULT CTestAgentImp::RunTest(PierIDType pierID,LPCTSTR lpszResultsFile)
    RunLoadRatingTest(ofResults,strProcessID,pierID);
 
    return S_OK;
+}
+
+HRESULT CTestAgentImp::ExportCapMeshRatings(PierIDType pierID, LPCTSTR resultsFile, const CapMeshExportOptions& options)
+{
+   GET_IFACE(IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress progress(pProgress);
+   GET_IFACE(IXBRCapMeshDiagnostics, pMesh);
+   GET_IFACE(IXBRRatingSpecification, pSpec);
+
+   const auto mesh = pMesh->GetCapMeshStatistics(pierID);
+   std::ostringstream output;
+   output.imbue(std::locale::classic());
+   output << std::setprecision(std::numeric_limits<Float64>::max_digits10);
+   output << "stiffness_model,depth_change_percent,cap_elements,split_limit_hits,rating_level,moment_sign,"
+             "station_ft,column_index,poi_flags,vehicle_index,live_load_case_index,dead_moment_kip_ft,"
+             "wearing_surface_moment_kip_ft,live_moment_with_impact_kip_ft,"
+             "nominal_capacity_kip_ft,flexural_rf,"
+             "governs_moment_sign,overall_rf,overall_governing_check,overall_governing_station_ft\n";
+
+   using WBFL::Units::ConvertFromSysUnits;
+   using WBFL::Units::Measure;
+   GET_IFACE(IXBRProject, pProject);
+   GET_IFACE(IXBRArtifact, pArtifact);
+   bool wroteRating = false;
+   for (auto ratingType : {pgsTypes::lrDesign_Inventory, pgsTypes::lrDesign_Operating})
+   {
+      if (!pSpec->IsRatingEnabled(ratingType))
+      {
+         continue;
+      }
+      if (pProject->GetLiveLoadName(pierID, ratingType, 0) == NO_LIVE_LOAD_DEFINED)
+      {
+         continue;
+      }
+
+      // The design report uses the envelope across design vehicles.
+      const auto* rating = pArtifact->GetXBeamRatingArtifact(pierID, ratingType, INVALID_INDEX);
+      if (!rating)
+      {
+         return E_FAIL;
+      }
+
+      const xbrMomentRatingArtifact* positiveMoment = nullptr;
+      const xbrMomentRatingArtifact* negativeMoment = nullptr;
+      const xbrShearRatingArtifact* shear = nullptr;
+      const xbrYieldStressRatioArtifact* positiveYield = nullptr;
+      const xbrYieldStressRatioArtifact* negativeYield = nullptr;
+      const auto overallRF = rating->GetRatingFactorEx(&positiveMoment, &negativeMoment,
+         &shear, &positiveYield, &negativeYield);
+
+      const char* governingCheck = "";
+      const xbrPointOfInterest* governingPoi = nullptr;
+      if (overallRF < DBL_MAX)
+      {
+         if (positiveMoment)
+         {
+            governingCheck = "positive_moment";
+            governingPoi = &positiveMoment->GetPointOfInterest();
+         }
+         else if (negativeMoment)
+         {
+            governingCheck = "negative_moment";
+            governingPoi = &negativeMoment->GetPointOfInterest();
+         }
+         else if (shear)
+         {
+            governingCheck = "shear";
+            governingPoi = &shear->GetPointOfInterest();
+         }
+         else if (positiveYield)
+         {
+            governingCheck = "positive_moment_yield";
+            governingPoi = &positiveYield->GetPointOfInterest();
+         }
+         else if (negativeYield)
+         {
+            governingCheck = "negative_moment_yield";
+            governingPoi = &negativeYield->GetPointOfInterest();
+         }
+      }
+      const char* level = ratingType == pgsTypes::lrDesign_Inventory ? "inventory" : "operating";
+      for (bool positive : {true, false})
+      {
+         const xbrMomentRatingArtifact* governing = nullptr;
+         const auto governingRF = rating->GetMomentRatingFactorEx(positive, &governing);
+         for (const auto& [poi, result] : rating->GetMomentRatings(positive))
+         {
+            output << (options.useMidspanStiffness ? "midspan," : "variable,");
+            if (!options.useMidspanStiffness)
+            {
+               output << options.depthPercent;
+            }
+            output << ',' << mesh.elementCount << ',' << mesh.splitLimitHits << ','
+                   << level << ',' << (positive ? "positive" : "negative") << ','
+                   << ConvertFromSysUnits(poi.GetDistFromStart(), Measure::Feet) << ','
+                   << poi.GetColumnIndex() << ',' << poi.GetAttributes() << ',' << result.GetVehicleIndex() << ','
+                   << result.GetLiveLoadConfigurationIndex() << ','
+                   << ConvertFromSysUnits(result.GetDeadLoadMoment(), Measure::KipFeet) << ','
+                   << ConvertFromSysUnits(result.GetWearingSurfaceMoment(), Measure::KipFeet) << ','
+                   << ConvertFromSysUnits(result.GetLiveLoadMoment(), Measure::KipFeet) << ','
+                   << ConvertFromSysUnits(result.GetNominalMomentCapacity(), Measure::KipFeet) << ',';
+            const auto flexuralRF = result.GetRatingFactor();
+            if (std::isfinite(flexuralRF) && flexuralRF < DBL_MAX)
+            {
+               output << flexuralRF;
+            }
+            output << ',' << (&result == governing && governingRF < DBL_MAX) << ',';
+            if (governingPoi)
+            {
+               output << overallRF;
+            }
+            output << ',' << governingCheck << ',';
+            if (governingPoi)
+            {
+               output << ConvertFromSysUnits(governingPoi->GetDistFromStart(), Measure::Feet);
+            }
+            output << '\n';
+            wroteRating = true;
+         }
+      }
+   }
+
+   if (!output || !wroteRating)
+   {
+      return E_FAIL;
+   }
+
+   std::filesystem::path path(resultsFile);
+   path.replace_extension(options.useMidspanStiffness
+      ? ".mesh-midspan.csv" : std::format(".mesh-{}.csv", options.depthPercent));
+   std::ofstream file(path);
+   file << output.view();
+   file.close();
+   return file ? S_OK : E_FAIL;
 }
 
 CString CTestAgentImp::GetProcessID()
